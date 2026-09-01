@@ -5,6 +5,7 @@ import { apiFetch } from '../api/client';
 import { useSession } from '../hooks/useSession';
 import { useActiveGroupContext } from '../hooks/useActiveGroupContext';
 import { Chip, PositionBadge } from '../components/ui';
+import { NoGroupState } from '../components/NoGroupState';
 
 interface LeaderboardRow {
   userId: string;
@@ -35,7 +36,13 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!token || !activeGroup) return;
+    if (!token || !activeGroup) {
+      // Sin grupo activo (recién registrado, o mientras /me todavía resuelve) no hay
+      // nada que pedir — sin este corte, `loading` se queda en true para siempre y la
+      // pantalla nunca llega a mostrar el estado "Todavía no tenés grupo".
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     Promise.all([
       apiFetch<LeaderboardResponse>(`/groups/${activeGroup.id}/leaderboard?period=month`, { accessToken: token }),
@@ -50,18 +57,7 @@ export default function Home() {
 
   if (loadingMe || loading) return <Screen><p style={{ color: '#6B6357' }}>Cargando…</p></Screen>;
 
-  if (!activeGroup) {
-    return (
-      <Screen>
-        <Eyebrow>Liga de Juegos</Eyebrow>
-        <h1 className="lj-display" style={{ fontSize: 34, margin: '10px 0 8px' }}>Todavía no tenés grupo</h1>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <Link className="btn btn-primary" to="/grupo/nuevo">Crear grupo</Link>
-          <Link className="btn btn-outline-dark" to="/unirse">Unirme con un código</Link>
-        </div>
-      </Screen>
-    );
-  }
+  if (!activeGroup) return <NoGroupState />;
 
   if (!lb || !day) return <Screen><p role="alert" style={{ color: '#A8352A' }}>No pudimos cargar tu tabla.</p></Screen>;
 

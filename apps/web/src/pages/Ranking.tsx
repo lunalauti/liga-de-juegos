@@ -4,6 +4,7 @@ import { apiFetch } from '../api/client';
 import { useSession } from '../hooks/useSession';
 import { useActiveGroupContext } from '../hooks/useActiveGroupContext';
 import { Chip } from '../components/ui';
+import { NoGroupState } from '../components/NoGroupState';
 
 type Period = 'week' | 'month';
 
@@ -42,14 +43,18 @@ export default function Ranking() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!token || !activeGroup) return;
+    if (!token || !activeGroup) {
+      setLoading(false); // sin grupo, no hay nada que pedir — si no, esto queda "Cargando…" para siempre
+      return;
+    }
     setLoading(true);
     apiFetch<LeaderboardResponse>(`/groups/${activeGroup.id}/leaderboard?period=${period}`, { accessToken: token })
       .then(setData)
       .finally(() => setLoading(false));
   }, [token, activeGroup, period]);
 
-  if (loadingMe || !activeGroup) return <Screen><p style={{ color: '#6B6357' }}>Cargando…</p></Screen>;
+  if (loadingMe) return <Screen><p style={{ color: '#6B6357' }}>Cargando…</p></Screen>;
+  if (!activeGroup) return <NoGroupState />;
 
   return (
     <Screen>

@@ -76,6 +76,8 @@
 
 > **Hito: acá el sistema ya sirve.** Se puede usar con los amigos aunque falte todo lo de abajo.
 
+> **Bug post-hito, reportado por el usuario probando la app real:** un usuario recién registrado, sin ningún grupo todavía, quedaba en "Cargando…" para siempre en Hoy, Tabla, Cargar y Detalle del día — el `loading` local nunca se apagaba porque el efecto que lo hace sólo corre si hay un grupo activo. Corregido en las 4 pantallas + extraído `<NoGroupState />` compartido. De paso se silenciaron los warnings de deprecación de Sass que imprime Bootstrap (`vite.config.ts`, inofensivos pero eran ruido en la consola).
+
 ## Fase 5 — Deploy (~4 h)
 
 - [ ] **T5.1** Deploy de la API en Render + variables de entorno + `/health`. §7

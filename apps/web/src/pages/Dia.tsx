@@ -4,6 +4,7 @@ import { formatTime, todayInArgentina, addDays, initialsOf, GAMES } from '@liga/
 import { apiFetch } from '../api/client';
 import { useSession } from '../hooks/useSession';
 import { useActiveGroupContext } from '../hooks/useActiveGroupContext';
+import { NoGroupState } from '../components/NoGroupState';
 
 interface DayCell { status: 'played' | 'dnf' | 'absent' | 'blackout'; seconds: number | null; verified: boolean }
 interface DayRow { userId: string; displayName: string; avatar: string | null; cells: Record<string, DayCell> }
@@ -30,14 +31,18 @@ export default function Dia() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!token || !activeGroup) return;
+    if (!token || !activeGroup) {
+      setLoading(false); // sin grupo, no hay nada que pedir — si no, esto queda "Cargando…" para siempre
+      return;
+    }
     setLoading(true);
     apiFetch<DayResponse>(`/groups/${activeGroup.id}/day?date=${puzzleDate}`, { accessToken: token })
       .then(setData)
       .finally(() => setLoading(false));
   }, [token, activeGroup, puzzleDate]);
 
-  if (loadingMe || !activeGroup) return <Screen><p style={{ color: '#6B6357' }}>Cargando…</p></Screen>;
+  if (loadingMe) return <Screen><p style={{ color: '#6B6357' }}>Cargando…</p></Screen>;
+  if (!activeGroup) return <NoGroupState />;
 
   return (
     <Screen>

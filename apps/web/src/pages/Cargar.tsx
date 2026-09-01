@@ -4,6 +4,7 @@ import { apiFetch, ApiClientError } from '../api/client';
 import { useSession } from '../hooks/useSession';
 import { useMe } from '../hooks/useMe';
 import { GameCard, Chip } from '../components/ui';
+import { NoGroupState } from '../components/NoGroupState';
 
 /**
  * Artboard 02 · "Cargar tiempos": el link primero, la carga a mano plegada abajo.
@@ -14,7 +15,7 @@ import { GameCard, Chip } from '../components/ui';
 export default function Cargar() {
   const { session } = useSession();
   const token = session?.access_token;
-  const { me } = useMe();
+  const { me, loading: loadingMe } = useMe();
   const groupIds = me?.groups.map((g) => g.id) ?? [];
 
   const [url, setUrl] = useState('');
@@ -83,6 +84,9 @@ export default function Cargar() {
     setImportError(null);
     setConfirmed(false);
   }
+
+  if (loadingMe) return <Screen><p style={{ color: '#6B6357' }}>Cargando…</p></Screen>;
+  if (groupIds.length === 0) return <NoGroupState />;
 
   if (confirmed && preview) {
     return (
