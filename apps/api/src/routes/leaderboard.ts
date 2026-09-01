@@ -104,6 +104,7 @@ async function runScoring(groupId: string, roster: Roster, gameIdBySlug: Map<str
     entries,
     blackouts,
     settings: { absencePolicy: settings.absence_policy ?? 'penalize', dropWorstN: settings.drop_worst_n ?? 0 },
+    today: todayInArgentina(),
   });
 }
 

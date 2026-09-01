@@ -23,6 +23,12 @@ function isBlackout(blackouts: Blackout[], puzzleDate: string, gameSlug: string)
 /**
  * Expande miembro × juego activo × día en celdas resueltas (RF-8). Pura: nada de
  * fechas implícitas, todo lo que necesita entra por parámetro.
+ *
+ * `today` decide si una ausencia se penaliza: sólo un día que **ya terminó**
+ * (`day < today`) puede penalizarse. El día en curso nunca genera una celda de
+ * ausencia, sin importar `absencePolicy` — no perdiste nada todavía si el día
+ * no cerró. Pedido explícito del usuario: "sólo sumá las penalizaciones si
+ * terminó el día y no lo hice".
  */
 export function buildGrid(params: {
   members: ScoringMember[];
@@ -31,8 +37,9 @@ export function buildGrid(params: {
   entries: ScoringEntry[];
   blackouts: Blackout[];
   absencePolicy: AbsencePolicy;
+  today: string;
 }): ResolvedCell[] {
-  const { members, games, days, entries, blackouts, absencePolicy } = params;
+  const { members, games, days, entries, blackouts, absencePolicy, today } = params;
 
   const byKey = new Map<string, ScoringEntry>();
   for (const e of entries) byKey.set(`${e.userId}|${e.gameSlug}|${e.puzzleDate}`, e);
@@ -55,7 +62,7 @@ export function buildGrid(params: {
             verified: entry.verified,
             source: 'entry',
           });
-        } else if (absencePolicy === 'penalize') {
+        } else if (absencePolicy === 'penalize' && day < today) {
           cells.push({
             userId: member.userId,
             gameSlug: game.slug,
@@ -66,7 +73,8 @@ export function buildGrid(params: {
             source: 'absence',
           });
         }
-        // absence_policy 'ignore' y sin entry: no hay celda, no aporta nada (RF-8).
+        // absence_policy 'ignore', o el día en curso (day >= today), o sin entry:
+        // no hay celda, no aporta nada todavía (RF-8).
       }
     }
   }

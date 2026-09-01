@@ -63,7 +63,7 @@
 
 ## Fase 4 — Scoring y ranking · **MVP jugable** (~10 h)
 
-- [x] **T4.1** `scoring/grid.ts`: expandir la grilla miembro × juego × día resolviendo DNF, ausencias y blackouts. [RF-8] §5.1 **Hecho**, 6 tests.
+- [x] **T4.1** `scoring/grid.ts`: expandir la grilla miembro × juego × día resolviendo DNF, ausencias y blackouts. [RF-8] §5.1 **Hecho**, 7 tests. **Corregido después**: el motor penalizaba el día en curso ni bien faltaba un juego, sin esperar a que el día terminara — no era lo que decía RF-8 ("al cerrar el día"). Ahora `buildGrid` recibe `today` y sólo penaliza `day < today`. Encontrado con un dato real del usuario (su propio "Total mes" se veía inflado por dos juegos del día que todavía no había cargado), verificado contra Supabase real: total sólo refleja lo cargado + días ya cerrados.
 - [x] **T4.2** `scoring/totalTime.ts`: suma, ganadores diarios, orden y desempates. [RF-11, RF-12, RF-15] **Hecho.** Encontré y corregí un bug propio antes de testear: `dailyWins` quedaba hardcodeado en 0 y nunca se completaba, lo que hubiera roto el primer criterio de desempate en silencio.
 - [x] **T4.3** `scoring/dropWorst.ts`: descartar los N peores días. [RF-13] **Hecho**, 3 tests.
 - [x] **T4.4** **Suite de tests del motor** — 21 tests, los 8 casos pedidos cubiertos uno por uno (incluido el desempate por DNF en aislado, que no estaba en la lista original pero hacía falta para probar los 4 criterios de RF-15 por separado). Encontró un bug real: `participated` decidía mal quién entra al ranking cuando `absence_policy: "penalize"` — alguien 100% inactivo quedaba excluido de la tabla en vez de rankeado último con un total enorme, que es la conducta correcta según RF-8.

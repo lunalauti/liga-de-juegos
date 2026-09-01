@@ -297,12 +297,13 @@ Módulo puro en `apps/api/src/scoring/`: recibe entries + settings, devuelve tab
 ### 5.1 Algoritmo (modo `total_time`)
 
 ```
-entrada: entries del grupo en [desde, hasta], settings, miembros, juegos activos, blackouts
+entrada: entries del grupo en [desde, hasta], settings, miembros, juegos activos, blackouts, hoy
 1. Expandir la grilla: para cada (miembro × juego activo × día no anulado) resolver un valor:
      - hay entry no-DNF  → duration_seconds
      - hay entry DNF     → penalty_seconds del grupo  (RF-7)
-     - no hay entry      → si absence_policy = "penalize" → penalty_seconds  (RF-8)
-                           si "ignore" → excluido de la suma, marcado incompleto
+     - no hay entry      → si el día YA TERMINÓ (día < hoy) y absence_policy = "penalize" → penalty_seconds  (RF-8)
+                           si no (día = hoy, todavía en curso) → excluido, sin importar absence_policy
+                           si absence_policy = "ignore" → excluido de la suma, marcado incompleto
 2. Si drop_worst_n > 0: por jugador, descartar los N días de mayor suma diaria (RF-13)
 3. total_seconds = suma de los valores restantes
 4. Calcular por día el ganador diario (menor suma del día, sólo días completos) → daily_wins (RF-12)
@@ -311,6 +312,8 @@ entrada: entries del grupo en [desde, hasta], settings, miembros, juegos activos
 ```
 
 **Nota:** el DNF se guarda con la penalización *vigente al momento de cargar*, pero el motor **recalcula** usando la penalización actual del grupo. Así, cambiar la penalización (RF-17) reordena la temporada en curso sin tocar filas.
+
+**Nota sobre "hoy" (RF-8, pedido explícito del usuario tras verlo con un dato real propio):** el día en curso nunca genera una celda de ausencia, sea cual sea `absence_policy`. Cargar sólo uno de los tres juegos del día no infla el total con la penalización de los otros dos hasta que el día efectivamente cierre (mañana). `buildGrid` recibe `today` explícito — nunca lo infiere — y compara `day < today` para decidir si un día "ya terminó". Verificado contra Supabase real: con un solo juego cargado hoy, `total_seconds` del período sólo incluye ese juego, no los otros dos sin cargar.
 
 ### 5.2 Modo `position_points`
 

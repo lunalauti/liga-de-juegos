@@ -15,6 +15,7 @@ export function scoreTotalTime(input: ScoringInput): { rows: LeaderboardRow[]; d
     entries: input.entries,
     blackouts: input.blackouts,
     absencePolicy: input.settings.absencePolicy,
+    today: input.today,
   });
 
   const dailyWinners = computeDailyWinners(grid, input.games.length);

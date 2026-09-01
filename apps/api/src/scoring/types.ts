@@ -43,6 +43,8 @@ export interface ScoringInput {
   entries: ScoringEntry[];
   blackouts: Blackout[];
   settings: ScoringSettings;
+  /** "Hoy" en ART. Sólo un día anterior a éste puede generar una celda de ausencia (§5.1). */
+  today: string;
 }
 
 export interface PerGameStats {

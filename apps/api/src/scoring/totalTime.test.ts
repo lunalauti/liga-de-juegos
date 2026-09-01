@@ -18,6 +18,7 @@ function baseInput(overrides: Partial<ScoringInput> = {}): ScoringInput {
     entries: [],
     blackouts: [],
     settings: { absencePolicy: 'penalize', dropWorstN: 0 },
+    today: '2026-09-01', // posterior a todos los `days` usados en estos tests: siempre "días ya terminados"
     ...overrides,
   };
 }
@@ -226,5 +227,39 @@ describe('scoreTotalTime · mes sin datos', () => {
     }
     // Empate exacto entre los dos → alfabético.
     expect(rows.map((r) => r.userId)).toEqual(['nacho', 'sofi']);
+  });
+});
+
+describe('scoreTotalTime · el día en curso no penaliza (pedido del usuario)', () => {
+  it('con juegos sin cargar HOY, no suma penalización — el día no terminó', () => {
+    const { rows } = scoreTotalTime(
+      baseInput({
+        days: ['2026-08-31', '2026-09-01'],
+        today: '2026-09-01', // "hoy" es el último día del rango: todavía en curso
+        members: [{ userId: 'sofi', displayName: 'Sofi', avatar: null }],
+        entries: [
+          // Sofi cargó ayer completo, y hoy sólo un juego (el otro queda pendiente, no penalizado).
+          { userId: 'sofi', gameSlug: 'crucigrama', puzzleDate: '2026-08-31', durationSeconds: 300, dnf: false, verified: true },
+          { userId: 'sofi', gameSlug: 'cruci-experto', puzzleDate: '2026-08-31', durationSeconds: 600, dnf: false, verified: true },
+          { userId: 'sofi', gameSlug: 'crucigrama', puzzleDate: '2026-09-01', durationSeconds: 350, dnf: false, verified: true },
+          // cruci-experto de hoy: no cargado — no debe penalizar.
+        ],
+      }),
+    );
+    expect(rows[0]!.totalSeconds).toBe(300 + 600 + 350); // sin la penalización de hoy
+    expect(rows[0]!.daysPlayed).toBe(2);
+  });
+
+  it('un día pasado sin cargar sí penaliza, aunque el día de hoy no', () => {
+    const { rows } = scoreTotalTime(
+      baseInput({
+        days: ['2026-08-31', '2026-09-01'],
+        today: '2026-09-01',
+        members: [{ userId: 'sofi', displayName: 'Sofi', avatar: null }],
+        entries: [], // no cargó nada, ni ayer (terminado) ni hoy (en curso)
+      }),
+    );
+    // Ayer: penaliza los 2 juegos (1200+2400). Hoy: no penaliza nada todavía.
+    expect(rows[0]!.totalSeconds).toBe(1200 + 2400);
   });
 });
