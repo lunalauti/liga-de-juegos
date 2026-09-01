@@ -150,25 +150,133 @@ function GroupDetail({ group, token, onChanged }: { group: MyGroup; token: strin
       {group.role === 'admin' && (
         <GroupSettingsPanel
           groupId={group.id}
+          groupName={group.name}
           token={token}
           onSaved={() => {
             onChanged();
             setReloadTick((n) => n + 1);
           }}
+          onDeleted={onChanged}
         />
       )}
     </>
   );
 }
 
-function GroupSettingsPanel({ groupId, token, onSaved }: { groupId: string; token: string | undefined; onSaved: () => void }) {
+function GroupSettingsPanel({
+  groupId,
+  groupName,
+  token,
+  onSaved,
+  onDeleted,
+}: {
+  groupId: string;
+  groupName: string;
+  token: string | undefined;
+  onSaved: () => void;
+  onDeleted: () => void;
+}) {
   const [open, setOpen] = useState(false);
   return (
     <div style={{ marginTop: 20 }}>
       <button type="button" className="btn btn-outline-dark" style={{ width: '100%' }} onClick={() => setOpen((v) => !v)}>
         {open ? 'Cerrar ajustes' : 'Ajustes del grupo (admin)'}
       </button>
-      {open && <GroupSettingsForm groupId={groupId} token={token} onSaved={onSaved} />}
+      {open && (
+        <>
+          <GroupSettingsForm groupId={groupId} token={token} onSaved={onSaved} />
+          <DeleteGroupSection groupId={groupId} groupName={groupName} token={token} onDeleted={onDeleted} />
+        </>
+      )}
+    </div>
+  );
+}
+
+function DeleteGroupSection({
+  groupId,
+  groupName,
+  token,
+  onDeleted,
+}: {
+  groupId: string;
+  groupName: string;
+  token: string | undefined;
+  onDeleted: () => void;
+}) {
+  const [confirming, setConfirming] = useState(false);
+  const [typedName, setTypedName] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function confirmDelete() {
+    if (!token) return;
+    setDeleting(true);
+    setError(null);
+    try {
+      await apiFetch(`/groups/${groupId}`, {
+        method: 'DELETE',
+        accessToken: token,
+        body: { confirmName: typedName },
+      });
+      onDeleted();
+    } catch (e) {
+      setError(e instanceof ApiClientError ? e.message : 'No pudimos borrar el grupo');
+      setDeleting(false);
+    }
+  }
+
+  return (
+    <div className="lj-card" style={{ padding: 14, marginTop: 14, border: '1.5px solid #A8352A' }}>
+      <p className="lj-label" style={{ color: '#A8352A', marginBottom: 6 }}>Zona de peligro</p>
+      {!confirming ? (
+        <button
+          type="button"
+          className="btn"
+          style={{ width: '100%', color: '#A8352A', borderColor: '#A8352A', borderWidth: 1.5, borderStyle: 'solid' }}
+          onClick={() => setConfirming(true)}
+        >
+          Borrar grupo
+        </button>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <p style={{ fontSize: 13, lineHeight: 1.6, color: '#4A4438', margin: 0 }}>
+            Esto borra el grupo para siempre: miembros, tiempos cargados, temporadas y ranking. No se puede deshacer.
+            Escribí <strong>{groupName}</strong> para confirmar.
+          </p>
+          <input
+            type="text"
+            className="form-control"
+            value={typedName}
+            onChange={(e) => setTypedName(e.target.value)}
+            placeholder={groupName}
+          />
+          {error && <p role="alert" style={{ fontSize: 13, color: '#A8352A', margin: 0 }}>{error}</p>}
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button
+              type="button"
+              className="btn btn-outline-dark"
+              style={{ flex: 1 }}
+              onClick={() => {
+                setConfirming(false);
+                setTypedName('');
+                setError(null);
+              }}
+              disabled={deleting}
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              className="btn"
+              style={{ flex: 1, background: '#A8352A', color: '#fff', borderColor: '#A8352A' }}
+              onClick={() => void confirmDelete()}
+              disabled={deleting || typedName !== groupName}
+            >
+              {deleting ? 'Borrando…' : 'Borrar para siempre'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

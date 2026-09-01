@@ -243,6 +243,37 @@ groupsRouter.post('/groups/:id/regenerate-code', async (req, res, next) => {
 });
 
 // ---------------------------------------------------------------------------
+// RF-5 — borrar el grupo. Sólo el admin; irreversible, se lleva puestos
+// miembros, resultados, temporadas y blackout dates (cascade en la DB, ver
+// supabase/migrations/0001_init.sql). El log de auditoría (entry_audit)
+// sobrevive con entry_id en null (0006_audit_survives_delete.sql).
+// Pide el nombre del grupo en el body como resguardo extra contra un click
+// accidental — no alcanza con estar autenticado como admin.
+// ---------------------------------------------------------------------------
+const deleteGroupSchema = z.object({ confirmName: z.string() });
+
+groupsRouter.delete('/groups/:id', async (req, res, next) => {
+  try {
+    const groupId = req.params['id']!;
+    await requireAdmin(groupId, req.user!.id);
+
+    const groupRes = await db.query(`select name from public.groups where id = $1`, [groupId]);
+    if (groupRes.rows.length === 0) throw notFound('Ese grupo no existe');
+
+    const { confirmName } = deleteGroupSchema.parse(req.body);
+    if (confirmName !== groupRes.rows[0].name) {
+      throw badRequest('NAME_MISMATCH', 'El nombre no coincide. Escribilo igual que en el grupo.');
+    }
+
+    await db.query(`delete from public.groups where id = $1`, [groupId]);
+    invalidateGroupCache(groupId);
+    res.status(204).end();
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ---------------------------------------------------------------------------
 // RF-5 — remover miembro, con el resguardo de no dejar el grupo sin admin
 // ---------------------------------------------------------------------------
 groupsRouter.delete('/groups/:id/members/:userId', async (req, res, next) => {
