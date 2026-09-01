@@ -412,7 +412,7 @@ Ninguno agrega consultas nuevas: todos se derivan de la grilla que el motor de p
 
 | Pieza | Dónde | Notas |
 |---|---|---|
-| Web | Vercel | `vercel.json` en la raíz define build/output para el monorepo. Preview por PR (automático de Vercel) |
+| Web | Vercel | `vercel.json` en la raíz define build/output para el monorepo. Preview por PR (automático de Vercel). Mismo problema que la API: Vercel instala con `NODE_ENV=production`, así que `vite`, `@vitejs/plugin-react`, `sass` y `bootstrap` viven en `dependencies` de `apps/web`, no `devDependencies` — son "de desarrollo" en el sentido de que no corren en el navegador del usuario final, pero el build en sí los necesita instalados. Encontrado con un deploy real fallando (`sh: vite: command not found`, exit 127), reproducido localmente antes de corregirlo. |
 | API | Render Web Service (free) | `render.yaml` (Blueprint). Corre `tsx` directo, sin paso de build — por eso `tsx` vive en `dependencies`, no `devDependencies`: Render instala con `NODE_ENV=production`, que saltea devDependencies. **El plan free duerme a los 15 min**: cold start de ~30s en el primer request tras estar dormido (T5.5, sin implementar todavía) |
 | DB + Auth | Supabase (free) | Migraciones aplicadas por `apps/api/scripts/migrate.mjs`, corrido por CI en cada push a `main` (job `migrate` en `.github/workflows/ci.yml`) |
 | Cron de cierre de temporadas | — | **No implementado.** RF-16 (cerrar temporada y congelar `final_standings`) es Fase 7; hoy no existe ningún job programado |
