@@ -2,7 +2,7 @@
 
 Registro y competencia de los juegos diarios de La Nación (Crucigrama, Cruci Experto, Sudoku Avanzado) entre amigos.
 
-**Estado:** Fases 0 y 1 (datos + auth) en marcha. Monorepo en pie, sistema de diseño verificado contra el canvas, y el esquema de base de datos ya está migrado a Supabase con RLS activa. Sigue T1.5–T1.7 (middleware de auth y pantallas de login/perfil) en `specs/03-tasks.md`.
+**Estado:** Fase 1 completa. Monorepo, sistema de diseño verificado contra el canvas, base de datos migrada con RLS activa, y autenticación funcionando de punta a punta contra Supabase real (login, sesión persistente, perfil). Sigue la Fase 2 (grupos) en `specs/03-tasks.md`.
 
 ## Setup
 

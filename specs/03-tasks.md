@@ -22,9 +22,9 @@
 - [x] **T1.2** Seed de `games` con los 3 juegos y sus penalizaciones (1200 / 2400 / 2700 s). [RF-7] **Hecho y aplicado** en `0003_seed_games.sql`. `sudoku-avanzado → sudoku/hard` sigue sin confirmar con un link real (T3.11).
 - [x] **T1.3** Trigger `on auth.users insert` → crea `profiles` con display_name del metadata. [RF-1] **Hecho y aplicado** (`handle_new_user` en `0001_init.sql`; usa el email si no viene `display_name`).
 - [x] **T1.4** Migración `0002_rls.sql`: funciones `is_member()` / `is_admin()` security definer + políticas de todas las tablas. [RNF-4] §3.4 **Hecho, aplicada y verificada**: con la anon key sin sesión, las tablas privadas devuelven vacío y `games` es legible.
-- [ ] **T1.5** API: middleware `requireAuth` que valida el JWT de Supabase e inyecta `req.user`. §1
-- [ ] **T1.6** Web: cliente Supabase, pantalla `/login` (email+pass, Google, registro), `useSession`, rutas protegidas. [RF-1]
-- [ ] **T1.7** API `GET /me` + `PATCH /me`; web: pantalla de perfil. [RF-2]
+- [x] **T1.5** API: middleware `requireAuth` que valida el JWT de Supabase e inyecta `req.user`. §1 **Hecho y verificado contra Supabase real.** El proyecto usa las *signing keys* asimétricas (ES256): la validación es contra el JWKS (`/auth/v1/.well-known/jwks.json`), no `SUPABASE_JWT_SECRET` — corregido §1 para reflejarlo.
+- [x] **T1.6** Web: cliente Supabase, pantalla `/login` (email+pass, Google, registro), `useSession`, rutas protegidas. [RF-1] **Hecho.** Sin artboard propio (no está entre los 7 del canvas) — construida con los tokens del sistema. Verificado con un usuario real: login, sesión persistente, logout, redirect de rutas protegidas.
+- [x] **T1.7** API `GET /me` + `PATCH /me`; web: pantalla de perfil. [RF-2] **Hecho y verificado**: PATCH confirmado con una lectura directa a la base, no sólo por lo que muestra la UI.
 
 ## Fase 2 — Grupos (~6 h)
 

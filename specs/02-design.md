@@ -31,7 +31,7 @@
 
 1. El front usa `@supabase/supabase-js` para login/registro. Supabase devuelve un JWT.
 2. El front manda ese JWT en `Authorization: Bearer` a la API.
-3. La API valida la firma contra el JWKS de Supabase (`SUPABASE_JWT_SECRET`) y extrae `sub` = `user_id`.
+3. La API valida la firma contra el **JWKS público de Supabase** (`GET {SUPABASE_URL}/auth/v1/.well-known/jwks.json`, cacheado por `jose`) y extrae `sub` = `user_id`. Este proyecto usa las *signing keys* asimétricas (ES256) — no hay secreto compartido que guardar; `SUPABASE_JWT_SECRET` sólo aplica a proyectos con el esquema HS256 legacy.
 4. La API consulta Postgres con la **service role key** (bypassa RLS) y aplica la autorización ella misma. RLS queda activa igual, como red de seguridad si alguien alguna vez pega desde el cliente (RNF-4).
 
 ---

@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
+import { requireAuth } from './middleware/auth.js';
+import { meRouter } from './routes/me.js';
 
 export function createApp() {
   const app = express();
@@ -14,6 +16,8 @@ export function createApp() {
   app.get('/health', (_req, res) => {
     res.json({ ok: true, service: 'liga-de-juegos-api', now: new Date().toISOString() });
   });
+
+  app.use('/api/v1', requireAuth, meRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);
