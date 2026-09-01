@@ -80,10 +80,11 @@ Formato: `RF-x` con criterios de aceptación en formato EARS (*Cuando/Si… el s
 - Un jugador deberá poder pertenecer a varios grupos y cambiar entre ellos.
 
 **RF-5 — Administrar grupo**
-- El admin deberá poder: renombrar el grupo, regenerar el código, remover miembros, archivar el grupo.
+- El admin deberá poder: renombrar el grupo, regenerar el código, remover miembros, archivar el grupo, **borrar el grupo definitivamente**.
 - El admin deberá poder elegir qué juegos están activos en el grupo (subconjunto de los disponibles).
 - El admin deberá poder configurar las reglas de puntuación del grupo (§5.5).
 - El sistema deberá impedir que un admin se remueva a sí mismo si es el único admin.
+- Borrar un grupo es irreversible y sólo lo puede hacer el admin: se pierden miembros, resultados cargados, temporadas y ranking. El sistema deberá pedir una confirmación explícita (escribir el nombre del grupo) antes de ejecutarlo, además de la verificación de rol.
 
 ### 5.3 Carga de resultados
 
