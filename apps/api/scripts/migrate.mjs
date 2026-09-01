@@ -12,7 +12,7 @@ const migrationsDir = join(here, '..', '..', '..', 'supabase', 'migrations');
 
 const url = process.env.DATABASE_URL;
 if (!url) {
-  console.error('Falta DATABASE_URL en .env');
+  console.error('Falta DATABASE_URL — cargala en .env (local) o como secreto en GitHub Actions (CI)');
   process.exit(1);
 }
 
