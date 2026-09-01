@@ -8,7 +8,7 @@
 ## Fase 0 — Fundaciones (~5 h)
 
 - [x] **T0.1** Monorepo: npm workspaces con `apps/api`, `apps/web`, `packages/shared`. TypeScript strict, ESLint, Prettier, `.gitignore`, `.env.example`. §2 **Hecho.**
-- [ ] **T0.2** Proyecto Supabase creado; `DATABASE_URL` y llaves en `.env` local; Supabase CLI linkeado. §7 — **bloqueada: necesita tu cuenta de Supabase.**
+- [x] **T0.2** Proyecto Supabase creado; `DATABASE_URL` y llaves en `.env` local. §7 **Hecho** — proyecto `tgeciaudbisaozrjvfre`. (Aplicado por `apps/api/scripts/migrate.mjs`, no por el CLI de Supabase — más simple para no depender de login.)
 - [x] **T0.3** `packages/shared`: tipos de dominio + `parseTime()` / `formatTime()` con tests (`7:45`, `745`, `1:07:45`, inválidos). §6.2 **Hecho.**
 - [x] **T0.4** API esqueleto: Express + TS, `GET /health`, middleware de errores con el formato único, CORS, helmet. §4 **Hecho.**
 - [x] **T0.5** Web esqueleto: Vite + React + TS + React Router, Bootstrap importado vía SCSS con `_variables.scss` propio. §6 **Hecho.**
@@ -18,10 +18,10 @@
 
 ## Fase 1 — Datos y auth (~7 h)
 
-- [ ] **T1.1** Migración `0001_init.sql`: `profiles`, `games`, `groups`, `group_members`, `group_games`, `entries`, `entry_audit`, `seasons`, `blackout_dates` + índices. §3
-- [ ] **T1.2** Seed de `games` con los 3 juegos y sus penalizaciones (1200 / 2400 / 2700 s). [RF-7]
-- [ ] **T1.3** Trigger `on auth.users insert` → crea `profiles` con display_name del metadata. [RF-1]
-- [ ] **T1.4** Migración `0002_rls.sql`: función `is_member()` security definer + políticas de todas las tablas. [RNF-4] §3.4
+- [x] **T1.1** Migración `0001_init.sql`: `profiles`, `games`, `groups`, `group_members`, `group_games`, `entries`, `entry_audit`, `seasons`, `blackout_dates` + índices. §3 **Hecho y aplicada.** Incluye también `imported_results` (§9.4).
+- [x] **T1.2** Seed de `games` con los 3 juegos y sus penalizaciones (1200 / 2400 / 2700 s). [RF-7] **Hecho y aplicado** en `0003_seed_games.sql`. `sudoku-avanzado → sudoku/hard` sigue sin confirmar con un link real (T3.11).
+- [x] **T1.3** Trigger `on auth.users insert` → crea `profiles` con display_name del metadata. [RF-1] **Hecho y aplicado** (`handle_new_user` en `0001_init.sql`; usa el email si no viene `display_name`).
+- [x] **T1.4** Migración `0002_rls.sql`: funciones `is_member()` / `is_admin()` security definer + políticas de todas las tablas. [RNF-4] §3.4 **Hecho, aplicada y verificada**: con la anon key sin sesión, las tablas privadas devuelven vacío y `games` es legible.
 - [ ] **T1.5** API: middleware `requireAuth` que valida el JWT de Supabase e inyecta `req.user`. §1
 - [ ] **T1.6** Web: cliente Supabase, pantalla `/login` (email+pass, Google, registro), `useSession`, rutas protegidas. [RF-1]
 - [ ] **T1.7** API `GET /me` + `PATCH /me`; web: pantalla de perfil. [RF-2]

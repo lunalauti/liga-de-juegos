@@ -2,7 +2,7 @@
 
 Registro y competencia de los juegos diarios de La Nación (Crucigrama, Cruci Experto, Sudoku Avanzado) entre amigos.
 
-**Estado:** Fase 0 terminada. Monorepo en pie, utilidades compartidas con tests, API con `/health`, y el sistema de diseño implementado y verificado contra el canvas. Sigue la Fase 1 en `specs/03-tasks.md`.
+**Estado:** Fases 0 y 1 (datos + auth) en marcha. Monorepo en pie, sistema de diseño verificado contra el canvas, y el esquema de base de datos ya está migrado a Supabase con RLS activa. Sigue T1.5–T1.7 (middleware de auth y pantallas de login/perfil) en `specs/03-tasks.md`.
 
 ## Setup
 
@@ -14,7 +14,11 @@ npm run dev:web   # http://localhost:5173 — ver /kitchen-sink
 npm run dev:api   # http://localhost:3001/health
 ```
 
-Copiá `.env.example` a `.env` y completá las llaves de Supabase (T0.2).
+Copiá `.env.example` a `.env` y completá las llaves de Supabase (Project Settings → API y → Database).
+
+```bash
+node apps/api/scripts/migrate.mjs   # aplica supabase/migrations/*.sql, idempotente
+```
 
 ## Cómo funciona la competencia
 
