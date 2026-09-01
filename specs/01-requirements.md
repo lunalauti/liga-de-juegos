@@ -21,7 +21,7 @@ Un grupo de amigos resuelve todos los días los juegos del diario La Nación y s
 
 - Registro / login de usuarios.
 - Creación de grupos y unión por código de invitación.
-- Carga manual del tiempo diario por juego (Crucigrama, Cruci Experto, Sudoku Avanzado).
+- **Carga del resultado pegando el link de "compartir" de La Nación** (importa tiempo, fecha, juego y si lo terminó), con carga manual como alternativa.
 - Marcado de "no completado" con penalización automática.
 - Ranking semanal y mensual por grupo, general y por juego.
 - Historial y estadísticas personales.
@@ -29,7 +29,8 @@ Un grupo de amigos resuelve todos los días los juegos del diario La Nación y s
 
 ### Fuera del alcance (v1)
 
-- Scraping / integración automática con La Nación (los tiempos se cargan a mano). *La Nación no expone una API pública y el sitio es de suscripción: automatizar la captura implicaría credenciales de terceros y romper sus términos. Se descarta explícitamente.*
+- Sincronización automática sin intervención del jugador. La API de resultados de La Nación (ver `02-design.md` §9) sólo permite leer un resultado **puntual** a partir del id que se genera al tocar "compartir": no hay endpoint de listado ni forma de descubrir los ids. El jugador tiene que pegar el link, igual que hoy lo pega en el chat.
+- Login con la cuenta de La Nación para leer resultados directamente (requeriría credenciales de terceros y el ranking oficial está detrás de su SSO).
 - App nativa iOS/Android (la web responsive alcanza; se puede instalar como PWA más adelante).
 - Chat interno, comentarios, reacciones.
 - Verificación anti-trampa por screenshot/OCR (ver §8, decisión D3).
@@ -86,7 +87,17 @@ Formato: `RF-x` con criterios de aceptación en formato EARS (*Cuando/Si… el s
 
 ### 5.3 Carga de resultados
 
-**RF-6 — Cargar tiempo diario**
+**RF-6 — Importar resultado desde el link de La Nación** *(camino principal)*
+- Cuando un jugador pega un link de resultado compartido de La Nación, el sistema deberá consultar la API de La Nación y precargar automáticamente: juego, nivel, fecha del puzzle, tiempo en segundos y si lo completó o no.
+- El sistema deberá aceptar tanto la URL completa (`https://lanacion.agilmenteapp.com/shared/<id>`) como el id pelado.
+- Si el resultado indica `FAIL`, el sistema deberá registrarlo como DNF (RF-7).
+- Si el juego o nivel importado no está activo en el grupo, el sistema deberá avisarlo y no guardar nada.
+- Si el mismo link ya fue importado —por quien sea— el sistema deberá rechazarlo indicando quién lo cargó. Un resultado, una carga.
+- El sistema deberá guardar el identificador de usuario de La Nación que viene en el resultado y asociarlo al perfil la primera vez. Si después llega un link con otro identificador, el sistema deberá marcar el resultado como *no verificado* y avisar al grupo.
+- Si la API de La Nación no responde o el link es inválido, el sistema deberá ofrecer la carga manual sin perder lo tipeado.
+- El resultado importado deberá quedar marcado como **verificado** y mostrarse distinto de uno cargado a mano.
+
+**RF-6b — Cargar tiempo manualmente** *(alternativa)*
 - Cuando un jugador carga un tiempo para un juego y una fecha, el sistema deberá guardarlo y recalcular los rankings afectados.
 - El sistema deberá aceptar el tiempo en formato `mm:ss` y también `hh:mm:ss`, y almacenarlo en segundos.
 - El sistema deberá validar que el tiempo esté entre 1 segundo y el tiempo de penalización de ese juego (un tiempo peor que la penalización se carga como DNF, no aporta nada peor).
@@ -194,7 +205,9 @@ El MVP está listo cuando, con el sistema desplegado:
 |---|---|---|---|
 | D1 | ¿La competencia es semanal, mensual o las dos? | **Ambas**, con la mensual como principal | Bajo: es config de grupo |
 | D2 | ¿Se compite en la suma de los 3 o también en cada juego por separado? | **Ambas cosas**: ranking general + un ranking por juego | Bajo |
-| D3 | ¿Hace falta verificar los tiempos (screenshot)? | **No**. Confianza + log de ediciones visible | Medio: agregar upload de imagen es una feature aparte |
+| D3 | ¿Hace falta verificar los tiempos? | **Resuelto**: el link de La Nación es el comprobante. Lo importado queda marcado como verificado; lo manual, no | — |
+| D7 | ¿Se permite cargar a mano, sabiendo que el link es verificable? | **Sí**, pero marcado como no verificado. El grupo puede exigir link (setting `require_verified`) | Bajo |
+| D8 | ¿Qué pasa si La Nación cambia o corta la API? | La carga manual sigue funcionando; la app degrada, no se rompe | Medio |
 | D4 | ¿Los grupos son privados o hay ranking global? | **Sólo privados** en v1 | Medio |
 | D5 | ¿Se pueden agregar otros juegos del diario? | Sí, el catálogo de juegos es data, no código | Bajo |
 | D6 | ¿Qué pasa si La Nación no publica un juego un día? | El admin puede marcar un día como anulado para el grupo | Bajo |

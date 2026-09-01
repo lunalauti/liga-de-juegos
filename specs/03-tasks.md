@@ -1,7 +1,7 @@
 # Liga de Juegos — Plan de tareas
 
 > Fase 3 de 3. Cada task es un commit/PR chico, verificable por separado. `[RF-x]` = requerimiento que cubre, `§y` = sección del diseño.
-> Estimación total: **~40–50 h** de trabajo efectivo. El camino más corto a algo usable es la Fase 4 (MVP jugable).
+> Estimación total: **~46–56 h** de trabajo efectivo. El camino más corto a algo usable es la Fase 4 (MVP jugable).
 
 ---
 
@@ -42,7 +42,19 @@
 - [ ] **T3.5** API `DELETE /entries/:id` con la misma ventana. [RF-9]
 - [ ] **T3.6** `entry_audit`: escribir el log en create/update/delete. [RF-9]
 - [ ] **T3.7** Web `/cargar`: los 3 juegos en una pantalla, input de tiempo tolerante, toggle DNF, selector de fecha con default hoy, optimistic update. [RF-6, RF-7, RNF-2] §6.2
-- [ ] **T3.8** Tests de integración del endpoint de entries (happy path, DNF, fuera de ventana, fecha futura, tiempo inválido).
+- [ ] **T3.8** Tests de integración del endpoint de entries manual (happy path, DNF, fuera de ventana, fecha futura, tiempo inválido).
+
+## Fase 3.5 — Integración con La Nación (~6 h)
+
+- [ ] **T3.9** `services/lanacion.ts`: extraer uuid de una URL o texto pegado, `GET games/shared/<id>`, parsear con Zod, timeout 8 s + 1 reintento, cache 24 h. [RF-6] §9.1
+- [ ] **T3.10** Migración: columnas `source`, `verified`, `external_id`, `external_user_id`, `external_payload` en `entries`; tabla `imported_results`; `profiles.lanacion_user_ids`; `games.ln_game` / `games.ln_level`. §9.4
+- [ ] **T3.11** Seed del mapeo juego↔nivel. **Confirmar el nivel real del Sudoku Avanzado importando un link de verdad** (se asume `sudoku/hard`). §9.2
+- [ ] **T3.12** API `POST /entries/import`: validaciones de §9.4 (customer, juego activo, link ya usado → 409, fecha en ventana), `result: FAIL` → DNF, escritura en varios grupos a la vez. [RF-6, RF-7]
+- [ ] **T3.13** Binding de identidad: primer link asocia el `lanacion_user_id`; los siguientes marcan `verified` true/false. [RF-6] §9.4
+- [ ] **T3.14** Web: campo de pegar link arriba de todo en `/cargar`, con preview del resultado detectado (juego, fecha, tiempo) antes de confirmar, y errores accionables ("ese link ya lo cargó Fulano").
+- [ ] **T3.15** Chip "verificado" vs "cargado a mano" en ranking y detalle de día. [RF-6]
+- [ ] **T3.16** Setting `require_verified` del grupo. [D7]
+- [ ] **T3.17** Test de contrato contra un uuid real, corriendo en CI a diario: avisa si La Nación cambia el formato. §9.6
 
 ## Fase 4 — Scoring y ranking · **MVP jugable** (~10 h)
 

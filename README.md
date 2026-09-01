@@ -6,7 +6,7 @@ Registro y competencia de los juegos diarios de La Nación (Crucigrama, Cruci Ex
 
 ## Cómo funciona la competencia
 
-- Cada uno carga su tiempo diario en cada juego.
+- Cada uno pega el **link de "compartir" de La Nación** al terminar y el sistema importa juego, fecha, tiempo y si lo completó. También se puede cargar a mano, pero queda marcado como no verificado.
 - Si no lo terminaste, se te suma la penalización: **Crucigrama 20:00 · Cruci Experto 40:00 · Sudoku Avanzado 45:00**.
 - Gana la temporada (semanal o mensual) quien tenga **menor tiempo total acumulado**.
 - Desempate: más victorias diarias → menos abandonos → mejor tiempo individual.
@@ -20,6 +20,16 @@ Registro y competencia de los juegos diarios de La Nación (Crucigrama, Cruci Ex
 | 2 | [Diseño](specs/02-design.md) | Arquitectura, modelo de datos, API, motor de puntuación, deploy |
 | 3 | [Tareas](specs/03-tasks.md) | Plan de implementación en 10 fases |
 | 4 | [Prompt de UI](specs/04-ui-design-prompt.md) | Prompt listo para pegar en Claude Design |
+
+La integración con la API de La Nación está documentada en [02-design.md §9](specs/02-design.md#9-integración-con-la-nación-agilmente).
+
+## Herramientas
+
+```bash
+node tools/ln-shared.mjs <link-de-resultado-compartido>
+```
+
+Consulta la API de La Nación y devuelve el resultado ya normalizado. Sirve para confirmar el mapeo de juegos y niveles antes de escribir el importador.
 
 ## Stack
 

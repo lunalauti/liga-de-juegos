@@ -93,6 +93,7 @@ Todos los `id` son `uuid` con `default gen_random_uuid()`. Todos los timestamps 
 | `id` | uuid PK | = `auth.users.id` |
 | `display_name` | text NOT NULL | 2–30 chars |
 | `avatar` | text | emoji o URL |
+| `lanacion_user_ids` | text[] default '{}' | ids de La Nación asociados a este perfil (§9.4) |
 | `created_at` | timestamptz | |
 
 **`games`** — catálogo de juegos (RF-17, D5). Es data, no enum: agregar un juego nuevo no requiere deploy.
@@ -102,6 +103,8 @@ Todos los `id` son `uuid` con `default gen_random_uuid()`. Todos los timestamps 
 | `id` | uuid PK | |
 | `slug` | text UNIQUE | `crucigrama`, `cruci-experto`, `sudoku-avanzado` |
 | `name` | text | "Crucigrama" |
+| `ln_game` | text | `crossword` / `sudoku` — para matchear lo que importa el link (§9.2) |
+| `ln_level` | text | `daily` / `expert` / `hard` |
 | `default_penalty_seconds` | int | 1200 / 2400 / 2700 |
 | `sort_order` | int | orden de aparición en la UI |
 | `active` | bool | |
@@ -146,6 +149,11 @@ Todos los `id` son `uuid` con `default gen_random_uuid()`. Todos los timestamps 
 | `puzzle_date` | date NOT NULL | fecha del diario, no de carga |
 | `duration_seconds` | int NOT NULL | si `dnf`, = penalización vigente al momento de cargar |
 | `dnf` | bool NOT NULL default false | |
+| `source` | text NOT NULL | `lanacion_link` \| `manual` |
+| `verified` | bool NOT NULL default false | true sólo si vino de un link importado y el `external_user_id` coincide con el perfil |
+| `external_id` | uuid NULL UNIQUE | id del resultado compartido de La Nación. UNIQUE global = un link no se puede usar dos veces |
+| `external_user_id` | text NULL | id del jugador en La Nación (ej. `lanacion-1805577755`) |
+| `external_payload` | jsonb NULL | respuesta cruda, por si mañana queremos más campos |
 | `created_at` / `updated_at` | timestamptz | |
 
 `UNIQUE (group_id, user_id, game_id, puzzle_date)` — un resultado por jugador/juego/día/grupo. Un upsert sobre esa clave resuelve la edición (RF-9).
@@ -239,7 +247,8 @@ Códigos: `400` validación, `401` sin token, `403` sin permiso, `404`, `409` co
 | `DELETE` | `/groups/:id/members/:userId` | Remover miembro (admin) | RF-5 |
 | `POST` | `/groups/join` | Unirse con `{ code }` | RF-4 |
 | `GET` | `/groups/:id/day?date=` | Grilla jugador × juego de un día | RF-12, RF-20 |
-| `POST` | `/entries` | Upsert de un resultado | RF-6, RF-7, RF-9 |
+| `POST` | `/entries/import` | Importar desde un link de La Nación `{ group_ids, url }` | RF-6 |
+| `POST` | `/entries` | Upsert manual de un resultado | RF-6b, RF-7, RF-9 |
 | `POST` | `/entries/bulk` | Upsert de varios juegos y/o grupos de una | RF-6, RNF-2 |
 | `DELETE` | `/entries/:id` | Borrar dentro de ventana | RF-9 |
 | `GET` | `/groups/:id/entries?from=&to=&userId=` | Historial crudo | RF-19 |
@@ -373,3 +382,104 @@ Regla única: **la fecha del puzzle es un `date`, no un instante.** El servidor 
 | Cambio de reglas a mitad de mes | Sólo recalcula temporadas `open`; las cerradas quedan congeladas |
 | Zona horaria / horario de verano | Argentina no aplica DST; igual, toda fecha pasa por el mismo helper |
 | El grupo abandona a las 2 semanas | El MVP es chico a propósito: si funciona, se le agrega; si no, no se perdió un mes |
+
+
+---
+
+## 9. Integración con La Nación (Agilmente)
+
+Los juegos de La Nación corren sobre la plataforma **Agilmente** (`lanacion.agilmenteapp.com`, API en `lanacion-api.agilmenteapp.com/api/`). Al terminar un juego, el front hace `POST games/end` y arma un link para compartir: `https://lanacion.agilmenteapp.com/shared/<uuid>`. Ese link es exactamente el que hoy se pega en el chat del grupo.
+
+### 9.1 El único endpoint que sirve
+
+```
+GET https://lanacion-api.agilmenteapp.com/api/games/shared/<uuid>
+```
+
+Sin autenticación, `Access-Control-Allow-Origin: *`. Respuesta real:
+
+```json
+{
+  "id": "d11707e8-7916-4699-913c-becac7f971a4",
+  "date": "2026-08-31",
+  "start": "23:00:31", "end": "23:30:54",
+  "game": "crossword", "level": "expert",
+  "points": 200, "seconds": 1818, "formated_time": "30:18", "best_time": "30:18",
+  "result": "SUCCESS",
+  "name": null, "user_id": "lanacion-1805577755",
+  "ranking": 1, "customer": "lanacion",
+  "html_header": "…", "html_details": "…",
+  "created_at": "2026-09-01T02:00:31.000Z"
+}
+```
+
+Trae todo lo que necesitamos: **fecha del puzzle** (`date`, ya en día local — no hay que resolver zona horaria), **juego y nivel**, **segundos exactos**, **si lo completó** (`result`: `SUCCESS` | `FAIL`) e **identidad del jugador** (`user_id`).
+
+### 9.2 Mapeo de juegos
+
+| Nuestro `slug` | `ln_game` | `ln_level` | Penalización |
+|---|---|---|---|
+| `crucigrama` | `crossword` | `daily` | 1200 s |
+| `cruci-experto` | `crossword` | `expert` | 2400 s |
+| `sudoku-avanzado` | `sudoku` | `hard` *(a confirmar con un link real; los niveles de sudoku son `easy`/`normal`/`hard`)* | 2700 s |
+
+Los otros niveles de crossword existen (`express`, `mini`, `thematic`, `crossedwords`) y se pueden habilitar como juegos nuevos sin tocar código: es una fila más en `games` (D5).
+
+### 9.3 Por qué no hay sincronización automática
+
+Se probaron los caminos posibles y ninguno sirve:
+
+| Intento | Resultado |
+|---|---|
+| `GET /api/games/shared` (listar) | 404 |
+| `GET /api/games/user/<user_id>` | 404 |
+| `GET /api/games/shared?user_id=…` | 404 |
+| `GET /api/games/ranking/<game>/<level>/<period>` | 502 sin sesión — existe, pero requiere el token de La Nación |
+| `GET /api/games/stats/<game>/<level>` | 502 sin sesión |
+| `GET /api/games/<game>/<level>` | `{"error":"NO-USER"}` |
+
+**Conclusión:** el uuid es un token por resultado que se crea recién cuando el jugador termina y comparte. No es enumerable ni derivable del `user_id`. La única fuente posible es el propio jugador pegando su link. (Adivinar uuids v4 por fuerza bruta no es una opción: 2^122 combinaciones, y además sería abusar de un servicio ajeno.)
+
+El ranking oficial de La Nación sí existe (`games/ranking/...`), pero está detrás de su SSO (`ingresar.lanacion.com.ar`) y pediría las credenciales del diario de cada amigo. Descartado.
+
+### 9.4 Flujo de importación
+
+```
+1. El jugador pega el link (o sólo el uuid) en /cargar.
+2. La API extrae el uuid con /([0-9a-f-]{36})/ y llama al endpoint de La Nación
+   (timeout 8 s, 1 reintento, cache de 24 h por uuid — el resultado es inmutable).
+3. Valida:
+   - ¿customer == "lanacion"?                      → si no, rechaza
+   - ¿(game, level) mapea a un juego activo?       → si no, "ese juego no está en tu grupo"
+   - ¿external_id ya existe?                       → 409 "ese link ya lo cargó Fulano"
+   - ¿date dentro de la ventana de carga (7 días)? → si no, rechaza
+4. Identidad:
+   - Si el perfil no tiene ningún lanacion_user_id → lo asocia (primer link = binding).
+   - Si coincide con uno asociado                  → verified = true.
+   - Si no coincide                                → guarda con verified = false y avisa.
+5. Escribe el entry con source = "lanacion_link",
+   duration_seconds = seconds,
+   dnf = (result == "FAIL")  → y en el scoring pesa la penalización del grupo, no `seconds`.
+6. Invalida el cache del leaderboard de los grupos afectados.
+```
+
+Un mismo link se puede importar a **todos los grupos del jugador de una sola vez** (`group_ids`), porque la restricción de unicidad de `external_id` es global: se resuelve guardando el entry en cada grupo y el uuid en una tabla aparte.
+
+> **Ajuste al modelo:** `entries.external_id UNIQUE` impide cargar el mismo link en dos grupos. Se reemplaza por una tabla `imported_results (external_id uuid PK, user_id, payload jsonb, imported_at)`, y `entries.external_id` pasa a ser FK no única. La unicidad real que importa es "un link, un jugador", no "un link, una fila".
+
+### 9.5 Lo que esto cambia en el producto
+
+- **Los tiempos pasan a ser verificables.** Se acabó la discusión sobre si alguien redondeó para abajo. El chip "verificado" en la tabla hace el trabajo social solo.
+- **La carga es un pegar, no un tipear.** El link ya lo tienen en el portapapeles cuando terminan de jugar.
+- **La fecha del puzzle viene del origen**, así que no hay que confiar en el reloj del celular ni pelear con la zona horaria en el caso importado.
+- El grupo puede exigir link para que el resultado cuente (`settings.require_verified`, D7).
+
+### 9.6 Riesgos de depender de un servicio ajeno
+
+| Riesgo | Mitigación |
+|---|---|
+| Cambian la ruta o el formato del JSON | Un solo módulo (`services/lanacion.ts`) con parser Zod; si falla, error claro y fallback a carga manual. Un test de contrato contra un uuid real avisa cuando cambie |
+| Bloquean el acceso por User-Agent u origen | Se llama desde el backend con headers de browser; si bloquean, el front puede llamar directo (el endpoint tiene CORS `*`) |
+| Borran resultados viejos | Se guarda `external_payload` completo al importar: si el link muere, el dato ya es nuestro |
+| Uso abusivo | Una llamada por link importado, cacheada 24 h. Rate limit propio de 30 importaciones/hora por usuario. Es un volumen despreciable para ellos |
+| Alguien pega el link de otro | El binding de `lanacion_user_id` lo detecta desde el segundo link, y la unicidad global impide duplicarlo |
