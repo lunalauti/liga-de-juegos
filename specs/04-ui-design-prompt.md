@@ -1,5 +1,15 @@
 # Prompt para Claude Design
 
+> **Estado: ejecutado.** El diseño ya fue generado a partir de este prompt y vive en
+> [Claude Design](https://claude.ai/design/p/6789cec9-c5e4-4872-9b7b-aacb0d193ba3) (`Liga de Juegos.dc.html`).
+> A partir de acá **el canvas manda sobre este documento**: si hay diferencia entre lo que pide este prompt y
+> lo que muestra el diseño, gana el diseño. Este archivo queda como registro de la intención original y
+> como base para pedir pantallas nuevas más adelante.
+>
+> Ver [`design/README.md`](../design/README.md) para la regla de trabajo y la copia local.
+
+---
+
 > Copiá y pegá todo lo que sigue (desde la línea de `---`) en Claude Design.
 
 ---

@@ -12,6 +12,8 @@
 - [ ] **T0.3** `packages/shared`: tipos de dominio + `parseTime()` / `formatTime()` con tests (`7:45`, `745`, `1:07:45`, inválidos). §6.2
 - [ ] **T0.4** API esqueleto: Express + TS, `GET /health`, middleware de errores con el formato único, CORS, helmet. §4
 - [ ] **T0.5** Web esqueleto: Vite + React + TS + React Router, Bootstrap importado vía SCSS con `_variables.scss` propio. §6
+- [ ] **T0.6** Exportar el diseño a `design/` y extraer `design/tokens.md`: paleta con sus roles, escala tipográfica y de espaciado, radios y sombras. [design/README.md]
+- [ ] **T0.7** Traducir esos tokens a `_variables.scss` (override de Bootstrap) y publicar una página `/kitchen-sink` con todos los componentes base, para comparar contra el canvas de un vistazo.
 
 ## Fase 1 — Datos y auth (~7 h)
 
@@ -101,7 +103,9 @@
 - [ ] **T8.3** Web `/stats`: gráfico de evolución por juego (Recharts) + tarjetas de métricas. [RF-14, RF-19]
 - [ ] **T8.4** Destacar el récord personal cuando alguien lo rompe (badge en la carga y en el día). [RF-14]
 
-## Fase 9 — Terminaciones (~4 h)
+## Fase 9 — Terminaciones (~5 h)
+
+- [ ] **T9.0** Pasada de fidelidad contra el diseño: screenshot de cada pantalla implementada vs. su artboard, corregir diferencias, repetir. Mínimo dos rondas.
 
 - [ ] **T9.1** Pasada de accesibilidad: contraste, foco visible, labels, navegación por teclado. [RNF-7]
 - [ ] **T9.2** Estados vacíos, de carga y de error en todas las pantallas. §6.2
