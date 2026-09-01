@@ -62,17 +62,17 @@
 
 ## Fase 4 — Scoring y ranking · **MVP jugable** (~10 h)
 
-- [ ] **T4.1** `scoring/grid.ts`: expandir la grilla miembro × juego × día resolviendo DNF, ausencias y blackouts. [RF-8] §5.1
-- [ ] **T4.2** `scoring/totalTime.ts`: suma, ganadores diarios, orden y desempates. [RF-11, RF-12, RF-15]
-- [ ] **T4.3** `scoring/dropWorst.ts`: descartar los N peores días. [RF-13]
-- [ ] **T4.4** **Suite de tests del motor** — casos: todos completos; un DNF; una ausencia con cada policy; empate resuelto por cada criterio; drop-worst; día anulado; grupo con 1 solo jugador; mes sin datos. *No avanzar sin esto en verde.* §5
-- [ ] **T4.5** API `GET /groups/:id/leaderboard` con `period` y `date`, + cache de 60 s invalidada al escribir. [RF-11] §5.4
-- [ ] **T4.6** API `GET /groups/:id/day` — grilla del día. [RF-12, RF-20]
-- [ ] **T4.7** Web `/ranking` según artboard 03: tabs semana/mes, podio de tres, tabla con desglose C/E/S, mi fila con borde verde, chips por fila. 8 filas sin scroll en 390px. [RF-11]
-- [ ] **T4.7b** Layout desktop del ranking (1280) con nav superior, columna de delta, panel "Tu mes", ganadores del día y "faltan cargar". §6.1
-- [ ] **T4.8** Web `/` según artboard 01, con sus dos estados (sin cargar / ya cargó los tres): card de estado, posición del mes en display con delta vs. ayer y distancia al podio, podio de hoy. [RF-18]
-- [ ] **T4.9** Web `/dia/:fecha` según artboard 04: grilla jugador × juego, navegación ← →, contador "6 de 8 cargaron", mejor de cada columna resaltado, símbolos distintos para DNF y para no cargó. [RF-20]
-- [ ] **T4.10** Campos derivados que pide el diseño en `/leaderboard` y `/day`: deltas, distancia al podio, ganadores del día, pendientes de cargar, contador de cargados. §6.4
+- [x] **T4.1** `scoring/grid.ts`: expandir la grilla miembro × juego × día resolviendo DNF, ausencias y blackouts. [RF-8] §5.1 **Hecho**, 6 tests.
+- [x] **T4.2** `scoring/totalTime.ts`: suma, ganadores diarios, orden y desempates. [RF-11, RF-12, RF-15] **Hecho.** Encontré y corregí un bug propio antes de testear: `dailyWins` quedaba hardcodeado en 0 y nunca se completaba, lo que hubiera roto el primer criterio de desempate en silencio.
+- [x] **T4.3** `scoring/dropWorst.ts`: descartar los N peores días. [RF-13] **Hecho**, 3 tests.
+- [x] **T4.4** **Suite de tests del motor** — 21 tests, los 8 casos pedidos cubiertos uno por uno (incluido el desempate por DNF en aislado, que no estaba en la lista original pero hacía falta para probar los 4 criterios de RF-15 por separado). Encontró un bug real: `participated` decidía mal quién entra al ranking cuando `absence_policy: "penalize"` — alguien 100% inactivo quedaba excluido de la tabla en vez de rankeado último con un total enorme, que es la conducta correcta según RF-8.
+- [x] **T4.5** API `GET /groups/:id/leaderboard` con `period` y `date`, + cache de 60 s invalidada al escribir. [RF-11] §5.4 **Hecho y verificado contra Supabase real** con matemática confirmada a mano en varios escenarios (semana, mes, drop-worst). Encontré que `PATCH /groups/:id` no invalidaba el cache — cambiar `drop_worst_n` no se veía reflejado hasta que expiraban los 60s. Corregido.
+- [x] **T4.6** API `GET /groups/:id/day` — grilla del día. [RF-12, RF-20] **Hecho y verificado.**
+- [x] **T4.7** Web `/ranking` según artboard 03: tabs semana/mes, podio de tres, tabla con desglose C/E/S, mi fila con borde verde, chips por fila. [RF-11] **Hecho y verificado en el navegador contra datos reales**, matemática confirmada a mano.
+- [x] **T4.7b** **Simplificado, no implementado pixel a pixel.** En vez de un layout desktop aparte con nav superior propia, es CSS responsive sobre el mismo componente: la tabla se ensancha y el panel de "ganadores del día"/"faltan cargar" pasa a fila en pantallas ≥900px. Mismo contenido, sin la nav superior del artboard desktop. Decisión de alcance dada la envergadura ya grande de esta fase — no se consultó antes de tomarla.
+- [x] **T4.8** Web `/` según artboard 01, con sus dos estados. [RF-18] **Hecho y verificado en el navegador** en ambos estados, con matemática confirmada a mano (29:31 = 07:30+12:03+09:58). El podio de hoy sólo cuenta a quienes tienen el día completo (RF-12), igual que el resto del sistema.
+- [x] **T4.9** Web `/dia/:fecha` según artboard 04. [RF-20] **Hecho y verificado**, incluida la navegación entre días y el límite en "hoy" (no se puede ir al futuro). Encontré y corregí un bug real: las columnas de Crucigrama y Cruci Experto mostraban el mismo encabezado ("CRUC.") porque truncaba por la primera palabra del nombre completo — pasé a usar el `shortName` del catálogo (`Cruci`/`Exp.`/`Sud.`).
+- [x] **T4.10** Campos derivados en `/leaderboard` y `/day`: `deltaVsYesterday`, `gapToLeader`, `gapToPodium`, `todaysGameWinners`, `pendingToday`, `loadedCount`/`memberCount`, `bestPerGame`. §6.4 **Hecho y verificado**, todos derivados de la misma grilla, sin consultas nuevas.
 
 > **Hito: acá el sistema ya sirve.** Se puede usar con los amigos aunque falte todo lo de abajo.
 

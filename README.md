@@ -2,7 +2,7 @@
 
 Registro y competencia de los juegos diarios de La Nación (Crucigrama, Cruci Experto, Sudoku Avanzado) entre amigos.
 
-**Estado:** Fase 3 completa (carga de resultados). Se puede importar un resultado real desde el link de La Nación con preview antes de confirmar, cargar los 3 juegos a mano con DNF, y editar/borrar dentro de la ventana de 48 h. Sigue la Fase 4 (motor de puntuación y ranking — el MVP jugable) en `specs/03-tasks.md`.
+**Estado:** Fase 4 completa — **MVP jugable.** Motor de puntuación (suma, desempates, drop-worst, ausencias) con 21 tests, y las pantallas Hoy, Tabla y Detalle del día funcionando contra Supabase real. Con esto el sistema ya se puede usar con los amigos. Sigue la Fase 5 (deploy) en `specs/03-tasks.md`.
 
 ## Setup
 

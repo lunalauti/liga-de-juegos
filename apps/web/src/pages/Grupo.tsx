@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { initialsOf } from '@liga/shared';
 import { useMe } from '../hooks/useMe';
 import { useActiveGroup } from '../hooks/useActiveGroup';
 import { apiFetch, ApiClientError } from '../api/client';
@@ -249,14 +250,6 @@ function GroupSettingsForm({ groupId, token, onSaved }: { groupId: string; token
   );
 }
 
-function initialsOf(name: string): string {
-  return name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase())
-    .join('');
-}
 
 function formatSince(iso: string): string {
   const d = new Date(iso);

@@ -7,6 +7,9 @@ import Grupo from './pages/Grupo';
 import GroupNew from './pages/GroupNew';
 import GroupJoin from './pages/GroupJoin';
 import Cargar from './pages/Cargar';
+import Home from './pages/Home';
+import Ranking from './pages/Ranking';
+import Dia from './pages/Dia';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AppFrame } from './components/AppFrame';
 
@@ -17,15 +20,9 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/kitchen-sink" element={<KitchenSink />} />
 
-      <Route
-        path="/"
-        element={<ProtectedRoute><AppFrame><Placeholder title="Hoy" task="T4.8 · artboard 01" /></AppFrame></ProtectedRoute>}
-      />
+      <Route path="/" element={<ProtectedRoute><AppFrame><Home /></AppFrame></ProtectedRoute>} />
       <Route path="/cargar" element={<ProtectedRoute><AppFrame><Cargar /></AppFrame></ProtectedRoute>} />
-      <Route
-        path="/ranking"
-        element={<ProtectedRoute><AppFrame><Placeholder title="Tabla" task="T4.7 · artboard 03" /></AppFrame></ProtectedRoute>}
-      />
+      <Route path="/ranking" element={<ProtectedRoute><AppFrame><Ranking /></AppFrame></ProtectedRoute>} />
       <Route
         path="/stats"
         element={<ProtectedRoute><AppFrame><Placeholder title="Mis estadísticas" task="T8.3 · artboard 04" /></AppFrame></ProtectedRoute>}
@@ -35,10 +32,7 @@ export default function App() {
       <Route path="/grupo/nuevo" element={<ProtectedRoute><GroupNew /></ProtectedRoute>} />
       <Route path="/unirse" element={<ProtectedRoute><GroupJoin /></ProtectedRoute>} />
       <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
-      <Route
-        path="/dia/:fecha"
-        element={<ProtectedRoute><Placeholder title="Detalle del día" task="T4.9 · artboard 04" /></ProtectedRoute>}
-      />
+      <Route path="/dia/:fecha" element={<ProtectedRoute><Dia /></ProtectedRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

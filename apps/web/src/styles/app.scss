@@ -271,3 +271,18 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .lj-row--entering { animation: none; }
 }
+
+/* --- Ranking en desktop: la tabla se ensancha, el panel lateral pasa al costado.
+   Simplificación consciente de T4.7b: no replica la nav superior del artboard
+   desktop pixel a pixel, pero mismo contenido, mismo ancho útil. --- */
+@media (min-width: 900px) {
+  .lj-ranking-screen {
+    max-width: 1040px !important;
+  }
+  .lj-ranking-panels {
+    flex-direction: row !important;
+  }
+  .lj-ranking-panels > * {
+    flex: 1;
+  }
+}

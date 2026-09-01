@@ -547,3 +547,10 @@ Ninguna cambia el modelo de §3; son ajustes a las reglas `on delete` que el tes
 | `0005_imported_results_nullable_user.sql` | Mismo problema en `imported_results.user_id`. La query de "¿quién ya cargó este link?" pasó a `left join` para que el link siga reclamado aunque esa cuenta ya no exista. |
 
 También: `apps/api/src/db.ts` fuerza el parser de `date` de `pg` a devolver el string tal cual llega de Postgres. Por default, `pg` construye un `Date` de JS con la zona horaria **del proceso**, no UTC — en una máquina en Argentina da la fecha correcta de casualidad, y se corre un día en un servidor con `TZ=UTC` (Render). `puzzle_date` es una fecha pura, nunca un instante (§5.5); ahora lo es de verdad, no sólo en el papel.
+
+### 9.8 Notas de implementación de la Fase 4 (motor de puntuación)
+
+- **`position_points` todavía no está implementado** (es Fase 6). `GET /groups/:id/leaderboard` lo detecta y responde `400 SCORING_MODE_NOT_READY` en vez de calcular mal en silencio — un grupo puede elegir ese modo en los ajustes (T2.7/T3.16) sin que el ranking se rompa, simplemente no anda hasta la Fase 6.
+- **El cache de 60 s (§5.4) se invalida en más lugares de los que el diseño original mencionaba**: no sólo al escribir un `entry`, también al `PATCH /groups/:id` — cambiar `drop_worst_n`, `absence_policy` o los juegos activos afecta el cálculo tanto como cargar un resultado.
+- **`initialsOf`** (avatar de dos letras: "Sofi" → "SF", "Nacho Pérez" → "NP") vive en `packages/shared/src/text.ts`, compartida entre Ranking, Detalle del día, Grupo y Home — nombres de una sola palabra necesitan sus propias dos primeras letras, no la inicial de dos palabras que no existen.
+- **T4.7b (layout desktop del ranking) se simplificó**: en vez de un componente aparte con nav superior propia, es CSS responsive sobre la misma pantalla — el mismo contenido se reacomoda en pantallas anchas, sin replicar la barra de navegación superior del artboard desktop.
