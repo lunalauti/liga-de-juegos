@@ -42,3 +42,17 @@ claude
 ```
 
 y adentro `/design-login` una vez. Después, esta sesión (y las headless) pueden leer el proyecto con la herramienta DesignSync.
+
+## Comparar la implementación contra el diseño
+
+El canvas usa su propio viewport y no se deja capturar, así que para comparar se recorta el
+markup a una página estática:
+
+```bash
+node tools/design-ref.mjs "Componentes que se repiten" /tmp/ref.html
+```
+
+Después se abre esa página al lado de `/kitchen-sink` y se comparan medidas computadas, no
+impresiones: `getBoundingClientRect()` y `getComputedStyle()` sobre los mismos elementos.
+Así apareció, por ejemplo, que el `line-height` de 1.7 del cuerpo se filtraba a las filas de
+la tabla y las hacía 5px más altas que en el diseño.

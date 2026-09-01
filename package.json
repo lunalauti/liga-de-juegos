@@ -1,0 +1,20 @@
+{
+  "name": "liga-de-juegos",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev -w @liga/web",
+    "dev:api": "npm run dev -w @liga/api",
+    "test": "vitest run",
+    "typecheck": "npm run typecheck -w @liga/shared -w @liga/api -w @liga/web",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8"
+  }
+}

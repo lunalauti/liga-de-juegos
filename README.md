@@ -2,7 +2,19 @@
 
 Registro y competencia de los juegos diarios de La Nación (Crucigrama, Cruci Experto, Sudoku Avanzado) entre amigos.
 
-**Estado:** especificación completa, sin código todavía. El desarrollo arranca por `specs/03-tasks.md` → Fase 0.
+**Estado:** Fase 0 terminada. Monorepo en pie, utilidades compartidas con tests, API con `/health`, y el sistema de diseño implementado y verificado contra el canvas. Sigue la Fase 1 en `specs/03-tasks.md`.
+
+## Setup
+
+```bash
+npm install
+npm test          # 11 tests
+npm run typecheck
+npm run dev:web   # http://localhost:5173 — ver /kitchen-sink
+npm run dev:api   # http://localhost:3001/health
+```
+
+Copiá `.env.example` a `.env` y completá las llaves de Supabase (T0.2).
 
 ## Cómo funciona la competencia
 

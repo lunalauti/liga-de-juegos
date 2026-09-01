@@ -1,0 +1,59 @@
+// Override de Bootstrap 5. Va ANTES de @import "bootstrap".
+// Fuente de verdad: design/tokens.md (extraído de Liga de Juegos.dc.html, artboard 06).
+
+// --- Paleta ---
+$ln-ink:          #14120E;
+$ln-ink-2:        #4A4438;
+$ln-ink-3:        #6B6357;
+$ln-rule:         #DDD6C8;
+$ln-paper:        #F6F2EA;
+$ln-paper-2:      #F1EBDD;
+$ln-surface:      #FFFFFF;
+$ln-input:        #FBF8F1;
+$ln-focus:        #C9A227;
+$ln-success-bg:   #EFF4EF;
+$ln-danger-bg:    #FCF2F0;
+$ln-row-flash:    #E8F0EA;
+
+$primary:         #16513C;
+$primary-hover:   #0F3D2D;   // verde botella oscuro
+$danger:          #A8352A;   // sólo DNF y errores de carga
+$body-bg:         $ln-paper;
+$body-color:      $ln-ink;
+
+// --- Tipografía ---
+$font-family-serif: 'Newsreader', Georgia, serif;
+$font-family-sans-serif: 'Archivo', system-ui, -apple-system, sans-serif;
+$font-family-monospace: 'IBM Plex Mono', ui-monospace, monospace;
+$font-family-base: $font-family-sans-serif;
+$font-size-base: 0.9375rem;  // 15px
+$line-height-base: 1.7;
+$headings-font-family: $font-family-serif;
+$headings-font-weight: 600;
+
+// --- Forma: sin esquinas redondeadas, en ningún lado ---
+$border-radius:    0;
+$border-radius-sm: 0;
+$border-radius-lg: 0;
+$border-radius-xl: 0;
+$border-radius-pill: 0;
+$border-color: $ln-rule;
+$border-width: 1px;
+
+// --- Foco ---
+$focus-ring-width:   3px;
+$focus-ring-color:   $ln-focus;
+$focus-ring-opacity: 1;
+$focus-ring-blur:    0;
+
+// --- Sombras: una sola en todo el sistema ---
+$box-shadow:    0 18px 40px rgba(60, 48, 30, .13);
+$box-shadow-sm: none;
+$box-shadow-lg: $box-shadow;
+
+// --- Espaciado ---
+$spacer: 1rem;
+$spacers: (0: 0, 1: .25rem, 2: .5rem, 3: .75rem, 4: 1rem, 5: 1.25rem, 6: 1.5rem, 8: 2rem, 16: 4rem);
+
+// Los tiempos SIEMPRE con cifras tabulares:
+//   .t { font-family: $font-family-monospace; font-variant-numeric: tabular-nums; font-weight: 600; }

@@ -7,14 +7,14 @@
 
 ## Fase 0 — Fundaciones (~5 h)
 
-- [ ] **T0.1** Monorepo: npm workspaces con `apps/api`, `apps/web`, `packages/shared`. TypeScript strict, ESLint, Prettier, `.gitignore`, `.env.example`. §2
-- [ ] **T0.2** Proyecto Supabase creado; `DATABASE_URL` y llaves en `.env` local; Supabase CLI linkeado. §7
-- [ ] **T0.3** `packages/shared`: tipos de dominio + `parseTime()` / `formatTime()` con tests (`7:45`, `745`, `1:07:45`, inválidos). §6.2
-- [ ] **T0.4** API esqueleto: Express + TS, `GET /health`, middleware de errores con el formato único, CORS, helmet. §4
-- [ ] **T0.5** Web esqueleto: Vite + React + TS + React Router, Bootstrap importado vía SCSS con `_variables.scss` propio. §6
+- [x] **T0.1** Monorepo: npm workspaces con `apps/api`, `apps/web`, `packages/shared`. TypeScript strict, ESLint, Prettier, `.gitignore`, `.env.example`. §2 **Hecho.**
+- [ ] **T0.2** Proyecto Supabase creado; `DATABASE_URL` y llaves en `.env` local; Supabase CLI linkeado. §7 — **bloqueada: necesita tu cuenta de Supabase.**
+- [x] **T0.3** `packages/shared`: tipos de dominio + `parseTime()` / `formatTime()` con tests (`7:45`, `745`, `1:07:45`, inválidos). §6.2 **Hecho.**
+- [x] **T0.4** API esqueleto: Express + TS, `GET /health`, middleware de errores con el formato único, CORS, helmet. §4 **Hecho.**
+- [x] **T0.5** Web esqueleto: Vite + React + TS + React Router, Bootstrap importado vía SCSS con `_variables.scss` propio. §6 **Hecho.**
 - [x] **T0.6** Exportar el diseño a `design/` y extraer los tokens → [`design/tokens.md`](../design/tokens.md) + [`design/tokens.scss`](../design/tokens.scss). **Hecho.**
-- [ ] **T0.7** Copiar `design/tokens.scss` a `apps/web/src/styles/_variables.scss`, importar las tres familias de Google Fonts (Newsreader, Archivo, IBM Plex Mono) y verificar que Bootstrap quede sin esquinas redondeadas en ningún componente. §6.5
-- [ ] **T0.8** Página `/kitchen-sink` con los componentes del artboard 06 —fila de ranking (4 variantes), card de juego (3 estados), chips, badge de posición, botones (5 estados)— para comparar contra el canvas de un vistazo. §6.3
+- [x] **T0.7** Copiar `design/tokens.scss` a `apps/web/src/styles/_variables.scss`, importar las tres familias de Google Fonts (Newsreader, Archivo, IBM Plex Mono) y verificar que Bootstrap quede sin esquinas redondeadas en ningún componente. §6.5 **Hecho.**
+- [x] **T0.8** Página `/kitchen-sink` con los componentes del artboard 06 —fila de ranking (4 variantes), card de juego (3 estados), chips, badge de posición, botones (5 estados)— para comparar contra el canvas de un vistazo. §6.3 **Hecho.**
 
 ## Fase 1 — Datos y auth (~7 h)
 

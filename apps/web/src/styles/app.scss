@@ -1,0 +1,273 @@
+@use 'variables' as *;
+@import 'bootstrap/scss/bootstrap';
+
+/* ---------------------------------------------------------------------------
+   Componentes del artboard 06. Los valores salen del canvas, no de la intuición:
+   ver design/tokens.md. Radio 0 en todo, reglas finas, una sola sombra.
+   --------------------------------------------------------------------------- */
+
+body {
+  background: $ln-paper;
+  color: $ln-ink;
+  font-family: $font-family-sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.lj-display {
+  font-family: $font-family-serif;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 1.02;
+}
+
+.lj-card-title {
+  font-family: $font-family-serif;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+/* Los tiempos siempre en cifras tabulares, o las columnas bailan. */
+.lj-t {
+  font-family: $font-family-monospace;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: normal;
+}
+
+/* El interlineado de 1.7 es para el copy que explica. En lo compacto aplasta todo. */
+.lj-row,
+.lj-chip,
+.lj-badge,
+.lj-avatar,
+.lj-game__field,
+.lj-row__pos,
+.lj-row__total {
+  line-height: normal;
+}
+
+.lj-label {
+  font-family: $font-family-monospace;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: $ln-ink-3;
+}
+
+.lj-card {
+  border: 1px solid $ln-rule;
+  background: $ln-surface;
+}
+
+/* --- Fila de ranking: 4 variantes ---------------------------------------- */
+.lj-row {
+  display: grid;
+  grid-template-columns: 30px 1fr 78px;
+  gap: 8px;
+  align-items: center;
+  padding: 9px 14px;
+  border-bottom: 1px solid #ede7da;
+  background: $ln-surface;
+
+  &:last-child { border-bottom: 0; }
+
+  &--leader { background: $ln-input; }
+
+  &--me {
+    background: $ln-success-bg;
+    border-left: 4px solid $primary;
+    .lj-row__pos { font-weight: 700; }
+  }
+
+  &--idle {
+    color: #a9a091;
+    .lj-row__total { color: #b3aa98; }
+  }
+
+  &__pos {
+    font-family: $font-family-monospace;
+    font-size: 17px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__player { display: flex; align-items: center; gap: 7px; min-width: 0; }
+  &__name { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  &__total {
+    text-align: right;
+    font-family: $font-family-monospace;
+    font-size: 17px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.lj-avatar {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  border: 1px solid $ln-rule;
+  background: $ln-paper-2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 600;
+
+  &--me { border-color: $primary; background: $ln-surface; }
+  &--idle { border-style: dashed; border-color: #c9c0ac; color: #b3aa98; background: transparent; }
+}
+
+/* --- Badge de posición: 4 variantes -------------------------------------- */
+.lj-badge {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: $font-family-monospace;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+
+  &--first { background: $primary; color: $ln-paper; font-weight: 700; }
+  &--strong { border: 1.5px solid $ln-ink; font-weight: 600; }
+  &--plain { border: 1px solid $ln-rule; color: $ln-ink-3; }
+  &--none { border: 1px dashed #c9c0ac; color: #b3aa98; }
+}
+
+/* --- Chips ---------------------------------------------------------------- */
+.lj-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  font-size: 11px;
+  white-space: nowrap;
+
+  &--verified { border: 1px solid $primary; color: $primary; font-weight: 600; }
+  &--manual { border: 1px dashed #b3aa98; color: #8c8271; }
+  &--dnf { border: 1px solid $danger; color: $danger; font-weight: 600; }
+  &--streak { border: 1px solid $ln-rule; background: $ln-paper-2; color: $ln-ink-2; }
+  &--wins { background: $ln-ink; color: $ln-paper; font-weight: 600; }
+}
+
+/* El sello ✓: única marca de verificado, idéntica en todas las pantallas. */
+.lj-seal {
+  width: 12px;
+  height: 12px;
+  border: 1.2px solid currentColor;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  line-height: 1;
+}
+
+/* --- Card de juego en la carga: 3 estados -------------------------------- */
+.lj-game {
+  border: 1px solid $ln-rule;
+  background: $ln-surface;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  &__label { font-size: 12px; font-weight: 600; }
+
+  &__field {
+    height: 44px;
+    border: 1px dashed #c9c0ac;
+    background: $ln-input;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: $font-family-monospace;
+    font-size: 18px;
+    color: #b3aa98;
+  }
+
+  &--focus {
+    border: 1.5px solid $ln-ink;
+    .lj-game__field {
+      border: 1.5px solid $ln-ink;
+      outline: 3px solid $ln-focus;
+      outline-offset: 1px;
+      color: $ln-ink;
+      font-weight: 600;
+    }
+  }
+
+  &--dnf {
+    border: 1.5px solid $danger;
+    .lj-game__label { color: $danger; }
+    .lj-game__field {
+      border: 1px solid $danger;
+      background: $ln-danger-bg;
+      color: $danger;
+      font-size: 16px;
+      font-weight: 600;
+    }
+  }
+
+  &__penalty {
+    font-family: $font-family-monospace;
+    font-size: 8px;
+    letter-spacing: 0.1em;
+  }
+}
+
+/* --- Botones: el diseño usa 44px de alto y borde de 1.5px ---------------- */
+.btn {
+  height: 44px;
+  padding: 0 18px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 0;
+}
+
+.btn-primary {
+  --bs-btn-bg: #{$primary};
+  --bs-btn-border-color: #{$primary-hover};
+  --bs-btn-hover-bg: #{$primary-hover};
+  --bs-btn-hover-border-color: #{$primary-hover};
+  --bs-btn-active-bg: #{$primary-hover};
+  --bs-btn-color: #{$ln-paper};
+  --bs-btn-hover-color: #{$ln-paper};
+  border-width: 1.5px;
+}
+
+.btn-outline-dark {
+  --bs-btn-color: #{$ln-ink};
+  --bs-btn-border-color: #{$ln-ink};
+  --bs-btn-hover-bg: #{$ln-ink};
+  --bs-btn-hover-color: #{$ln-paper};
+}
+
+.btn:disabled,
+.btn.disabled {
+  --bs-btn-disabled-bg: #{$ln-paper-2};
+  --bs-btn-disabled-border-color: #{$ln-rule};
+  --bs-btn-disabled-color: #8c8271;
+  opacity: 1;
+}
+
+/* Foco: ámbar, visible, nunca removido. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid $ln-focus;
+  outline-offset: 2px;
+  box-shadow: none;
+}
+.btn:focus-visible { outline: 3px solid $ln-focus; outline-offset: 2px; box-shadow: none; }
+
+/* La única animación del sistema: la fila que entra al guardar un tiempo. */
+@keyframes rowIn {
+  from { transform: translateY(14px); background: $ln-row-flash; }
+  to { transform: translateY(0); }
+}
+.lj-row--entering { animation: rowIn 320ms cubic-bezier(0.2, 0.7, 0.3, 1); }
+
+@media (prefers-reduced-motion: reduce) {
+  .lj-row--entering { animation: none; }
+}
