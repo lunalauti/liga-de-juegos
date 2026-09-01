@@ -194,7 +194,7 @@ export default function Cargar() {
         >
           <span style={{ display: 'flex', flexDirection: 'column', gap: 2, textAlign: 'left' }}>
             <span style={{ fontSize: 15, fontWeight: 600 }}>Cargar a mano</span>
-            <span style={{ fontSize: 12, color: '#6B6357' }}>Sin link: los tres juegos de una</span>
+            <span style={{ fontSize: 12, color: '#6B6357' }}>Sin link: uno, dos o los tres juegos</span>
           </span>
           <span aria-hidden="true">▾</span>
         </button>
@@ -204,13 +204,18 @@ export default function Cargar() {
   );
 }
 
+type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+interface GameValue { dnf: boolean; time: string; status: SaveStatus; error?: string }
+
+function hasInput(v: GameValue): boolean {
+  return v.dnf || v.time.trim() !== '';
+}
+
 function ManualEntryForm({ groupId, token }: { groupId: string; token: string | undefined }) {
-  const [values, setValues] = useState<Record<string, { dnf: boolean; time: string }>>(
-    Object.fromEntries(GAMES.map((g) => [g.slug, { dnf: false, time: '' }])),
+  const [values, setValues] = useState<Record<string, GameValue>>(
+    Object.fromEntries(GAMES.map((g) => [g.slug, { dnf: false, time: '', status: 'idle' as SaveStatus }])),
   );
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
+  const [savingAll, setSavingAll] = useState(false);
 
   const totalSeconds = GAMES.reduce((sum, g) => {
     const v = values[g.slug]!;
@@ -220,36 +225,66 @@ function ManualEntryForm({ groupId, token }: { groupId: string; token: string | 
     return m ? sum + Number(m[1]) * 60 + Number(m[2]) : sum;
   }, 0);
 
-  async function save() {
+  function update(slug: string, patch: Partial<GameValue>) {
+    setValues((prev) => ({ ...prev, [slug]: { ...prev[slug]!, ...patch, status: 'idle' } }));
+  }
+
+  /** Guarda un juego solo — RF-6b no exige cargar los tres juntos. */
+  async function saveOne(slug: string) {
     if (!token) return;
-    setSaving(true);
-    setError(null);
+    const v = values[slug]!;
+    if (!hasInput(v)) return;
+    setValues((prev) => ({ ...prev, [slug]: { ...prev[slug]!, status: 'saving', error: undefined } }));
     try {
-      const entries = GAMES.map((g) => {
-        const v = values[g.slug]!;
-        return v.dnf ? { gameSlug: g.slug, dnf: true } : { gameSlug: g.slug, time: v.time };
-      });
-      await apiFetch('/entries/bulk', {
+      await apiFetch('/entries', {
         method: 'POST',
         accessToken: token,
-        body: { groupIds: [groupId], puzzleDate: todayInArgentina(), entries },
+        body: { groupId, puzzleDate: todayInArgentina(), gameSlug: slug, ...(v.dnf ? { dnf: true } : { time: v.time }) },
       });
-      setSaved(true);
+      setValues((prev) => ({ ...prev, [slug]: { ...prev[slug]!, status: 'saved' } }));
     } catch (e) {
-      setError(e instanceof ApiClientError ? e.message : 'No pudimos guardar');
-    } finally {
-      setSaving(false);
+      const msg = e instanceof ApiClientError ? e.message : 'No pudimos guardar';
+      setValues((prev) => ({ ...prev, [slug]: { ...prev[slug]!, status: 'error', error: msg } }));
     }
   }
 
+  /** Guarda de una los juegos completados que todavía no se guardaron individualmente. */
+  async function saveAll() {
+    const pending = GAMES.filter((g) => hasInput(values[g.slug]!) && values[g.slug]!.status !== 'saved');
+    if (!token || pending.length === 0) return;
+    setSavingAll(true);
+    try {
+      const entries = pending.map((g) => {
+        const v = values[g.slug]!;
+        return v.dnf ? { gameSlug: g.slug, dnf: true } : { gameSlug: g.slug, time: v.time };
+      });
+      const res = await apiFetch<{ results: { gameSlug: string; status: 'ok' | 'error'; error?: { message: string } }[] }>(
+        '/entries/bulk',
+        { method: 'POST', accessToken: token, body: { groupIds: [groupId], puzzleDate: todayInArgentina(), entries } },
+      );
+      setValues((prev) => {
+        const next = { ...prev };
+        for (const r of res.results) {
+          next[r.gameSlug] = { ...next[r.gameSlug]!, status: r.status === 'ok' ? 'saved' : 'error', error: r.error?.message };
+        }
+        return next;
+      });
+    } finally {
+      setSavingAll(false);
+    }
+  }
+
+  const filledCount = GAMES.filter((g) => hasInput(values[g.slug]!)).length;
+  const pendingCount = GAMES.filter((g) => hasInput(values[g.slug]!) && values[g.slug]!.status !== 'saved').length;
+
   return (
     <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <p style={{ fontSize: 12, color: '#6B6357' }}>Lo que cargues a mano queda sin verificar.</p>
+      <p style={{ fontSize: 12, color: '#6B6357' }}>Lo que cargues a mano queda sin verificar. Podés guardar juego por juego.</p>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
         {GAMES.map((g, i) => {
           const v = values[g.slug]!;
           return (
-            <div key={g.slug} style={{ position: 'relative' }}>
+            <div key={g.slug} style={{ position: 'relative', display: 'flex', flexDirection: 'column' }}>
               <span style={{ position: 'absolute', top: -6, left: -4, fontSize: 10, color: '#6B6357' }}>{i + 1}</span>
               <GameCard
                 label={g.shortName}
@@ -263,17 +298,33 @@ function ManualEntryForm({ groupId, token }: { groupId: string; token: string | 
                 inputMode="numeric"
                 placeholder="mm:ss"
                 value={v.time}
-                disabled={v.dnf}
-                onChange={(e) => setValues((prev) => ({ ...prev, [g.slug]: { ...prev[g.slug]!, time: e.target.value } }))}
+                disabled={v.dnf || v.status === 'saving'}
+                onChange={(e) => update(g.slug, { time: e.target.value })}
               />
               <label style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, fontSize: 12 }}>
                 <input
                   type="checkbox"
                   checked={v.dnf}
-                  onChange={(e) => setValues((prev) => ({ ...prev, [g.slug]: { ...prev[g.slug]!, dnf: e.target.checked } }))}
+                  disabled={v.status === 'saving'}
+                  onChange={(e) => update(g.slug, { dnf: e.target.checked })}
                 />
                 No lo terminé
               </label>
+
+              {v.status === 'saved' ? (
+                <Chip kind="verified">Guardado</Chip>
+              ) : (
+                <button
+                  type="button"
+                  className="btn btn-outline-dark"
+                  style={{ marginTop: 8, height: 36, fontSize: 12, padding: '0 8px' }}
+                  onClick={() => void saveOne(g.slug)}
+                  disabled={!hasInput(v) || v.status === 'saving'}
+                >
+                  {v.status === 'saving' ? 'Guardando…' : 'Guardar'}
+                </button>
+              )}
+              {v.status === 'error' && <p role="alert" style={{ color: '#A8352A', fontSize: 11, margin: '4px 0 0' }}>{v.error}</p>}
             </div>
           );
         })}
@@ -285,11 +336,11 @@ function ManualEntryForm({ groupId, token }: { groupId: string; token: string | 
         <span style={{ fontSize: 13, fontWeight: 600 }}>Total del día</span>
         <span className="lj-t" style={{ fontSize: 20 }}>{formatTime(totalSeconds)}</span>
       </div>
-      {error && <p role="alert" style={{ color: '#A8352A', fontSize: 13, margin: 0 }}>{error}</p>}
-      {saved && <p role="status" style={{ color: '#16513C', fontSize: 13, margin: 0 }}>Guardado.</p>}
-      <button type="button" className="btn btn-primary" onClick={() => void save()} disabled={saving}>
-        {saving ? 'Guardando…' : 'Guardar los tres'}
-      </button>
+      {filledCount > 1 && pendingCount > 0 && (
+        <button type="button" className="btn btn-primary" onClick={() => void saveAll()} disabled={savingAll}>
+          {savingAll ? 'Guardando…' : pendingCount === GAMES.length ? 'Guardar los tres' : `Guardar los ${pendingCount} que faltan`}
+        </button>
+      )}
     </div>
   );
 }
