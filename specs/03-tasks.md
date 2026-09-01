@@ -12,8 +12,9 @@
 - [ ] **T0.3** `packages/shared`: tipos de dominio + `parseTime()` / `formatTime()` con tests (`7:45`, `745`, `1:07:45`, inválidos). §6.2
 - [ ] **T0.4** API esqueleto: Express + TS, `GET /health`, middleware de errores con el formato único, CORS, helmet. §4
 - [ ] **T0.5** Web esqueleto: Vite + React + TS + React Router, Bootstrap importado vía SCSS con `_variables.scss` propio. §6
-- [ ] **T0.6** Exportar el diseño a `design/` y extraer `design/tokens.md`: paleta con sus roles, escala tipográfica y de espaciado, radios y sombras. [design/README.md]
-- [ ] **T0.7** Traducir esos tokens a `_variables.scss` (override de Bootstrap) y publicar una página `/kitchen-sink` con todos los componentes base, para comparar contra el canvas de un vistazo.
+- [x] **T0.6** Exportar el diseño a `design/` y extraer los tokens → [`design/tokens.md`](../design/tokens.md) + [`design/tokens.scss`](../design/tokens.scss). **Hecho.**
+- [ ] **T0.7** Copiar `design/tokens.scss` a `apps/web/src/styles/_variables.scss`, importar las tres familias de Google Fonts (Newsreader, Archivo, IBM Plex Mono) y verificar que Bootstrap quede sin esquinas redondeadas en ningún componente. §6.5
+- [ ] **T0.8** Página `/kitchen-sink` con los componentes del artboard 06 —fila de ranking (4 variantes), card de juego (3 estados), chips, badge de posición, botones (5 estados)— para comparar contra el canvas de un vistazo. §6.3
 
 ## Fase 1 — Datos y auth (~7 h)
 
@@ -27,12 +28,12 @@
 
 ## Fase 2 — Grupos (~6 h)
 
-- [ ] **T2.1** Generador de `invite_code` (6 chars, alfabeto sin ambiguos) + test de colisión. [RF-3]
+- [ ] **T2.1** Generador de `invite_code` con formato legible al dictado (`CRUCI-84`) + test de colisión. [RF-3] §6.5
 - [ ] **T2.2** API `POST /groups`, `GET /groups/:id`, `PATCH /groups/:id`, `POST /groups/join`. [RF-3, RF-4, RF-5]
 - [ ] **T2.3** Zod schema de `groups.settings` + validación al escribir. [RF-17] §3.2
 - [ ] **T2.4** API: `regenerate-code`, remover miembro, guard "no podés quedarte sin admin". [RF-5]
 - [ ] **T2.5** Web: crear grupo, unirse con código, selector de grupo en el header (persistido). [RF-3, RF-4] §6.2
-- [ ] **T2.6** Web: pantalla de grupo (miembros, código copiable, compartir por WhatsApp). [RF-5]
+- [ ] **T2.6** Web: pantalla de grupo según artboard 04 (código grande con copiar y compartir por WhatsApp, miembros, palmarés). [RF-5]
 - [ ] **T2.7** Web: panel de settings del grupo, sólo admin. [RF-17]
 
 ## Fase 3 — Carga de resultados (~7 h)
@@ -53,8 +54,8 @@
 - [ ] **T3.11** Seed del mapeo juego↔nivel. **Confirmar el nivel real del Sudoku Avanzado importando un link de verdad** (se asume `sudoku/hard`). §9.2
 - [ ] **T3.12** API `POST /entries/import`: validaciones de §9.4 (customer, juego activo, link ya usado → 409, fecha en ventana), `result: FAIL` → DNF, escritura en varios grupos a la vez. [RF-6, RF-7]
 - [ ] **T3.13** Binding de identidad: primer link asocia el `lanacion_user_id`; los siguientes marcan `verified` true/false. [RF-6] §9.4
-- [ ] **T3.14** Web: campo de pegar link arriba de todo en `/cargar`, con preview del resultado detectado (juego, fecha, tiempo) antes de confirmar, y errores accionables ("ese link ya lo cargó Fulano").
-- [ ] **T3.15** Chip "verificado" vs "cargado a mano" en ranking y detalle de día. [RF-6]
+- [ ] **T3.14** Web `/cargar` según artboard 02: campo de link arriba de todo, preview de lo detectado con sello verificado, confirmar/descartar, y el estado de error de link repetido ("Ese link ya lo cargó Martín. Buen intento.") mostrando quién y cuándo. El campo trunca el link por el medio. §6.5
+- [ ] **T3.15** Chips de estado del artboard 06: el sello ✓ como única marca de verificado, idéntico en Hoy/Ranking/Detalle; lo cargado a mano con contorno punteado neutro, sin alerta. [RF-6] §6.3
 - [ ] **T3.16** Setting `require_verified` del grupo. [D7]
 - [ ] **T3.17** Test de contrato contra un uuid real, corriendo en CI a diario: avisa si La Nación cambia el formato. §9.6
 
@@ -66,9 +67,11 @@
 - [ ] **T4.4** **Suite de tests del motor** — casos: todos completos; un DNF; una ausencia con cada policy; empate resuelto por cada criterio; drop-worst; día anulado; grupo con 1 solo jugador; mes sin datos. *No avanzar sin esto en verde.* §5
 - [ ] **T4.5** API `GET /groups/:id/leaderboard` con `period` y `date`, + cache de 60 s invalidada al escribir. [RF-11] §5.4
 - [ ] **T4.6** API `GET /groups/:id/day` — grilla del día. [RF-12, RF-20]
-- [ ] **T4.7** Web `/ranking`: tabs semana/mes, tabla general con desglose por juego, podio, resaltado del usuario. [RF-11]
-- [ ] **T4.8** Web `/`: home con "¿ya cargaste hoy?", tu posición y el podio del día. [RF-18]
-- [ ] **T4.9** Web `/dia/:fecha`: grilla completa, con navegación anterior/siguiente. [RF-20]
+- [ ] **T4.7** Web `/ranking` según artboard 03: tabs semana/mes, podio de tres, tabla con desglose C/E/S, mi fila con borde verde, chips por fila. 8 filas sin scroll en 390px. [RF-11]
+- [ ] **T4.7b** Layout desktop del ranking (1280) con nav superior, columna de delta, panel "Tu mes", ganadores del día y "faltan cargar". §6.1
+- [ ] **T4.8** Web `/` según artboard 01, con sus dos estados (sin cargar / ya cargó los tres): card de estado, posición del mes en display con delta vs. ayer y distancia al podio, podio de hoy. [RF-18]
+- [ ] **T4.9** Web `/dia/:fecha` según artboard 04: grilla jugador × juego, navegación ← →, contador "6 de 8 cargaron", mejor de cada columna resaltado, símbolos distintos para DNF y para no cargó. [RF-20]
+- [ ] **T4.10** Campos derivados que pide el diseño en `/leaderboard` y `/day`: deltas, distancia al podio, ganadores del día, pendientes de cargar, contador de cargados. §6.4
 
 > **Hito: acá el sistema ya sirve.** Se puede usar con los amigos aunque falte todo lo de abajo.
 
@@ -94,21 +97,21 @@
 - [ ] **T7.1** Creación automática de `seasons` al primer entry del período. [RF-16]
 - [ ] **T7.2** Cron 00:10 ART: cerrar temporadas vencidas y congelar `final_standings`. [RF-16] §5.4
 - [ ] **T7.3** API `GET /groups/:id/seasons` + palmarés.
-- [ ] **T7.4** Web: historial de temporadas y palmarés en la pantalla de grupo. [RF-16]
+- [ ] **T7.4** Web: palmarés por mes en la pantalla de grupo, según artboard 04. [RF-16]
 
 ## Fase 8 — Estadísticas (~5 h)
 
 - [ ] **T8.1** `scoring/stats.ts`: racha, consistencia, PB, completion, trend + tests. [RF-14] §5.3
 - [ ] **T8.2** API `GET /groups/:id/stats`.
-- [ ] **T8.3** Web `/stats`: gráfico de evolución por juego (Recharts) + tarjetas de métricas. [RF-14, RF-19]
+- [ ] **T8.3** Web `/stats` según artboard 04: evolución por juego a 14 días + tarjetas de récord personal, racha (actual y mejor), consistencia, completado y tiempos verificados. [RF-14, RF-19]
 - [ ] **T8.4** Destacar el récord personal cuando alguien lo rompe (badge en la carga y en el día). [RF-14]
 
 ## Fase 9 — Terminaciones (~5 h)
 
 - [ ] **T9.0** Pasada de fidelidad contra el diseño: screenshot de cada pantalla implementada vs. su artboard, corregir diferencias, repetir. Mínimo dos rondas.
 
-- [ ] **T9.1** Pasada de accesibilidad: contraste, foco visible, labels, navegación por teclado. [RNF-7]
-- [ ] **T9.2** Estados vacíos, de carga y de error en todas las pantallas. §6.2
+- [ ] **T9.1** Pasada de accesibilidad: contraste, anillo de foco ámbar en todo lo interactivo (nunca removido), labels, navegación por teclado. [RNF-7]
+- [ ] **T9.2** Estados vacíos según artboard 05 (grupo recién creado y día sin cargas) + estados de carga y error en el resto. §6.6
 - [ ] **T9.3** Verificación mobile real (iOS Safari y Android Chrome): sin scroll horizontal, sin zoom en los inputs (`font-size: 16px`). [RNF-2]
 - [ ] **T9.4** `README.md` con setup local, deploy y las reglas de la liga explicadas en criollo.
 

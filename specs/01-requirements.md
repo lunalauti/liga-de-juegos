@@ -72,7 +72,7 @@ Formato: `RF-x` con criterios de aceptación en formato EARS (*Cuando/Si… el s
 ### 5.2 Grupos
 
 **RF-3 — Crear grupo**
-- Cuando un jugador crea un grupo con nombre, el sistema deberá crearlo, asignarle el rol admin y generar un código de invitación único de 6–8 caracteres.
+- Cuando un jugador crea un grupo con nombre, el sistema deberá crearlo, asignarle el rol admin y generar un código de invitación único con formato legible al dictado (`CRUCI-84`: palabra corta derivada del nombre + guion + 2 dígitos), reintentando ante colisión.
 
 **RF-4 — Unirse a un grupo**
 - Cuando un jugador ingresa un código válido, el sistema deberá agregarlo como miembro.
@@ -143,10 +143,11 @@ Además del tiempo total (modo default), el grupo deberá poder activar:
 - **Cabeza a cabeza (H2H)**: por cada día y juego, el sistema deberá registrar el resultado contra cada rival, y mostrar una matriz "cuántas veces le gané a cada uno".
 
 **RF-14 — Métricas complementarias** (siempre visibles, no definen al campeón)
-- **Racha** (`streak`): días consecutivos con todos los juegos activos completados sin DNF.
+- **Racha** (`streak`): días consecutivos con todos los juegos activos completados sin DNF. Se muestra la actual y la mejor histórica.
 - **Consistencia**: desvío estándar del tiempo por juego. Premia al regular por encima del irregular.
 - **Récord personal (PB)**: mejor tiempo histórico por juego; el sistema deberá destacarlo cuando alguien lo rompe.
 - **Tasa de completado**: % de juegos terminados sin DNF sobre juegos disponibles.
+- **Tiempos verificados**: cuántos de los resultados del jugador vinieron por link contra el total.
 - **Mejora**: variación del tiempo promedio contra la temporada anterior.
 
 **RF-15 — Desempates**

@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body { margin:0; background:#EDE7DA; font-family:Archivo, system-ui, sans-serif; }
+a { color:#16513C; text-decoration:underline; }
+a:hover { color:#0F3D2D; }
+@keyframes rowIn { from { transform:translateY(14px); background:#E8F0EA; } to { transform:translateY(0); } }
+</style>
+</helmet>
+
+<div style="padding:56px 48px 96px;display:flex;flex-direction:column;gap:64px">
+
+<section style="display:flex;flex-direction:column;gap:32px">
+  <div id="1a" style="display:flex;flex-direction:column;gap:14px;max-width:900px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:1.5px solid #14120E;background:#fff;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600">1a</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#6B6357">Liga de Juegos · UI mobile-first</span>
+    </div>
+    <h1 style="margin:0;font-family:Newsreader,serif;font-size:56px;line-height:1.02;letter-spacing:-0.03em;font-weight:600;color:#14120E">Liga de Juegos</h1>
+    <p style="margin:0;max-width:620px;font-size:15px;line-height:1.7;color:#4A4438;text-wrap:pretty">Siete pantallas en 390×844, la vista desktop del ranking y el sistema visual: paleta con roles, escala tipográfica y variantes de los componentes que se repiten.</p>
+  </div>
+
+  <!-- ================= HOME ================= -->
+  <div style="display:flex;flex-direction:column;gap:18px">
+    <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1.5px solid #14120E;padding-bottom:8px">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:#16513C">01</span>
+      <h2 style="margin:0;font-family:Newsreader,serif;font-size:26px;font-weight:600;letter-spacing:-0.02em">Home</h2>
+      <span style="font-size:13px;color:#6B6357">Estado del día, mi posición mensual y el podio de hoy</span>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:36px">
+
+      <!-- Home: sin cargar -->
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#6B6357">Home · todavía no cargó</span>
+        <div data-screen-label="Home – sin cargar" style="width:390px;height:844px;background:#F6F2EA;border:1px solid #DDD6C8;box-shadow:0 18px 40px rgba(60,48,30,.13);position:relative;overflow:hidden;display:flex;flex-direction:column;color:#14120E">
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:#14120E">
+            <span>9:14</span><span style="letter-spacing:.1em">▮▮▮ ▰</span>
+          </div>
+          <div style="padding:6px 20px 14px;display:flex;align-items:flex-end;justify-content:space-between;border-bottom:1.5px solid #14120E">
+            <div style="display:flex;flex-direction:column;gap:2px">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#6B6357">Lunes 31 de agosto</span>
+              <span style="font-family:Newsreader,serif;font-size:27px;font-weight:600;letter-spacing:-0.025em;line-height:1">Liga de Juegos</span>
+            </div>
+            <div style="width:34px;height:34px;border:1.5px solid #14120E;background:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600">VC</div>
+          </div>
+
+          <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;gap:14px;padding:16px 20px">
+            <!-- card estado del día -->
+            <div style="position:relative;background:#fff;border:1.5px solid #14120E;padding:18px 18px 18px">
+              <span style="position:absolute;top:4px;left:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#6B6357">1</span>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#A8352A">Hoy</span>
+                <span style="font-family:Newsreader,serif;font-size:29px;line-height:1.08;letter-spacing:-0.025em;font-weight:600;text-wrap:balance">Todavía no cargaste lo de hoy</span>
+                <span style="font-size:13px;line-height:1.6;color:#4A4438">Sofi, Nacho y Belén ya cargaron los tres. Te llevan 6 horas de ventaja moral.</span>
+              </div>
+              <button style="margin-top:16px;width:100%;height:56px;background:#16513C;color:#F6F2EA;border:1.5px solid #0F3D2D;font-family:Archivo,sans-serif;font-size:17px;font-weight:600;letter-spacing:-0.01em;cursor:pointer" style-hover="background:#0F3D2D" style-active="transform:translateY(1px)" style-focus="outline:3px solid #C9A227;outline-offset:2px">Cargar mis tiempos</button>
+              <div style="margin-top:10px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;color:#6B6357">
+                <span style="width:13px;height:13px;border:1.2px solid #16513C;display:inline-flex;align-items:center;justify-content:center;font-size:9px;color:#16513C">✓</span>
+                Pegá el link y se carga solo
+              </div>
+            </div>
+
+            <!-- mi posición -->
+            <div style="background:#fff;border:1px solid #DDD6C8;border-left:4px solid #16513C;padding:14px 16px;display:flex;align-items:center;justify-content:space-between">
+              <div style="display:flex;flex-direction:column;gap:3px">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#6B6357">Tu posición · agosto</span>
+                <div style="display:flex;align-items:baseline;gap:10px">
+                  <span style="font-family:Newsreader,serif;font-size:52px;line-height:.9;font-weight:600;letter-spacing:-0.04em">4º</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:#16513C">▲ 2</span>
+                  <span style="font-size:11px;color:#6B6357">vs. ayer</span>
+                </div>
+              </div>
+              <div style="text-align:right;display:flex;flex-direction:column;gap:3px">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#6B6357">Total mes</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;letter-spacing:-0.02em">47:21</span>
+                <span style="font-size:11px;color:#6B6357">a 6:09 del podio</span>
+              </div>
+            </div>
+
+            <!-- podio del día -->
+            <div style="background:#fff;border:1px solid #DDD6C8;padding:0">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid #DDD6C8;background:#F1EBDD">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#4A4438">Podio de hoy</span>
+                <a href="#1a" style="font-size:12px;color:#16513C;text-decoration:none;border-bottom:1px solid #16513C">Ver el día</a>
+              </div>
+              <div style="display:flex;flex-direction:column">
+                <div style="display:flex;align-items:center;gap:11px;padding:11px 14px;border-bottom:1px solid #EDE7DA;background:#FBF8F1">
+                  <span style="width:22px;height:22px;background:#16513C;color:#F6F2EA;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600">1</span>
+                  <span style="width:28px;height:28px;border:1px solid #DDD6C8;background:#F1EBDD;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600">SF</span>
+                  <span style="flex:1;font-size:14px;font-weight:600">Sofi</span>
+                  <span style="width:13px;height:13px;border:1.2px solid #16513C;display:inline-flex;align-items:center;justify-content:center;font-size:9px;color:#16513C">✓</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600">24:18</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:11px;padding:11px 14px;border-bottom:1px solid #EDE7DA">
+                  <span style="width:22px;height:22px;border:1px solid #14120E;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600">2</span>
+                  <span style="width:28px;height:28px;border:1px solid #DDD6C8;background:#F1EBDD;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600">NA</span>
+                  <span style="flex:1;font-size:14px;font-weight:600">Nacho</span>
+                  <span style="width:13px;height:13px;border:1.2px solid #16513C;display:inline-flex;align-items:center;justify-content:center;font-size:9px;color:#16513C">✓</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600">25:47</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:11px;padding:11px 14px">
+                  <span style="width:22px;height:22px;border:1px solid #14120E;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600">3</span>
+                  <span style="width:28px;height:28px;border:1px solid #DDD6C8;background:#F1EBDD;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600">BE</span>
+                  <span style="flex:1;font-size:14px;font-weight:600">Belén</span>
+                  <span style="width:13px;height:13px;border:1px dashed #B3AA98;display:inline-flex;align-items:center;justify-content:center;font-size:9px;color:#8C8271">·</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600">26:02</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);border-top:1.5px solid #14120E;background:#F1EBDD;height:64px;flex:0 0 64px">
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#16513C;border-top:3px solid #16513C;margin-top:-1.5px"><span style="font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600">▦</span><span style="font-size:10px;font-weight:600">Hoy</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#6B6357"><span style="font-family:'IBM Plex Mono',monospace;font-size:14px">＋</span><span style="font-size:10px">Cargar</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#6B6357"><span style="font-family:'IBM Plex Mono',monospace;font-size:14px">≡</span><span style="font-size:10px">Tabla</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#6B6357"><span style="font-family:'IBM Plex Mono',monospace;font-size:14px">◔</span><span style="font-size:10px">Yo</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#6B6357"><span style="font-family:'IBM Plex Mono',monospace;font-size:14px">◍</span><span style="font-size:10px">Grupo</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Home: ya cargado -->
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#6B6357">Home · ya cargó los tres</span>
+        <div data-screen-label="Home – cargado" style="width:390px;height:844px;background:#F6F2EA;border:1px solid #DDD6C8;box-shadow:0 18px 40px rgba(60,48,30,.13);position:relative;overflow:hidden;display:flex;flex-direction:column;color:#14120E">
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600"><span>9:31</span><span style="letter-spacing:.1em">▮▮▮ ▰</span></div>
+          <div style="padding:6px 20px 14px;display:flex;align-items:flex-end;justify-content:space-between;border-bottom:1.5px solid #14120E">
+            <div style="display:flex;flex-direction:column;gap:2px">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#6B6357">Lunes 31 de agosto</span>
+              <span style="font-family:Newsreader,serif;font-size:27px;font-weight:600;letter-spacing:-0.025em;line-height:1">Liga de Juegos</span>
+            </div>
+            <div style="width:34px;height:34px;border:1.5px solid #14120E;background:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600">VC</div>
+          </div>
+
+          <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;gap:14px;padding:16px 20px">
+            <div style="position:relative;background:#fff;border:1.5px solid #14120E">
+              <span style="position:absolute;top:4px;left:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#6B6357">1</span>
+              <div style="padding:16px 16px 12px;display:flex;align-items:flex-end;justify-content:space-between;border-bottom:1px solid #DDD6C8">
+                <div style="display:flex;flex-direction:column;gap:2px">
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#16513C">Listo por hoy</span>
+                  <span style="font-family:Newsreader,serif;font-size:27px;line-height:1.05;letter-spacing:-0.025em;font-weight:600">Cargaste los tres</span>
+                </div>
+                <div style="text-align:right">
+                  <div style="font-family:Newsreader,serif;font-size:34px;line-height:1;font-weight:600;letter-spacing:-0.03em">3º</div>
+                  <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#6B6357">del día</div>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr)">
+                <div style="padding:12px 10px;border-right:1px solid #DDD6C8;display:flex;flex-direction:column;gap:5px;align-items:flex-start">
+                  <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#6B6357">Crucigrama</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;letter-spacing:-0.03em">06:41</span>
+                  <span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:#16513C"><span style="width:12px;height:12px;border:1.2px solid #16513C;display:inline-flex;align-items:center;justify-content:center;font-size:8px">✓</span>Verificado</span>
+                </div>
+                <div style="padding:12px 10px;border-right:1px solid #DDD6C8;display:flex;flex-direction:column;gap:5px;align-items:flex-start">
+                  <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#6B6357">Cruci Experto</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;letter-spacing:-0.03em">12:03</span>
+                  <span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:#16513C"><span style="width:12px;height:12px;border:1.2px solid #16513C;display:inline-flex;align-items:center;justify-content:center;font-size:8px">✓</span>Verificado</span>
+                </div>
+                <div style="padding:12px 10px;display:flex;flex-direction:column;gap:5px;align-items:flex-start">
+                  <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#6B6357">Sudoku Av.</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;letter-spacing:-0.03em">09:58</span>
+                  <span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:#8C8271"><span style="width:12px;height:12px;border:1px dashed #B3AA98;display:inline-flex;align-items:center;justify-content:center;font-size:8px">·</span>A mano</span>
+                </div>
+              </div>
+            </div>
+
+            <div style="background:#fff;border:1px solid #DDD6C8;border-left:4px solid #16513C;padding:14px 16px;display:flex;align-items:center;justify-content:space-between">
+              <div style="display:flex;flex-direction:column;gap:3px">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#6B6357">Tu posición · agosto</span>
+                <div style="display:flex;align-items:baseline;gap:10px">
+                  <span style="font-family:Newsreader,serif;font-size:52px;line-height:.9;font-weight:600;letter-spacing:-0.04em">3º</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:#16513C">▲ 1</span>
+                  <span style="font-size:11px;color:#6B6357">vs. ayer</span>
+                </div>
+              </div>
+              <div style="text-align:right;display:flex;flex-direction:column;gap:3px">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#6B6357">Total mes</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;letter-spacing:-0.02em">44:38</span>
+                <span style="font-size:11px;color:#6B6357">a 1:33 de Sofi</span>
+              </div>
+            </div>
+
+            <div style="background:#fff;border:1px solid #DDD6C8">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid #DDD6C8;background:#F1EBDD">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#4A4438">Podio de hoy</span>
+                <a href="#1a" style="font-size:12px;color:#16513C;text-decoration:none;border-bottom:1px solid #16513C">Ver el día</a>
+              </div>
+              <div style="display:flex;align-items:center;gap:11px;padding:11px 14px;border-bottom:1px solid #EDE7DA;background:#FBF8F1">
+                <span style="width:22px;height:22px;background:#16513C;color:#F6F2EA;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600">1</span>
+                <span style="width:28px;height:28px;border:1px solid #DDD6C8;background:#F1EBDD;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600">SF</span>
+                <span style="flex:1;font-size:14px;font-weight:600">Sofi</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600">24:18</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:11px;padding:11px 14px;border-bottom:1px solid #EDE7DA">
+                <span style="width:22px;height:22px;border:1px solid #14120E;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600">2</span>
+                <span style="width:28px;height:28px;border:1px solid #DDD6C8;background:#F1EBDD;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600">NA</span>
+                <span style="flex:1;font-size:14px;font-weight:600">Nacho</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600">25:47</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:11px;padding:11px 14px;background:#EFF4EF;border-left:4px solid #16513C">
+                <span style="width:22px;height:22px;border:1px solid #14120E;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600">3</span>
+                <span style="width:28px;height:28px;border:1px solid #16513C;background:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600">VC</span>
+                <span style="flex:1;font-size:14px;font-weight:700">Vos</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700">28:42</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);border-top:1.5px solid #14120E;background:#F1EBDD;flex:0 0 64px">
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#16513C;border-top:3px solid #16513C;margin-top:-1.5px"><span style="font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600">▦</span><span style="font-size:10px;font-weight:600">Hoy</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#6B6357"><span style="font-family:'IBM Plex Mono',monospace;font-size:14px">＋</span><span style="font-size:10px">Cargar</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#6B6357"><span style="font-family:'IBM Plex Mono',monospace;font-size:14px">≡</span><span style="font-size:10px">Tabla</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#6B6357"><span style="font-family:'IBM Plex Mono',monospace;font-size:14px">◔</span><span style="font-size:10px">Yo</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#6B6357"><span style="font-family:'IBM Plex Mono',monospace;font-size:14px">◍</span><span style="font-size:10px">Grupo</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= CARGAR ================= -->
+  <div style="display:flex;flex-direction:column;gap:18px">
+    <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1.5px solid #14120E;padding-bottom:8px">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:#16513C">02</span>
+      <h2 style="margin:0;font-family:Newsreader,serif;font-size:26px;font-weight:600;letter-spacing:-0.02em">Cargar tiempos</h2>
+      <span style="font-size:13px;color:#6B6357">Link primero, a mano plegado abajo</span>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:36px">
+
+      <!-- link + preview -->
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#6B6357">Link pegado · preview verificado</span>
+        <div data-screen-label="Cargar – link" style="width:390px;height:844px;background:#F6F2EA;border:1px solid #DDD6C8;box-shadow:0 18px 40px rgba(60,48,30,.13);overflow:hidden;display:flex;flex-direction:column;color:#14120E">
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600"><span>9:15</span><span style="letter-spacing:.1em">▮▮▮ ▰</span></div>
+          <div style="padding:4px 20px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1.5px solid #14120E">
+            <span style="font-size:20px;color:#4A4438">←</span>
+            <span style="font-family:Newsreader,serif;font-size:22px;font-weight:600;letter-spacing:-0.02em">Cargar tiempos</span>
+            <button style="height:30px;padding:0 10px;background:transparent;border:1px solid #DDD6C8;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#4A4438;cursor:pointer" style-hover="border-color:#14120E">31/08 ▾</button>
+          </div>
+
+          <div style="flex:1;overflow:hidden;padding:18px 20px;display:flex;flex-direction:column;gap:16px">
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#4A4438">Camino rápido</span>
+              <div style="background:#fff;border:1.5px solid #16513C;padding:14px 14px;display:flex;flex-direction:column;gap:8px">
+                <span style="font-family:Newsreader,serif;font-size:22px;letter-spacing:-0.02em;font-weight:600">Pegá el link de tu resultado</span>
+                <div style="display:flex;align-items:center;gap:8px;border:1px solid #DDD6C8;background:#FBF8F1;padding:12px 12px">
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:16px;color:#14120E;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;flex:1">lanacion.com.ar/juegos/r/8Xk2…</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#16513C">pegado</span>
+                </div>
+              </div>
+            </div>
+
+            <div style="background:#fff;border:1.5px solid #14120E;position:relative">
+              <span style="position:absolute;top:4px;left:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#6B6357">2</span>
+              <div style="padding:14px 16px 12px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;border-bottom:1px solid #DDD6C8">
+                <div style="display:flex;flex-direction:column;gap:4px">
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#6B6357">Detectamos</span>
+                  <span style="font-family:Newsreader,serif;font-size:24px;font-weight:600;letter-spacing:-0.02em;line-height:1.1">Cruci Experto</span>
+                  <span style="font-size:12px;color:#4A4438">Lunes 31 de agosto</span>
+                </div>
+                <div style="display:inline-flex;align-items:center;gap:6px;border:1.5px solid #16513C;color:#16513C;padding:5px 9px">
+                  <span style="width:14px;height:14px;border:1.2px solid #16513C;display:inline-flex;align-items:center;justify-content:center;font-size:9px">✓</span>
+                  <span style="font-size:11px;font-weight:600;letter-spacing:.04em">VERIFICADO</span>
+                </div>
+              </div>
+              <div style="padding:16px;display:flex;align-items:baseline;gap:12px">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:56px;font-weight:600;letter-spacing:-0.045em;line-height:1">12:03</span>
+                <span style="font-size:12px;color:#6B6357">mejor que tu promedio por 1:48</span>
+              </div>
+              <div style="padding:0 16px 16px;display:flex;gap:10px">
+                <button style="flex:1;height:52px;background:#16513C;color:#F6F2EA;border:1.5px solid #0F3D2D;font-family:Archivo,sans-serif;font-size:16px;font-weight:600;cursor:pointer" style-hover="background:#0F3D2D" style-focus="outline:3px solid #C9A227;outline-offset:2px">Confirmar</button>
+                <button style="width:96px;height:52px;background:transparent;color:#4A4438;border:1px solid #DDD6C8;font-family:Archivo,sans-serif;font-size:15px;cursor:pointer" style-hover="border-color:#14120E;color:#14120E">Descartar</button>
+              </div>
+            </div>
+
+            <div style="margin-top:auto;border-top:1px solid #DDD6C8;padding-top:14px">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 14px;background:#F1EBDD;border:1px solid #DDD6C8">
+                <div style="display:flex;flex-direction:column;gap:2px">
+                  <span style="font-size:15px;font-weight:600">Cargar a mano</span>
+                  <span style="font-size:12px;color:#6B6357">Sin link: los tres juegos de una</span>
+                </div>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:15px;color:#4A4438">▾</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- error -->
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#6B6357">Error · link repetido</span>
+        <div data-screen-label="Cargar – error link" style="width:390px;height:844px;background:#F6F2EA;border:1px solid #DDD6C8;box-shadow:0 18px 40px rgba(60,48,30,.13);overflow:hidden;display:flex;flex-direction:column;color:#14120E">
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600"><span>9:16</span><span style="letter-spacing:.1em">▮▮▮ ▰</span></div>
+          <div style="padding:4px 20px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1.5px solid #14120E">
+            <span style="font-size:20px;color:#4A4438">←</span>
+            <span style="font-family:Newsreader,serif;font-size:22px;font-weight:600;letter-spacing:-0.02em">Cargar tiempos</span>
+            <button style="height:30px;padding:0 10px;background:transparent;border:1px solid #DDD6C8;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#4A4438;cursor:pointer">31/08 ▾</button>
+          </div>
+          <div style="flex:1;padding:18px 20px;display:flex;flex-direction:column;gap:16px">
+            <div style="background:#fff;border:1.5px solid #A8352A;padding:14px;display:flex;flex-direction:column;gap:8px">
+              <span style="font-family:Newsreader,serif;font-size:22px;letter-spacing:-0.02em;font-weight:600">Pegá el link de tu resultado</span>
+              <div style="display:flex;align-items:center;gap:8px;border:1px solid #A8352A;background:#FCF2F0;padding:12px">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:16px;color:#14120E;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;flex:1">lanacion.com.ar/juegos/r/7Qm9…</span>
+              </div>
+              <div style="display:flex;align-items:flex-start;gap:8px;color:#A8352A">
+                <span style="width:16px;height:16px;border:1.5px solid #A8352A;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex:0 0 16px">!</span>
+                <span style="font-size:13px;line-height:1.5">Ese link ya lo cargó Martín. Buen intento.</span>
+              </div>
+            </div>
+            <div style="background:#FBF8F1;border:1px solid #DDD6C8;padding:14px;display:flex;flex-direction:column;gap:10px">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#6B6357">Cargado por Martín · 8:41</span>
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <span style="font-size:15px;font-weight:600">Cruci Experto · 31/08</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:600">11:26</span>
+              </div>
+              <button style="height:46px;background:transparent;border:1px solid #14120E;font-family:Archivo,sans-serif;font-size:15px;font-weight:600;cursor:pointer;color:#14120E" style-hover="background:#F1EBDD">Probar con otro link</button>
+            </div>
+            <div style="margin-top:auto;display:flex;align-items:center;justify-content:space-between;padding:14px;background:#F1EBDD;border:1px solid #DDD6C8">
+              <div style="display:flex;flex-direction:column;gap:2px">
+                <span style="font-size:15px;font-weight:600">Cargar a mano</span>
+                <span style="font-size:12px;color:#6B6357">Sin link: los tres juegos de una</span>
+              </div>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:15px;color:#4A4438">▾</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- manual -->
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#6B6357">A mano · desplegado</span>
+        <div data-screen-label="Cargar – a mano" style="width:390px;height:844px;background:#F6F2EA;border:1px solid #DDD6C8;box-shadow:0 18px 40px rgba(60,48,30,.13);overflow:hidden;display:flex;flex-direction:column;color:#14120E">
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600"><span>9:18</span><span style="letter-spacing:.1em">▮▮▮ ▰</span></div>
+          <div style="padding:4px 20px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1.5px solid #14120E">
+            <span style="font-size:20px;color:#4A4438">←</span>
+            <span style="font-family:Newsreader,serif;font-size:22px;font-weight:600;letter-spacing:-0.02em">Cargar a mano</span>
+            <button style="height:30px;padding:0 10px;background:transparent;border:1px solid #DDD6C8;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#4A4438;cursor:pointer">31/08 ▾</button>
+          </div>
+          <div style="flex:1;padding:14px 20px 0;display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#6B6357;line-height:1.5">
+              <span style="width:13px;height:13px;border:1px dashed #B3AA98;display:inline-flex;align-items:center;justify-content:center;font-size:9px;color:#8C8271;flex:0 0 13px">·</span>
+              Lo que cargues a mano queda sin verificar.
+            </div>
+
+            <div style="background:#fff;border:1px solid #DDD6C8;position:relative">
+              <span style="position:absolute;top:3px;left:5px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8C8271">1</span>
+              <div style="padding:12px 14px 12px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+                <span style="font-size:15px;font-weight:600">Crucigrama</span>
+                <input value="06:41" style="width:118px;height:52px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;border:1.5px solid #14120E;background:#FBF8F1;color:#14120E;letter-spacing:-0.02em" style-focus="outline:3px solid #C9A227;outline-offset:1px">
+              </div>
+              <div style="padding:0 14px 12px;display:flex;align-items:center;justify-content:space-between">
+                <span style="font-size:13px;color:#6B6357">No lo terminé</span>
+                <span style="width:44px;height:26px;border:1px solid #DDD6C8;background:#F1EBDD;border-radius:0;display:flex;align-items:center;padding:2px"><span style="width:20px;height:20px;background:#fff;border:1px solid #B3AA98"></span></span>
+              </div>
+            </div>
+
+            <div style="background:#fff;border:1px solid #DDD6C8;position:relative">
+              <span style="position:absolute;top:3px;left:5px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8C8271">2</span>
+              <div style="padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+                <span style="font-size:15px;font-weight:600">Cruci Experto</span>
+                <input value="12:03" style="width:118px;height:52px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;border:1.5px solid #14120E;background:#FBF8F1;color:#14120E;letter-spacing:-0.02em" style-focus="outline:3px solid #C9A227;outline-offset:1px">
+              </div>
+              <div style="padding:0 14px 12px;display:flex;align-items:center;justify-content:space-between">
+                <span style="font-size:13px;color:#6B6357">No lo terminé</span>
+                <span style="width:44px;height:26px;border:1px solid #DDD6C8;background:#F1EBDD;display:flex;align-items:center;padding:2px"><span style="width:20px;height:20px;background:#fff;border:1px solid #B3AA98"></span></span>
+              </div>
+            </div>
+
+            <!-- DNF activo -->
+            <div style="background:#fff;border:1.5px solid #A8352A;position:relative">
+              <span style="position:absolute;top:3px;left:5px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8C8271">3</span>
+              <div style="padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+                <span style="font-size:15px;font-weight:600">Sudoku Avanzado</span>
+                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px">
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;color:#A8352A;letter-spacing:-0.02em">45:00</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#A8352A">Castigo por DNF</span>
+                </div>
+              </div>
+              <div style="padding:0 14px 12px;display:flex;align-items:center;justify-content:space-between">
+                <span style="font-size:13px;font-weight:600;color:#A8352A">No lo terminé</span>
+                <span style="width:44px;height:26px;border:1px solid #A8352A;background:#A8352A;display:flex;align-items:center;justify-content:flex-end;padding:2px"><span style="width:20px;height:20px;background:#fff"></span></span>
+              </div>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8C8271;padding:2px 2px">
+              <span>DNF: Crucigrama 20:00</span><span>Experto 40:00</span><span>Sudoku 45:00</span>
+            </div>
+          </div>
+          <div style="padding:12px 20px 18px;border-top:1px solid #DDD6C8;background:#F6F2EA">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px">
+              <span style="font-size:13px;color:#6B6357">Total del día</span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:600">63:44</span>
+            </div>
+            <button style="width:100%;height:56px;background:#16513C;color:#F6F2EA;border:1.5px solid #0F3D2D;font-family:Archivo,sans-serif;font-size:17px;font-weight:600;cursor:pointer" style-hover="background:#0F3D2D" style-focus="outline:3px solid #C9A227;outline-offset:2px">Guardar los tres</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= RANKING ================= -->
+  <div style="display:flex;flex-direction:column;gap:18px">
+    <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1.5px solid #14120E;padding-bottom:8px">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:#16513C">03</span>
+      <h2 style="margin:0;font-family:Newsreader,serif;font-size:26px;font-weight:600;letter-spacing:-0.02em">Ranking</h2>
+      <span style="font-size:13px;color:#6B6357">8 filas sin scroll · semana / mes · desktop</span>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:36px;align-items:flex-start">
+
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#6B6357">Ranking · semana</span>
+        <div data-screen-label="Ranking mobile" style="width:390px;height:844px;background:#F6F2EA;border:1px solid #DDD6C8;box-shadow:0 18px 40px rgba(60,48,30,.13);overflow:hidden;display:flex;flex-direction:column;color:#14120E">
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600"><span>9:33</span><span style="letter-spacing:.1em">▮▮▮ ▰</span></div>
+          <div style="padding:4px 20px 0;border-bottom:1.5px solid #14120E">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;padding-bottom:10px">
+              <span style="font-family:Newsreader,serif;font-size:26px;font-weight:600;letter-spacing:-0.025em">Tabla</span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6B6357">25–31 ago</span>
+            </div>
+            <div style="display:flex;gap:0">
+              <div style="flex:1;text-align:center;padding:10px 0;border-bottom:3px solid #16513C;font-size:14px;font-weight:700;color:#16513C;margin-bottom:-1.5px">Semana</div>
+              <div style="flex:1;text-align:center;padding:10px 0;border-bottom:3px solid transparent;font-size:14px;color:#6B6357">Mes</div>
+            </div>
+          </div>
+
+          <!-- podio -->
+          <div style="display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:1px;background:#DDD6C8;border-bottom:1.5px solid #14120E">
+            <div style="background:#FBF8F1;padding:14px 8px 12px;display:flex;flex-direction:column;align-items:center;gap:5px">
+              <span style="width:22px;height:22px;border:1px solid #14120E;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600">2</span>
+              <span style="width:34px;height:34px;border:1px solid #DDD6C8;background:#F1EBDD;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600">NA</span>
+              <span style="font-size:13px;font-weight:600">Nacho</span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:600">44:38</span>
+            </div>
+            <div style="background:#16513C;color:#F6F2EA;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:5px">
+              <span style="width:24px;height:24px;background:#F6F2EA;color:#16513C;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700">1</span>
+              <span style="width:40px;height:40px;border:1px solid #F6F2EA;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600">SF</span>
+              <span style="font-size:14px;font-weight:700">Sofi</span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:21px;font-weight:700;letter-spacing:-0.02em">41:12</span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;opacity:.85">Puntera</span>
+            </div>
+            <div style="background:#FBF8F1;padding:14px 8px 12px;display:flex;flex-direction:column;align-items:center;gap:5px">
+              <span style="width:22px;height:22px;border:1px solid #14120E;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600">3</span>
+              <span style="width:34px;height:34px;border:1px solid #16513C;background:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600">VC</span>
+              <span style="font-size:13px;font-weight:700">Vos</span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:700">47:21</span>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:30px 1fr 78px;gap:8px;padding:7px 14px;background:#F1EBDD;border-bottom:1px solid #DDD6C8;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#6B6357">
+            <span>Pos</span><span>Jugador</span><span style="text-align:right">Total</span>
+          </div>
+
+          <div style="flex:1;display:flex;flex-direction:column">
+            <sc-for list="{{ rows }}" as="r" hint-placeholder-count="8">
+              <div style="display:grid;grid-template-columns:30px 1fr 78px;gap:8px;align-items:center;padding:9px 14px;border-bottom:1px solid #EDE7DA;background:{{ r.bg }};border-left:{{ r.edge }}">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:17px;font-weight:600;letter-spacing:-0.02em">{{ r.pos }}</span>
+                <div style="display:flex;flex-direction:column;gap:3px;min-width:0">
+                  <div style="display:flex;align-items:center;gap:7px">
+                    <span style="width:22px;height:22px;border:1px solid #DDD6C8;background:#F1EBDD;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;flex:0 0 22px">{{ r.ini }}</span>
+                    <span style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</span>
+                    {{ r.verifiedMark }}
+                    {{ r.chips }}
+                  </div>
+                  <div style="display:flex;gap:9px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8C8271">
+                    <span>C {{ r.g1 }}</span><span>E {{ r.g2 }}</span><span>S {{ r.g3 }}</span>
+                  </div>
+                </div>
+                <span style="text-align:right;font-family:'IBM Plex Mono',monospace;font-size:17px;font-weight:600;letter-spacing:-0.02em">{{ r.total }}</span>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);border-top:1.5px solid #14120E;background:#F1EBDD;flex:0 0 64px">
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#6B6357"><span style="font-family:'IBM Plex Mono',monospace;font-size:14px">▦</span><span style="font-size:10px">Hoy</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#6B6357"><span style="font-family:'IBM Plex Mono',monospace;font-size:14px">＋</span><span style="font-size:10px">Cargar</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#16513C;border-top:3px solid #16513C;margin-top:-1.5px"><span style="font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600">≡</span><span style="font-size:10px;font-weight:600">Tabla</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#6B6357"><span style="font-family:'IBM Plex Mono',monospace;font-size:14px">◔</span><span style="font-size:10px">Yo</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#6B6357"><span style="font-family:'IBM Plex Mono',monospace;font-size:14px">◍</span><span style="font-size:10px">Grupo</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- desktop -->
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#6B6357">Ranking · desktop 1280</span>
+        <div data-screen-label="Ranking desktop" style="width:1280px;background:#F6F2EA;border:1px solid #DDD6C8;box-shadow:0 18px 40px rgba(60,48,30,.13);overflow:hidden;color:#14120E">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 32px;border-bottom:1.5px solid #14120E">
+            <div style="display:flex;align-items:baseline;gap:28px">
+              <span style="font-family:Newsreader,serif;font-size:26px;font-weight:600;letter-spacing:-0.025em">Liga de Juegos</span>
+              <div style="display:flex;gap:22px;font-size:14px;color:#6B6357">
+                <span>Hoy</span><span style="color:#16513C;font-weight:700;border-bottom:2px solid #16513C;padding-bottom:2px">Tabla</span><span>Mis estadísticas</span><span>Grupo</span>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:14px">
+              <button style="height:40px;padding:0 18px;background:#16513C;color:#F6F2EA;border:1.5px solid #0F3D2D;font-family:Archivo,sans-serif;font-size:14px;font-weight:600;cursor:pointer" style-hover="background:#0F3D2D">Cargar tiempos</button>
+              <span style="width:34px;height:34px;border:1.5px solid #14120E;background:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600">VC</span>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 344px;gap:0">
+            <div style="padding:26px 32px 32px;border-right:1px solid #DDD6C8">
+              <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:18px">
+                <div>
+                  <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#6B6357;margin-bottom:4px">Agosto 2026 · 8 jugadores</div>
+                  <div style="font-family:Newsreader,serif;font-size:40px;line-height:1;letter-spacing:-0.03em;font-weight:600">Tabla del mes</div>
+                </div>
+                <div style="display:flex;border:1px solid #DDD6C8;background:#fff">
+                  <span style="padding:9px 20px;font-size:14px;color:#4A4438;border-right:1px solid #DDD6C8">Semana</span>
+                  <span style="padding:9px 20px;font-size:14px;font-weight:700;background:#16513C;color:#F6F2EA">Mes</span>
+                </div>
+              </div>
+
+              <div style="display:grid;grid-template-columns:56px 1fr 92px 92px 92px 108px 150px;gap:0;background:#F1EBDD;border:1px solid #DDD6C8;border-bottom:1.5px solid #14120E;padding:9px 14px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#6B6357">
+                <span>Pos</span><span>Jugador</span><span style="text-align:right">Cruci</span><span style="text-align:right">Experto</span><span style="text-align:right">Sudoku</span><span style="text-align:right">Total</span><span style="text-align:right">Detalle</span>
+              </div>
+              <sc-for list="{{ rows }}" as="r" hint-placeholder-count="8">
+                <div style="display:grid;grid-template-columns:56px 1fr 92px 92px 92px 108px 150px;gap:0;align-items:center;padding:13px 14px;border:1px solid #DDD6C8;border-top:none;background:{{ r.bg }}">
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:600;letter-spacing:-0.02em">{{ r.pos }}</span>
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <span style="width:28px;height:28px;border:1px solid #DDD6C8;background:#F1EBDD;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600">{{ r.ini }}</span>
+                    <span style="font-size:15px;font-weight:600">{{ r.name }}</span>
+                    {{ r.verifiedMark }}
+                    {{ r.chips }}
+                  </div>
+                  <span style="text-align:right;font-family:'IBM Plex Mono',monospace;font-size:14px;color:#4A4438">{{ r.g1 }}</span>
+                  <span style="text-align:right;font-family:'IBM Plex Mono',monospace;font-size:14px;color:#4A4438">{{ r.g2 }}</span>
+                  <span style="text-align:right;font-family:'IBM Plex Mono',monospace;font-size:14px;color:#4A4438">{{ r.g3 }}</span>
+                  <span style="text-align:right;font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:600;letter-spacing:-0.02em">{{ r.total }}</span>
+                  <span style="text-align:right;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8C8271">{{ r.delta }}</span>
+                </div>
+              </sc-for>
+            </div>
+
+            <div style="padding:26px 24px 32px;display:flex;flex-direction:column;gap:18px;background:#FBF8F1">
+              <div style="border:1.5px solid #14120E;background:#fff;padding:16px">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#6B6357;margin-bottom:6px">Tu mes</div>
+                <div style="display:flex;align-items:baseline;gap:12px">
+                  <span style="font-family:Newsreader,serif;font-size:54px;line-height:.9;font-weight:600;letter-spacing:-0.04em">4º</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;color:#16513C">▲ 2</span>
+                </div>
+                <div style="margin-top:10px;font-size:13px;color:#4A4438;line-height:1.6">Estás a 6:09 del podio. Con dos días buenos entrás.</div>
+              </div>
+              <div style="border:1px solid #DDD6C8;background:#fff">
+                <div style="padding:11px 14px;border-bottom:1px solid #DDD6C8;background:#F1EBDD;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#4A4438">Ganadores del día</div>
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid #EDE7DA"><span style="font-size:14px">Crucigrama</span><span style="font-size:14px;font-weight:600">Sofi · <span style="font-family:'IBM Plex Mono',monospace">05:12</span></span></div>
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid #EDE7DA"><span style="font-size:14px">Cruci Experto</span><span style="font-size:14px;font-weight:600">Martín · <span style="font-family:'IBM Plex Mono',monospace">11:26</span></span></div>
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px"><span style="font-size:14px">Sudoku Av.</span><span style="font-size:14px;font-weight:600">Nacho · <span style="font-family:'IBM Plex Mono',monospace">07:49</span></span></div>
+              </div>
+              <div style="border:1px solid #DDD6C8;background:#fff;padding:14px">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#6B6357;margin-bottom:8px">Faltan cargar</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <span style="border:1px solid #DDD6C8;padding:5px 10px;font-size:12px;color:#4A4438">Gastón</span>
+                  <span style="border:1px solid #DDD6C8;padding:5px 10px;font-size:12px;color:#4A4438">Lu</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= DETALLE + STATS ================= -->
+  <div style="display:flex;flex-direction:column;gap:18px">
+    <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1.5px solid #14120E;padding-bottom:8px">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:#16513C">04</span>
+      <h2 style="margin:0;font-family:Newsreader,serif;font-size:26px;font-weight:600;letter-spacing:-0.02em">Detalle del día · Mis estadísticas · Grupo</h2>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:36px">
+
+      <!-- detalle del día -->
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#6B6357">Detalle del día</span>
+        <div data-screen-label="Detalle del día" style="width:390px;height:844px;background:#F6F2EA;border:1px solid #DDD6C8;box-shadow:0 18px 40px rgba(60,48,30,.13);overflow:hidden;display:flex;flex-direction:column;color:#14120E">
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600"><span>9:36</span><span style="letter-spacing:.1em">▮▮▮ ▰</span></div>
+          <div style="padding:4px 20px 12px;border-bottom:1.5px solid #14120E;display:flex;align-items:center;justify-content:space-between">
+            <span style="font-size:20px;color:#4A4438">←</span>
+            <div style="text-align:center">
+              <div style="font-family:Newsreader,serif;font-size:22px;font-weight:600;letter-spacing:-0.02em">Lunes 31/08</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#6B6357;letter-spacing:.1em">6 DE 8 CARGARON</div>
+            </div>
+            <span style="font-size:20px;color:#4A4438">→</span>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 68px 68px 68px;padding:8px 14px;background:#F1EBDD;border-bottom:1.5px solid #14120E;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#6B6357">
+            <span>Jugador</span><span style="text-align:right">Cruci</span><span style="text-align:right">Exp.</span><span style="text-align:right">Sud.</span>
+          </div>
+          <div style="flex:1">
+            <sc-for list="{{ dayRows }}" as="d" hint-placeholder-count="8">
+              <div style="display:grid;grid-template-columns:1fr 68px 68px 68px;align-items:center;padding:11px 14px;border-bottom:1px solid #EDE7DA;background:{{ d.bg }};border-left:{{ d.edge }}">
+                <div style="display:flex;align-items:center;gap:8px;min-width:0">
+                  <span style="width:24px;height:24px;border:1px solid #DDD6C8;background:#F1EBDD;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;flex:0 0 24px">{{ d.ini }}</span>
+                  <span style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.name }}</span>
+                </div>
+                {{ d.c1 }}{{ d.c2 }}{{ d.c3 }}
+              </div>
+            </sc-for>
+            <div style="display:flex;gap:16px;padding:14px;font-size:11px;color:#6B6357;flex-wrap:wrap">
+              <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:14px;height:14px;background:#16513C"></span>Mejor de la columna</span>
+              <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:14px;height:14px;border:1.5px solid #A8352A;color:#A8352A;display:inline-flex;align-items:center;justify-content:center;font-size:8px;font-weight:700">✕</span>DNF (con castigo)</span>
+              <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:14px;height:14px;border:1px dashed #C9C0AC"></span>No cargó</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- stats -->
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#6B6357">Mis estadísticas</span>
+        <div data-screen-label="Mis estadísticas" style="width:390px;height:844px;background:#F6F2EA;border:1px solid #DDD6C8;box-shadow:0 18px 40px rgba(60,48,30,.13);overflow:hidden;display:flex;flex-direction:column;color:#14120E">
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600"><span>9:40</span><span style="letter-spacing:.1em">▮▮▮ ▰</span></div>
+          <div style="padding:4px 20px 12px;border-bottom:1.5px solid #14120E;display:flex;align-items:flex-end;justify-content:space-between">
+            <div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#6B6357">Últimos 14 días</div>
+              <div style="font-family:Newsreader,serif;font-size:26px;font-weight:600;letter-spacing:-0.025em">Mis estadísticas</div>
+            </div>
+            <div style="width:34px;height:34px;border:1.5px solid #14120E;background:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600">VC</div>
+          </div>
+          <div style="flex:1;padding:16px 20px;display:flex;flex-direction:column;gap:14px;overflow:hidden">
+            <div style="background:#fff;border:1px solid #DDD6C8;padding:14px 12px 10px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:0 2px">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#6B6357">Evolución por juego</span>
+                <div style="display:flex;gap:10px;font-size:10px;color:#4A4438">
+                  <span style="display:inline-flex;align-items:center;gap:4px"><span style="width:12px;height:2px;background:#16513C"></span>Cruci</span>
+                  <span style="display:inline-flex;align-items:center;gap:4px"><span style="width:12px;height:2px;background:#C9A227"></span>Exp.</span>
+                  <span style="display:inline-flex;align-items:center;gap:4px"><span style="width:12px;height:2px;background:#8C8271"></span>Sud.</span>
+                </div>
+              </div>
+              <svg viewBox="0 0 320 150" style="width:100%;height:150px;display:block">
+                <rect x="0" y="0" width="320" height="150" fill="#FBF8F1"></rect>
+                <g stroke="#E7E0D2" stroke-width="1">
+                  <line x1="0" y1="30" x2="320" y2="30"></line><line x1="0" y1="60" x2="320" y2="60"></line>
+                  <line x1="0" y1="90" x2="320" y2="90"></line><line x1="0" y1="120" x2="320" y2="120"></line>
+                  <line x1="64" y1="0" x2="64" y2="150"></line><line x1="128" y1="0" x2="128" y2="150"></line>
+                  <line x1="192" y1="0" x2="192" y2="150"></line><line x1="256" y1="0" x2="256" y2="150"></line>
+                </g>
+                <polyline fill="none" stroke="#8C8271" stroke-width="1.6" stroke-dasharray="4 3" points="6,54 30,62 54,49 78,70 102,58 126,45 150,64 174,52 198,60 222,44 246,55 270,41 294,50 314,38"></polyline>
+                <polyline fill="none" stroke="#C9A227" stroke-width="2" points="6,34 30,29 54,44 78,36 102,50 126,41 150,33 174,46 198,38 222,30 246,42 270,34 294,28 314,32"></polyline>
+                <polyline fill="none" stroke="#16513C" stroke-width="2.4" points="6,104 30,112 54,98 78,109 102,95 126,101 150,88 174,96 198,84 222,92 246,79 270,86 294,74 314,70"></polyline>
+                <circle cx="314" cy="70" r="3.5" fill="#16513C"></circle>
+              </svg>
+              <div style="display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#8C8271;padding:6px 2px 0"><span>18 ago</span><span>25 ago</span><span>31 ago</span></div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div style="background:#fff;border:1px solid #DDD6C8;border-top:3px solid #16513C;padding:12px 13px;display:flex;flex-direction:column;gap:4px">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#6B6357">Récord personal</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:28px;font-weight:600;letter-spacing:-0.03em">04:52</span>
+                <span style="font-size:11px;color:#6B6357">Crucigrama · 22/08</span>
+              </div>
+              <div style="background:#fff;border:1px solid #DDD6C8;padding:12px 13px;display:flex;flex-direction:column;gap:4px">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#6B6357">Racha actual</span>
+                <span style="font-family:Newsreader,serif;font-size:30px;font-weight:600;letter-spacing:-0.03em;line-height:1">11 días</span>
+                <span style="font-size:11px;color:#6B6357">Tu mejor: 19</span>
+              </div>
+              <div style="background:#fff;border:1px solid #DDD6C8;padding:12px 13px;display:flex;flex-direction:column;gap:4px">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#6B6357">Consistencia</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:28px;font-weight:600;letter-spacing:-0.03em">±1:14</span>
+                <span style="font-size:11px;color:#6B6357">Desvío sobre tu media</span>
+              </div>
+              <div style="background:#fff;border:1px solid #DDD6C8;padding:12px 13px;display:flex;flex-direction:column;gap:4px">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#6B6357">Completado</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:28px;font-weight:600;letter-spacing:-0.03em">86%</span>
+                <span style="font-size:11px;color:#A8352A">6 DNF en agosto</span>
+              </div>
+            </div>
+
+            <div style="background:#F1EBDD;border:1px solid #DDD6C8;padding:12px 13px;display:flex;align-items:center;justify-content:space-between">
+              <span style="font-size:13px;color:#4A4438">Tiempos verificados</span>
+              <span style="display:inline-flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;color:#16513C"><span style="width:14px;height:14px;border:1.2px solid #16513C;display:inline-flex;align-items:center;justify-content:center;font-size:9px">✓</span>72 de 84</span>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);border-top:1.5px solid #14120E;background:#F1EBDD;flex:0 0 64px">
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#6B6357"><span style="font-family:'IBM Plex Mono',monospace;font-size:14px">▦</span><span style="font-size:10px">Hoy</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#6B6357"><span style="font-family:'IBM Plex Mono',monospace;font-size:14px">＋</span><span style="font-size:10px">Cargar</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#6B6357"><span style="font-family:'IBM Plex Mono',monospace;font-size:14px">≡</span><span style="font-size:10px">Tabla</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#16513C;border-top:3px solid #16513C;margin-top:-1.5px"><span style="font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600">◔</span><span style="font-size:10px;font-weight:600">Yo</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#6B6357"><span style="font-family:'IBM Plex Mono',monospace;font-size:14px">◍</span><span style="font-size:10px">Grupo</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- grupo -->
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#6B6357">Grupo</span>
+        <div data-screen-label="Grupo" style="width:390px;height:844px;background:#F6F2EA;border:1px solid #DDD6C8;box-shadow:0 18px 40px rgba(60,48,30,.13);overflow:hidden;display:flex;flex-direction:column;color:#14120E">
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600"><span>9:44</span><span style="letter-spacing:.1em">▮▮▮ ▰</span></div>
+          <div style="padding:4px 20px 12px;border-bottom:1.5px solid #14120E">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#6B6357">Grupo · desde marzo 2026</div>
+            <div style="font-family:Newsreader,serif;font-size:26px;font-weight:600;letter-spacing:-0.025em">Los del crucigrama</div>
+          </div>
+          <div style="flex:1;padding:16px 20px;display:flex;flex-direction:column;gap:14px;overflow:hidden">
+            <div style="border:1.5px solid #14120E;background:#fff;padding:12px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#6B6357;margin-bottom:6px">Código de invitación</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:29px;font-weight:600;letter-spacing:.06em">CRUCI-84</span>
+                <button style="height:36px;padding:0 12px;background:transparent;border:1px solid #14120E;font-size:13px;font-weight:600;cursor:pointer;color:#14120E" style-hover="background:#F1EBDD">Copiar</button>
+              </div>
+              <button style="margin-top:10px;width:100%;height:46px;background:#16513C;color:#F6F2EA;border:1.5px solid #0F3D2D;font-size:15px;font-weight:600;font-family:Archivo,sans-serif;cursor:pointer" style-hover="background:#0F3D2D">Compartir por WhatsApp</button>
+            </div>
+
+            <div style="border:1px solid #DDD6C8;background:#fff">
+              <div style="padding:10px 14px;border-bottom:1px solid #DDD6C8;background:#F1EBDD;display:flex;justify-content:space-between">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#4A4438">Miembros</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#6B6357">8</span>
+              </div>
+              <sc-for list="{{ members }}" as="m" hint-placeholder-count="8">
+                <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid #EDE7DA">
+                  <span style="width:26px;height:26px;border:1px solid #DDD6C8;background:#F1EBDD;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600">{{ m.ini }}</span>
+                  <span style="flex:1;font-size:14px;font-weight:600">{{ m.name }}</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8C8271">{{ m.note }}</span>
+                </div>
+              </sc-for>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 14px">
+                <span style="font-size:13px;color:#16513C;font-weight:600;border-bottom:1px solid #16513C">Ver los 8</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8C8271">Fede, Lu</span>
+              </div>
+            </div>
+
+            <div style="border:1px solid #DDD6C8;background:#fff">
+              <div style="padding:10px 14px;border-bottom:1px solid #DDD6C8;background:#F1EBDD;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#4A4438">Palmarés</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid #EDE7DA"><span style="font-size:13px;color:#6B6357">Julio</span><span style="font-size:14px;font-weight:600">Martín</span><span style="font-family:'IBM Plex Mono',monospace;font-size:13px">42:05</span></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid #EDE7DA"><span style="font-size:13px;color:#6B6357">Junio</span><span style="font-size:14px;font-weight:600">Sofi</span><span style="font-family:'IBM Plex Mono',monospace;font-size:13px">40:58</span></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px"><span style="font-size:13px;color:#6B6357">Mayo</span><span style="font-size:14px;font-weight:600">Sofi</span><span style="font-family:'IBM Plex Mono',monospace;font-size:13px">43:31</span></div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);border-top:1.5px solid #14120E;background:#F1EBDD;flex:0 0 64px">
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#6B6357"><span style="font-family:'IBM Plex Mono',monospace;font-size:14px">▦</span><span style="font-size:10px">Hoy</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#6B6357"><span style="font-family:'IBM Plex Mono',monospace;font-size:14px">＋</span><span style="font-size:10px">Cargar</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#6B6357"><span style="font-family:'IBM Plex Mono',monospace;font-size:14px">≡</span><span style="font-size:10px">Tabla</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#6B6357"><span style="font-family:'IBM Plex Mono',monospace;font-size:14px">◔</span><span style="font-size:10px">Yo</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#16513C;border-top:3px solid #16513C;margin-top:-1.5px"><span style="font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600">◍</span><span style="font-size:10px;font-weight:600">Grupo</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= VACÍOS ================= -->
+  <div style="display:flex;flex-direction:column;gap:18px">
+    <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1.5px solid #14120E;padding-bottom:8px">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:#16513C">05</span>
+      <h2 style="margin:0;font-family:Newsreader,serif;font-size:26px;font-weight:600;letter-spacing:-0.02em">Estados vacíos</h2>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:36px">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#6B6357">Grupo recién creado</span>
+        <div data-screen-label="Vacío – grupo nuevo" style="width:390px;height:844px;background:#F6F2EA;border:1px solid #DDD6C8;box-shadow:0 18px 40px rgba(60,48,30,.13);overflow:hidden;display:flex;flex-direction:column;color:#14120E">
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600"><span>9:02</span><span style="letter-spacing:.1em">▮▮▮ ▰</span></div>
+          <div style="padding:6px 20px 14px;border-bottom:1.5px solid #14120E">
+            <span style="font-family:Newsreader,serif;font-size:27px;font-weight:600;letter-spacing:-0.025em">Liga de Juegos</span>
+          </div>
+          <div style="flex:1;padding:20px;display:flex;flex-direction:column;gap:16px">
+            <div style="border:1.5px solid #14120E;background:#fff;padding:20px 18px;display:flex;flex-direction:column;gap:10px;position:relative">
+              <span style="position:absolute;top:4px;left:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#6B6357">1</span>
+              <div style="height:96px;background-image:linear-gradient(#E7E0D2 1px,transparent 1px),linear-gradient(90deg,#E7E0D2 1px,transparent 1px);background-size:24px 24px;border:1px solid #DDD6C8;display:flex;align-items:center;justify-content:center;font-family:Newsreader,serif;font-size:15px;color:#8C8271">La tabla arranca vacía</div>
+              <span style="font-family:Newsreader,serif;font-size:26px;line-height:1.1;letter-spacing:-0.025em;font-weight:600">Sos el único acá adentro</span>
+              <span style="font-size:13px;line-height:1.6;color:#4A4438">Mandales el código a los muchachos. Sin rivales no hay tabla, hay diario.</span>
+              <button style="margin-top:4px;width:100%;height:54px;background:#16513C;color:#F6F2EA;border:1.5px solid #0F3D2D;font-size:16px;font-weight:600;font-family:Archivo,sans-serif;cursor:pointer" style-hover="background:#0F3D2D">Compartir CRUCI-84</button>
+              <button style="width:100%;height:48px;background:transparent;border:1px solid #DDD6C8;font-size:15px;color:#4A4438;font-family:Archivo,sans-serif;cursor:pointer" style-hover="border-color:#14120E;color:#14120E">Cargar mis tiempos igual</button>
+            </div>
+            <div style="border:1px solid #DDD6C8;background:#FBF8F1;padding:14px;display:flex;flex-direction:column;gap:8px">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#6B6357">Cómo funciona</span>
+              <span style="font-size:13px;color:#4A4438;line-height:1.6">Tres juegos por día. Suma de tiempos. Si no terminás, castigo: 20, 40 o 45 minutos.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#6B6357">Día sin cargas</span>
+        <div data-screen-label="Vacío – día sin cargas" style="width:390px;height:844px;background:#F6F2EA;border:1px solid #DDD6C8;box-shadow:0 18px 40px rgba(60,48,30,.13);overflow:hidden;display:flex;flex-direction:column;color:#14120E">
+          <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600"><span>7:12</span><span style="letter-spacing:.1em">▮▮▮ ▰</span></div>
+          <div style="padding:4px 20px 12px;border-bottom:1.5px solid #14120E;display:flex;align-items:center;justify-content:space-between">
+            <span style="font-size:20px;color:#4A4438">←</span>
+            <div style="text-align:center">
+              <div style="font-family:Newsreader,serif;font-size:22px;font-weight:600;letter-spacing:-0.02em">Martes 01/09</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#6B6357;letter-spacing:.1em">0 DE 8 CARGARON</div>
+            </div>
+            <span style="font-size:20px;color:#C9C0AC">→</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 68px 68px 68px;padding:8px 14px;background:#F1EBDD;border-bottom:1.5px solid #14120E;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#6B6357">
+            <span>Jugador</span><span style="text-align:right">Cruci</span><span style="text-align:right">Exp.</span><span style="text-align:right">Sud.</span>
+          </div>
+          <div style="position:relative;flex:1;background-image:linear-gradient(#EDE7DA 1px,transparent 1px);background-size:100% 45px">
+            <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:0 40px;text-align:center">
+              <div style="width:56px;height:56px;border:1.5px solid #14120E;background:#fff;display:flex;align-items:center;justify-content:center;font-family:Newsreader,serif;font-size:26px;position:relative">
+                <span style="position:absolute;top:2px;left:4px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#8C8271">1</span>—
+              </div>
+              <span style="font-family:Newsreader,serif;font-size:24px;letter-spacing:-0.025em;font-weight:600;line-height:1.15">Nadie cargó todavía</span>
+              <span style="font-size:13px;color:#4A4438;line-height:1.6">Son las 7:12. El diario recién salió. Sé el primero y quedás arriba todo el día.</span>
+              <button style="margin-top:4px;height:52px;padding:0 26px;background:#16513C;color:#F6F2EA;border:1.5px solid #0F3D2D;font-size:16px;font-weight:600;font-family:Archivo,sans-serif;cursor:pointer" style-hover="background:#0F3D2D">Cargar mis tiempos</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= SISTEMA ================= -->
+  <div style="display:flex;flex-direction:column;gap:18px">
+    <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1.5px solid #14120E;padding-bottom:8px">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:#16513C">06</span>
+      <h2 style="margin:0;font-family:Newsreader,serif;font-size:26px;font-weight:600;letter-spacing:-0.02em">Sistema</h2>
+      <span style="font-size:13px;color:#6B6357">Paleta, tipografía y variantes de componentes</span>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start">
+      <!-- paleta -->
+      <div style="width:560px;background:#F6F2EA;border:1px solid #DDD6C8;padding:22px 24px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#6B6357;margin-bottom:14px">Paleta y roles</div>
+        <div style="display:flex;flex-direction:column">
+          <div style="display:grid;grid-template-columns:52px 128px 1fr;gap:14px;align-items:center;padding:9px 0;border-bottom:1px solid #E7E0D2"><span style="height:34px;background:#16513C;border:1px solid #0F3D2D"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:12px">#16513C</span><span style="font-size:13px;color:#4A4438">$primary · verde botella. CTA principal, mi fila, líder, links.</span></div>
+          <div style="display:grid;grid-template-columns:52px 128px 1fr;gap:14px;align-items:center;padding:9px 0;border-bottom:1px solid #E7E0D2"><span style="height:34px;background:#0F3D2D"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:12px">#0F3D2D</span><span style="font-size:13px;color:#4A4438">Hover / active del primary.</span></div>
+          <div style="display:grid;grid-template-columns:52px 128px 1fr;gap:14px;align-items:center;padding:9px 0;border-bottom:1px solid #E7E0D2"><span style="height:34px;background:#A8352A"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:12px">#A8352A</span><span style="font-size:13px;color:#4A4438">$danger · rojo tinta. Sólo DNF y errores de carga.</span></div>
+          <div style="display:grid;grid-template-columns:52px 128px 1fr;gap:14px;align-items:center;padding:9px 0;border-bottom:1px solid #E7E0D2"><span style="height:34px;background:#C9A227"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:12px">#C9A227</span><span style="font-size:13px;color:#4A4438">Ámbar de foco: anillo visible en todo lo interactivo.</span></div>
+          <div style="display:grid;grid-template-columns:52px 128px 1fr;gap:14px;align-items:center;padding:9px 0;border-bottom:1px solid #E7E0D2"><span style="height:34px;background:#14120E"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:12px">#14120E</span><span style="font-size:13px;color:#4A4438">Tinta. Texto, reglas fuertes, borde de card destacada.</span></div>
+          <div style="display:grid;grid-template-columns:52px 128px 1fr;gap:14px;align-items:center;padding:9px 0;border-bottom:1px solid #E7E0D2"><span style="height:34px;background:#4A4438"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:12px">#4A4438</span><span style="font-size:13px;color:#4A4438">Texto secundario (AA sobre papel).</span></div>
+          <div style="display:grid;grid-template-columns:52px 128px 1fr;gap:14px;align-items:center;padding:9px 0;border-bottom:1px solid #E7E0D2"><span style="height:34px;background:#6B6357"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:12px">#6B6357</span><span style="font-size:13px;color:#4A4438">Etiquetas y metadatos.</span></div>
+          <div style="display:grid;grid-template-columns:52px 128px 1fr;gap:14px;align-items:center;padding:9px 0;border-bottom:1px solid #E7E0D2"><span style="height:34px;background:#DDD6C8"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:12px">#DDD6C8</span><span style="font-size:13px;color:#4A4438">Regla fina. Todos los bordes de 1px.</span></div>
+          <div style="display:grid;grid-template-columns:52px 128px 1fr;gap:14px;align-items:center;padding:9px 0;border-bottom:1px solid #E7E0D2"><span style="height:34px;background:#F1EBDD"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:12px">#F1EBDD</span><span style="font-size:13px;color:#4A4438">Fondo de encabezados de tabla y barra inferior.</span></div>
+          <div style="display:grid;grid-template-columns:52px 128px 1fr;gap:14px;align-items:center;padding:9px 0;border-bottom:1px solid #E7E0D2"><span style="height:34px;background:#F6F2EA;border:1px solid #DDD6C8"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:12px">#F6F2EA</span><span style="font-size:13px;color:#4A4438">Papel. Fondo de la app.</span></div>
+          <div style="display:grid;grid-template-columns:52px 128px 1fr;gap:14px;align-items:center;padding:9px 0"><span style="height:34px;background:#FFFFFF;border:1px solid #DDD6C8"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:12px">#FFFFFF</span><span style="font-size:13px;color:#4A4438">Superficie de card. Sin sombra difusa: regla + cambio de fondo.</span></div>
+        </div>
+      </div>
+
+      <!-- tipografía -->
+      <div style="width:560px;background:#F6F2EA;border:1px solid #DDD6C8;padding:22px 24px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#6B6357;margin-bottom:14px">Escala tipográfica</div>
+        <div style="display:flex;flex-direction:column;gap:0">
+          <div style="padding:11px 0;border-bottom:1px solid #E7E0D2"><div style="font-family:Newsreader,serif;font-size:52px;line-height:1;letter-spacing:-0.04em;font-weight:600">4º · 47:21</div><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6B6357;margin-top:4px">Display · Newsreader 600 · 52/48px · tracking −0.04em</div></div>
+          <div style="padding:11px 0;border-bottom:1px solid #E7E0D2"><div style="font-family:Newsreader,serif;font-size:29px;letter-spacing:-0.025em;font-weight:600">Todavía no cargaste lo de hoy</div><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6B6357;margin-top:4px">Título de card · Newsreader 600 · 26–29px</div></div>
+          <div style="padding:11px 0;border-bottom:1px solid #E7E0D2"><div style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;letter-spacing:-0.02em">06:41 · 12:03 · 45:00</div><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6B6357;margin-top:4px">Tiempos · IBM Plex Mono 600 · 24px en carga, 17px en tabla · cifras tabulares</div></div>
+          <div style="padding:11px 0;border-bottom:1px solid #E7E0D2"><div style="font-size:15px;font-weight:600">Nacho · Cruci Experto</div><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6B6357;margin-top:4px">UI fuerte · Archivo 600 · 15px</div></div>
+          <div style="padding:11px 0;border-bottom:1px solid #E7E0D2"><div style="font-size:13px;line-height:1.7;color:#4A4438">Cuerpo. Interlineado holgado, 1.6–1.7, para el copy que explica.</div><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6B6357;margin-top:4px">Cuerpo · Archivo 400 · 13–15px</div></div>
+          <div style="padding:11px 0"><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#6B6357">Podio de hoy</div><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6B6357;margin-top:4px">Etiqueta · IBM Plex Mono · 9–10px · tracking .16em · mayúsculas</div></div>
+        </div>
+        <div style="margin-top:16px;border-top:1.5px solid #14120E;padding-top:12px;font-size:12px;color:#4A4438;line-height:1.7">
+          Inputs de tiempo: 16px mínimo real (24px en pantalla) con <span style="font-family:'IBM Plex Mono',monospace">inputmode="numeric"</span>. Radio 0 en todo: la grilla del crucigrama no tiene esquinas redondeadas.
+        </div>
+      </div>
+
+      <!-- componentes -->
+      <div style="width:1148px;background:#F6F2EA;border:1px solid #DDD6C8;padding:22px 24px;display:flex;flex-direction:column;gap:20px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#6B6357">Componentes que se repiten</div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <span style="font-size:13px;font-weight:600">Fila de ranking · 4 variantes</span>
+            <div style="border:1px solid #DDD6C8;background:#fff">
+              <div style="display:grid;grid-template-columns:30px 1fr 78px;gap:8px;align-items:center;padding:9px 14px;border-bottom:1px solid #EDE7DA;background:#FBF8F1"><span style="font-family:'IBM Plex Mono',monospace;font-size:17px;font-weight:600">1</span><div style="display:flex;align-items:center;gap:7px"><span style="width:22px;height:22px;border:1px solid #DDD6C8;background:#F1EBDD;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600">SF</span><span style="font-size:13px;font-weight:600">Líder</span></div><span style="text-align:right;font-family:'IBM Plex Mono',monospace;font-size:17px;font-weight:600">41:12</span></div>
+              <div style="display:grid;grid-template-columns:30px 1fr 78px;gap:8px;align-items:center;padding:9px 14px;border-bottom:1px solid #EDE7DA"><span style="font-family:'IBM Plex Mono',monospace;font-size:17px;font-weight:600">2</span><div style="display:flex;align-items:center;gap:7px"><span style="width:22px;height:22px;border:1px solid #DDD6C8;background:#F1EBDD;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600">NA</span><span style="font-size:13px;font-weight:600">Normal</span></div><span style="text-align:right;font-family:'IBM Plex Mono',monospace;font-size:17px;font-weight:600">44:38</span></div>
+              <div style="display:grid;grid-template-columns:30px 1fr 78px;gap:8px;align-items:center;padding:9px 14px;border-bottom:1px solid #EDE7DA;background:#EFF4EF;border-left:4px solid #16513C"><span style="font-family:'IBM Plex Mono',monospace;font-size:17px;font-weight:700">3</span><div style="display:flex;align-items:center;gap:7px"><span style="width:22px;height:22px;border:1px solid #16513C;background:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600">VC</span><span style="font-size:13px;font-weight:700">Mi fila</span></div><span style="text-align:right;font-family:'IBM Plex Mono',monospace;font-size:17px;font-weight:700">47:21</span></div>
+              <div style="display:grid;grid-template-columns:30px 1fr 78px;gap:8px;align-items:center;padding:9px 14px;color:#8C8271"><span style="font-family:'IBM Plex Mono',monospace;font-size:17px;font-weight:600">8</span><div style="display:flex;align-items:center;gap:7px"><span style="width:22px;height:22px;border:1px dashed #C9C0AC;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600">LU</span><span style="font-size:13px;font-weight:600">Sin cargar hoy</span></div><span style="text-align:right;font-family:'IBM Plex Mono',monospace;font-size:17px">—</span></div>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <span style="font-size:13px;font-weight:600">Card de juego en la carga · 3 estados</span>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+              <div style="border:1px solid #DDD6C8;background:#fff;padding:10px;display:flex;flex-direction:column;gap:6px"><span style="font-size:12px;font-weight:600">Vacío</span><div style="height:44px;border:1px dashed #C9C0AC;background:#FBF8F1;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:18px;color:#B3AA98">--:--</div></div>
+              <div style="border:1.5px solid #14120E;background:#fff;padding:10px;display:flex;flex-direction:column;gap:6px"><span style="font-size:12px;font-weight:600">Con foco</span><div style="height:44px;border:1.5px solid #14120E;outline:3px solid #C9A227;outline-offset:1px;background:#FBF8F1;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600">06:41</div></div>
+              <div style="border:1.5px solid #A8352A;background:#fff;padding:10px;display:flex;flex-direction:column;gap:6px"><span style="font-size:12px;font-weight:600;color:#A8352A">DNF</span><div style="height:44px;border:1px solid #A8352A;background:#FCF2F0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#A8352A"><span style="font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:600">45:00</span><span style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.1em">CASTIGO</span></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <span style="font-size:13px;font-weight:600">Chips de estado</span>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+              <span style="display:inline-flex;align-items:center;gap:5px;border:1px solid #16513C;color:#16513C;padding:4px 8px;font-size:11px;font-weight:600"><span style="width:12px;height:12px;border:1.2px solid #16513C;display:inline-flex;align-items:center;justify-content:center;font-size:8px">✓</span>VERIFICADO</span>
+              <span style="display:inline-flex;align-items:center;gap:5px;border:1px dashed #B3AA98;color:#8C8271;padding:4px 8px;font-size:11px">A mano</span>
+              <span style="display:inline-flex;align-items:center;gap:5px;border:1px solid #A8352A;color:#A8352A;padding:4px 8px;font-size:11px;font-weight:600">2 DNF</span>
+              <span style="display:inline-flex;align-items:center;gap:5px;border:1px solid #DDD6C8;background:#F1EBDD;color:#4A4438;padding:4px 8px;font-size:11px">3 días ▲</span>
+              <span style="display:inline-flex;align-items:center;gap:5px;background:#14120E;color:#F6F2EA;padding:4px 8px;font-size:11px;font-weight:600">5 victorias</span>
+            </div>
+            <span style="font-size:12px;color:#6B6357;line-height:1.6;margin-top:2px">El sello ✓ es la única marca de verificado y aparece igual en home, ranking y detalle. Lo tipeado a mano no lleva alerta: lleva un contorno punteado neutro.</span>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <span style="font-size:13px;font-weight:600">Badge de posición · Botones</span>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+              <span style="width:30px;height:30px;background:#16513C;color:#F6F2EA;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700">1</span>
+              <span style="width:30px;height:30px;border:1.5px solid #14120E;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600">2</span>
+              <span style="width:30px;height:30px;border:1px solid #DDD6C8;color:#6B6357;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:15px">7</span>
+              <span style="width:30px;height:30px;border:1px dashed #C9C0AC;color:#B3AA98;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:15px">—</span>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:4px">
+              <button style="height:44px;padding:0 18px;background:#16513C;color:#F6F2EA;border:1.5px solid #0F3D2D;font-size:14px;font-weight:600;font-family:Archivo,sans-serif;cursor:pointer">Primario</button>
+              <button style="height:44px;padding:0 18px;background:#0F3D2D;color:#F6F2EA;border:1.5px solid #0F3D2D;font-size:14px;font-weight:600;font-family:Archivo,sans-serif;cursor:pointer">Hover</button>
+              <button style="height:44px;padding:0 18px;background:#16513C;color:#F6F2EA;border:1.5px solid #0F3D2D;outline:3px solid #C9A227;outline-offset:2px;font-size:14px;font-weight:600;font-family:Archivo,sans-serif;cursor:pointer">Foco</button>
+              <button style="height:44px;padding:0 18px;background:transparent;color:#14120E;border:1px solid #14120E;font-size:14px;font-weight:600;font-family:Archivo,sans-serif;cursor:pointer">Secundario</button>
+              <button style="height:44px;padding:0 18px;background:#E7E0D2;color:#A9A091;border:1px solid #DDD6C8;font-size:14px;font-weight:600;font-family:Archivo,sans-serif">Deshabilitado</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</section>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showChips&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Ranking&quot;}}">
+const E = React.createElement;
+
+const chip = (text, kind) => {
+  const base = { display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 5px', fontSize: 9.5, fontFamily: 'Archivo, sans-serif', lineHeight: 1.2, whiteSpace: 'nowrap' };
+  const kinds = {
+    dnf: { border: '1px solid #A8352A', color: '#A8352A', fontWeight: 600 },
+    win: { background: '#14120E', color: '#F6F2EA', fontWeight: 600 },
+    streak: { border: '1px solid #DDD6C8', background: '#F1EBDD', color: '#4A4438' }
+  };
+  return E('span', { style: Object.assign({}, base, kinds[kind]) }, text);
+};
+
+const verified = (ok) => ok
+  ? E('span', { title: 'Verificado', style: { width: 13, height: 13, flex: '0 0 13px', border: '1.2px solid #16513C', color: '#16513C', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontFamily: 'Archivo, sans-serif' } }, '✓')
+  : E('span', { title: 'Cargado a mano', style: { width: 13, height: 13, flex: '0 0 13px', border: '1px dashed #B3AA98', color: '#8C8271', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 8 } }, '·');
+
+const DATA = [
+  { pos: 1, name: 'Sofi', ini: 'SF', total: '41:12', g1: '05:12', g2: '19:40', g3: '16:20', dnf: 0, wins: 5, streak: 22, ver: true, delta: '▲ 1' },
+  { pos: 2, name: 'Nacho', ini: 'NA', total: '44:38', g1: '06:02', g2: '21:15', g3: '17:21', dnf: 1, wins: 3, streak: 14, ver: true, delta: '▼ 1' },
+  { pos: 3, name: 'Martín', ini: 'MA', total: '46:04', g1: '06:31', g2: '21:26', g3: '18:07', dnf: 0, wins: 4, streak: 9, ver: true, delta: '=' },
+  { pos: 4, name: 'Vos', ini: 'VC', total: '47:21', g1: '06:41', g2: '22:03', g3: '18:37', dnf: 2, wins: 1, streak: 11, ver: false, me: true, delta: '▲ 2' },
+  { pos: 5, name: 'Belén', ini: 'BE', total: '49:02', g1: '07:10', g2: '23:11', g3: '18:41', dnf: 1, wins: 2, streak: 6, ver: true, delta: '▼ 1' },
+  { pos: 6, name: 'Caro', ini: 'CA', total: '51:44', g1: '07:48', g2: '24:02', g3: '19:54', dnf: 3, wins: 0, streak: 4, ver: false, delta: '=' },
+  { pos: 7, name: 'Fede', ini: 'FE', total: '55:10', g1: '08:22', g2: '25:40', g3: '21:08', dnf: 4, wins: 0, streak: 2, ver: true, delta: '▼ 2' },
+  { pos: 8, name: 'Lu', ini: 'LU', total: '62:31', g1: '09:04', g2: '28:15', g3: '25:12', dnf: 6, wins: 0, streak: 0, ver: false, delta: '=' }
+];
+
+const cell = (val, kind) => {
+  const base = { textAlign: 'right', fontFamily: "'IBM Plex Mono', monospace", fontSize: 13, fontWeight: 600, padding: '3px 4px', letterSpacing: '-0.01em' };
+  if (kind === 'best') return E('span', { style: Object.assign({}, base, { background: '#16513C', color: '#F6F2EA' }) }, val);
+  if (kind === 'dnf') return E('span', { style: Object.assign({}, base, { color: '#A8352A', border: '1px solid #A8352A', display: 'block' }) }, 'DNF');
+  if (kind === 'none') return E('span', { style: Object.assign({}, base, { color: '#C9C0AC', fontWeight: 400 }) }, '—');
+  return E('span', { style: base }, val);
+};
+
+const DAY = [
+  { name: 'Sofi', ini: 'SF', c: [['05:12', 'best'], ['11:48', ''], ['07:18', '']] },
+  { name: 'Martín', ini: 'MA', c: [['06:31', ''], ['11:26', 'best'], ['08:04', '']] },
+  { name: 'Nacho', ini: 'NA', c: [['06:02', ''], ['12:44', ''], ['07:49', 'best']] },
+  { name: 'Vos', ini: 'VC', c: [['06:41', ''], ['12:03', ''], ['09:58', '']], me: true },
+  { name: 'Belén', ini: 'BE', c: [['07:10', ''], ['13:02', ''], ['', 'dnf']] },
+  { name: 'Caro', ini: 'CA', c: [['07:48', ''], ['', 'dnf'], ['11:20', '']] },
+  { name: 'Fede', ini: 'FE', c: [['', 'none'], ['', 'none'], ['', 'none']] },
+  { name: 'Lu', ini: 'LU', c: [['', 'none'], ['', 'none'], ['', 'none']] }
+];
+
+const MEMBERS = [
+  { name: 'Sofi', ini: 'SF', note: '1ª · racha 22' },
+  { name: 'Nacho', ini: 'NA', note: '2º · racha 14' },
+  { name: 'Martín', ini: 'MA', note: '3º · racha 9' },
+  { name: 'Vos', ini: 'VC', note: '4º · admin' },
+  { name: 'Belén', ini: 'BE', note: '5ª · racha 6' },
+  { name: 'Caro', ini: 'CA', note: '6ª · racha 4' },
+  { name: 'Fede', ini: 'FE', note: '7º · racha 2' },
+  { name: 'Lu', ini: 'LU', note: '8º · abandonó' }
+];
+
+class Component extends DCLogic {
+  renderVals() {
+    const showChips = this.props.showChips ?? true;
+    const rows = DATA.map(r => {
+      const chips = [];
+      if (showChips) {
+        if (r.wins > 0) chips.push(E('span', { key: 'w' }, chip(r.wins + '✦', 'win')));
+        if (r.dnf > 0) chips.push(E('span', { key: 'd' }, chip(r.dnf + ' DNF', 'dnf')));
+        if (r.streak >= 5) chips.push(E('span', { key: 's' }, chip(r.streak + 'd', 'streak')));
+      }
+      return {
+        pos: r.pos, name: r.name, ini: r.ini, total: r.total, g1: r.g1, g2: r.g2, g3: r.g3, delta: r.delta,
+        bg: r.me ? '#EFF4EF' : (r.pos === 1 ? '#FBF8F1' : '#FFFFFF'),
+        edge: r.me ? '4px solid #16513C' : '4px solid transparent',
+        verifiedMark: verified(r.ver),
+        chips: E('span', { style: { display: 'flex', gap: 4, marginLeft: 'auto' } }, chips)
+      };
+    });
+    const dayRows = DAY.map(d => ({
+      name: d.name, ini: d.ini,
+      bg: d.me ? '#EFF4EF' : '#FFFFFF',
+      edge: d.me ? '4px solid #16513C' : '4px solid transparent',
+      c1: E('span', { style: { textAlign: 'right' } }, cell(d.c[0][0], d.c[0][1])),
+      c2: E('span', { style: { textAlign: 'right' } }, cell(d.c[1][0], d.c[1][1])),
+      c3: E('span', { style: { textAlign: 'right' } }, cell(d.c[2][0], d.c[2][1]))
+    }));
+    return { rows, dayRows, members: MEMBERS.slice(0, 6) };
+  }
+}
+
+</script>
+</body>
+</html>

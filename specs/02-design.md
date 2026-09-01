@@ -330,28 +330,72 @@ Regla única: **la fecha del puzzle es un `date`, no un instante.** El servidor 
 
 ## 6. Front-end
 
-### 6.1 Pantallas
+El diseño está resuelto y aprobado en Claude Design (`design/Liga de Juegos.dc.html`): 11 artboards mobile de 390×844, una vista desktop del ranking a 1280 y una sección de sistema. **El canvas manda**; esta sección es su traducción a rutas, componentes y datos. Los tokens están en [`design/tokens.md`](../design/tokens.md) y listos para pegar en [`design/tokens.scss`](../design/tokens.scss).
 
-| Ruta | Pantalla | Contenido |
+### 6.1 Navegación
+
+Barra inferior fija de 5 destinos, presente en todas las pantallas de primer nivel:
+
+| Tab | Ruta | Artboard |
 |---|---|---|
-| `/login` | Acceso | Email+pass, Google, registro |
-| `/` | Home | Card "¿Ya cargaste hoy?", tu posición, podio del día (RF-18) |
-| `/cargar` | Carga diaria | Los 3 juegos en una vista, selector de fecha, toggle DNF (RF-6, RNF-2) |
-| `/ranking` | Ranking | Tabs semana/mes, general + por juego, tabla ordenable (RF-11) |
-| `/dia/:fecha` | Detalle de día | Grilla jugador × juego (RF-20) |
-| `/stats` | Mis estadísticas | Gráfico de evolución, PB, racha, consistencia (RF-14, RF-19) |
-| `/grupo` | Grupo | Miembros, código de invitación, settings (admin), palmarés |
-| `/grupo/nuevo`, `/unirse` | Alta / ingreso | (RF-3, RF-4) |
+| Hoy | `/` | 01 (dos estados: sin cargar / ya cargó los tres) |
+| Cargar | `/cargar` | 02 (link pegado, error de link repetido, a mano desplegado) |
+| Tabla | `/ranking` | 03 (mobile semana/mes + desktop 1280) |
+| Yo | `/stats` | 04 |
+| Grupo | `/grupo` | 04 |
 
-### 6.2 Patrones
+Fuera de la barra: `/dia/:fecha` (detalle del día, artboard 04), `/login`, `/grupo/nuevo`, `/unirse`.
 
-- **Selector de grupo** en el header; el grupo activo se guarda en `localStorage` y viaja como parte de la ruta de la query.
-- **Input de tiempo**: campo único que acepta `7:45`, `745`, `1:07:45`. Normaliza a segundos en `packages/shared/time.ts` — misma función en front y back, un solo lugar donde equivocarse.
-- **Optimistic update** al cargar un tiempo: la fila aparece al instante, TanStack Query invalida el leaderboard al confirmar.
-- **Estados vacíos con intención**: "Todavía nadie cargó nada hoy. Sé el primero." — no un spinner vacío.
-- **Bootstrap customizado por SCSS**, no por clases sueltas: se sobreescriben `$primary`, `$font-family-base`, `$border-radius` en `_variables.scss` antes de importar Bootstrap. Así no queda con cara de bootstrap default (ver `04-ui-design-prompt.md`).
+Sólo el ranking tiene layout propio de desktop (nav superior + tabla ancha con columna de delta). El resto se centra a ancho mobile: es una app que se usa parado en la cocina.
 
----
+### 6.2 Pantallas y contenido
+
+| Pantalla | Qué muestra |
+|---|---|
+| **Hoy** | Card de estado del día (CTA "Cargar mis tiempos" o los tres tiempos con su sello), tu posición del mes en display grande con delta vs. ayer y distancia al podio, y el podio de hoy |
+| **Cargar** | Campo de link arriba de todo → preview de lo detectado (juego, fecha, tiempo, sello verificado) → confirmar/descartar. Debajo, plegado, "Cargar a mano" con los tres juegos, toggle DNF por juego y total del día |
+| **Ranking** | Tabs Semana/Mes, podio de tres, tabla con posición, jugador, desglose C/E/S y total. Mi fila con borde verde. Chips por fila: verificado, DNF, racha, victorias |
+| **Detalle del día** | Grilla jugador × juego con navegación ← →, contador "6 de 8 cargaron", mejor de cada columna resaltado, y símbolos distintos para DNF y para no cargó |
+| **Mis estadísticas** | Evolución por juego en 14 días, récord personal, racha actual (y la mejor), consistencia, % completado y tiempos verificados |
+| **Grupo** | Código de invitación grande con copiar y compartir por WhatsApp, miembros, palmarés por mes |
+| **Vacíos** | Grupo recién creado (sólo vos adentro, con las reglas explicadas) y día sin cargas |
+
+### 6.3 Componentes con variantes
+
+Del artboard 06, son los que se repiten y hay que construir una sola vez:
+
+- **Fila de ranking** — 4 variantes: líder, normal, mi fila, sin cargar hoy.
+- **Card de juego en la carga** — 3 estados: vacío (`--:--`), con foco, DNF (muestra el castigo).
+- **Chips** — verificado (✓), a mano, N DNF, racha, victorias. El sello ✓ es la **única** marca de verificado y aparece igual en Hoy, Ranking y Detalle. Lo cargado a mano no lleva alerta: lleva contorno punteado neutro.
+- **Badge de posición**, **botones** (primario, hover, foco, secundario, deshabilitado).
+
+### 6.4 Datos que el diseño pide y la API todavía no daba
+
+Detectado al traducir los artboards. Se agregan a los endpoints de §4:
+
+| Endpoint | Campos nuevos | De dónde sale |
+|---|---|---|
+| `/leaderboard` | `delta_vs_yesterday`, `gap_to_leader`, `gap_to_podium` | "4º ▲2 · a 6:09 del podio" |
+| `/leaderboard` | `daily_winners` (ganador por juego del día) | "Ganadores del día" en desktop |
+| `/leaderboard` | `pending_today` (quiénes no cargaron) | "Faltan cargar: Gastón, Lu" |
+| `/day` | `loaded_count` / `member_count`, `best_per_game` | "6 DE 8 CARGARON" + mejor de la columna |
+| `/stats` | `verified_count` / `total_count`, `best_streak` | "72 de 84" y "Tu mejor: 19" |
+| `/me` (home) | quiénes ya cargaron hoy | "Sofi, Nacho y Belén ya cargaron los tres" |
+
+Ninguno agrega consultas nuevas: todos se derivan de la grilla que el motor de puntuación ya arma (§5.1).
+
+### 6.5 Diferencias resueltas contra las specs previas
+
+1. **Código de invitación**: el diseño lo muestra como `CRUCI-84`, no como 6 caracteres al azar. **Gana el diseño** — se dicta por teléfono mucho mejor. Formato: palabra corta del nombre del grupo + guion + 2 dígitos, con reintento ante colisión. Actualiza RF-3.
+2. **Largo del link de La Nación**: el mockup usa `lanacion.com.ar/juegos/r/8Xk2…`, pero el link real es `lanacion.agilmenteapp.com/shared/<uuid-de-36>`, bastante más largo. El campo tiene que **truncar por el medio** conservando el final, no cortar al final como en el mockup.
+3. **Bootstrap redondea por defecto**: el diseño es `border-radius: 0` en todo. Hay que forzarlo en las variables (ya está en `tokens.scss`), no parchearlo por componente.
+
+### 6.6 Patrones
+
+- **Selector de grupo** en el header; el grupo activo se guarda en `localStorage`.
+- **Input de tiempo**: campo único que acepta `7:45`, `745`, `1:07:45`. Normaliza a segundos en `packages/shared/time.ts` — misma función en front y back.
+- **Optimistic update** al cargar un tiempo: la fila aparece al instante con la animación `rowIn` (la única del sistema), y TanStack Query invalida el leaderboard al confirmar.
+- **Estados vacíos con intención**, ya diseñados: nada de spinners pelados.
 
 ## 7. Deploy
 

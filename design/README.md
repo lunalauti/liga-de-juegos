@@ -12,16 +12,26 @@ Igual que con las specs: **primero el diseño, después el código.** Si una pan
 
 ## Qué va en esta carpeta
 
-Una copia local exportada de los artboards, para que el repo sea autocontenido y para poder comparar la implementación contra la referencia sin depender de tener sesión abierta:
-
 ```
 design/
-├── Liga de Juegos.dc.html   # export del canvas
-├── support.js               # el que importa el .dc.html
-└── tokens.md                # colores, tipografía y espaciado extraídos del diseño
+├── Liga de Juegos.dc.html   # export del canvas (11 artboards mobile + desktop del ranking + sistema)
+├── support.js               # runtime del canvas, generado — no se edita
+├── tokens.md                # paleta con roles, tipografía, forma, espaciado y movimiento
+└── tokens.scss              # los mismos tokens como override de Bootstrap, listo para copiar
 ```
 
-`tokens.md` se traduce después a `apps/web/src/styles/_variables.scss` (las variables de Bootstrap), que es lo que consume el código. Nadie debería estar sacando colores a ojo del canvas: salen de ahí.
+`tokens.scss` va a `apps/web/src/styles/_variables.scss` (T0.7) y es lo único que el código consume. Nadie debería estar sacando colores a ojo del canvas: salen de ahí.
+
+## Artboards
+
+| # | Contenido |
+|---|---|
+| 01 | Home, dos estados: todavía no cargó / ya cargó los tres |
+| 02 | Cargar: link pegado con preview, error de link repetido, a mano desplegado |
+| 03 | Ranking: mobile semana/mes y desktop 1280 |
+| 04 | Detalle del día · Mis estadísticas · Grupo |
+| 05 | Estados vacíos: grupo recién creado y día sin cargas |
+| 06 | Sistema: paleta, tipografía y variantes de componentes |
 
 ## Cómo actualizar la copia local
 
