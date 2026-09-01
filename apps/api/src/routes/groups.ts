@@ -5,6 +5,7 @@ import { db } from '../db.js';
 import { badRequest, conflict, notFound } from '../errors.js';
 import { generateInviteCode } from '../services/inviteCode.js';
 import { getMembership, requireMember, requireAdmin } from '../services/authz.js';
+import { invalidateGroupCache } from '../services/leaderboardCache.js';
 
 export const groupsRouter = Router();
 
@@ -207,6 +208,10 @@ groupsRouter.patch('/groups/:id', async (req, res, next) => {
         );
       }
     }
+
+    // Settings, juegos activos o penalizaciones cambiaron: el ranking calculado
+    // (cache de 60s, specs/02-design.md §5.4) queda desactualizado.
+    invalidateGroupCache(groupId);
 
     const detail = await loadGroupDetail(groupId);
     res.json(detail);

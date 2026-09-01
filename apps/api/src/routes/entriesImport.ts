@@ -6,6 +6,7 @@ import { ApiError, badRequest, conflict } from '../errors.js';
 import { getMembership } from '../services/authz.js';
 import { fetchLnResult, LnFetchError, type LnResult } from '../services/lanacion.js';
 import { upsertEntry, serializeEntry, resolveLnVerification } from '../services/entries.js';
+import { invalidateGroupCache } from '../services/leaderboardCache.js';
 
 export const entriesImportRouter = Router();
 
@@ -225,6 +226,7 @@ entriesImportRouter.post('/entries/import', async (req, res, next) => {
     ]);
 
     await client.query('commit');
+    for (const g of groupResults) if (g.status === 'created' || g.status === 'updated') invalidateGroupCache(g.groupId);
 
     // El tiempo real (ln.seconds) es el mismo para todos los grupos, pero si dnf=true
     // el segundo que cuenta es la penalización de CADA grupo — puede diferir entre

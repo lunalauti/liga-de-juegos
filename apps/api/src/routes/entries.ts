@@ -6,6 +6,7 @@ import { db } from '../db.js';
 import { badRequest, conflict, forbidden, notFound } from '../errors.js';
 import { requireMember } from '../services/authz.js';
 import { upsertEntry, serializeEntry } from '../services/entries.js';
+import { invalidateGroupCache } from '../services/leaderboardCache.js';
 
 export const entriesRouter = Router();
 
@@ -100,6 +101,7 @@ async function writeManualEntry(
     },
     actorId,
   );
+  invalidateGroupCache(groupId);
 
   return { entry: serializeEntry(entry), gameSlug: groupGame.slug, autoConvertedToDnf };
 }
@@ -194,6 +196,7 @@ entriesRouter.delete('/entries/:id', async (req, res, next) => {
       [entry.id, req.user!.id, entry],
     );
     await db.query(`delete from public.entries where id = $1`, [entryId]);
+    invalidateGroupCache(entry.group_id);
     res.status(204).end();
   } catch (err) {
     next(err);
