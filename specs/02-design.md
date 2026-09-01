@@ -116,7 +116,7 @@ Todos los `id` son `uuid` con `default gen_random_uuid()`. Todos los timestamps 
 | `id` | uuid PK | |
 | `name` | text NOT NULL | |
 | `invite_code` | text UNIQUE NOT NULL | 6 chars, alfabeto sin caracteres ambiguos (`0/O`, `1/I`) |
-| `created_by` | uuid → profiles | |
+| `created_by` | uuid → profiles, NULL, `on delete set null` | Quién lo creó, para historial — no una referencia viva (D9) |
 | `settings` | jsonb NOT NULL | ver §3.2 |
 | `archived_at` | timestamptz NULL | |
 
@@ -128,6 +128,13 @@ Todos los `id` son `uuid` con `default gen_random_uuid()`. Todos los timestamps 
 | `user_id` | uuid → profiles | PK compuesta |
 | `role` | text | `admin` \| `member` |
 | `joined_at` | timestamptz | |
+
+> **Sucesión de admin (D9):** `handle_admin_departure()`, trigger `before delete on profiles`
+> (`supabase/migrations/0004_creator_departure.sql`). Si el perfil que se borra es admin de
+> algún grupo y no queda otro admin ahí, el rol pasa al miembro con `joined_at` más antiguo;
+> si no queda nadie más, el grupo se borra entero (cascada ya cubre `entries`, `group_games`,
+> `seasons`, `blackout_dates`). Aplica a cualquier admin, no sólo al creador original.
+> Verificado contra Supabase real en ambos casos (con sucesor y sin nadie más).
 
 **`group_games`** — qué juegos están activos y con qué penalización en cada grupo (RF-17)
 
