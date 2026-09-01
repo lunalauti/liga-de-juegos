@@ -412,19 +412,19 @@ Ninguno agrega consultas nuevas: todos se derivan de la grilla que el motor de p
 
 | Pieza | Dónde | Notas |
 |---|---|---|
-| Web | Vercel | Build `npm run build -w apps/web`, output `apps/web/dist`. Preview por PR |
-| API | Render Web Service (free) | Docker o buildpack Node. **El plan free duerme a los 15 min**: el front muestra un skeleton en el primer request y un cron externo (cron-job.org) pega a `/health` cada 10 min |
-| DB + Auth | Supabase (free) | Migraciones aplicadas por CI con Supabase CLI |
-| Cron de cierre | Render Cron Job | 00:10 ART diario |
+| Web | Vercel | `vercel.json` en la raíz define build/output para el monorepo. Preview por PR (automático de Vercel) |
+| API | Render Web Service (free) | `render.yaml` (Blueprint). Corre `tsx` directo, sin paso de build — por eso `tsx` vive en `dependencies`, no `devDependencies`: Render instala con `NODE_ENV=production`, que saltea devDependencies. **El plan free duerme a los 15 min**: cold start de ~30s en el primer request tras estar dormido (T5.5, sin implementar todavía) |
+| DB + Auth | Supabase (free) | Migraciones aplicadas por `apps/api/scripts/migrate.mjs`, corrido por CI en cada push a `main` (job `migrate` en `.github/workflows/ci.yml`) |
+| Cron de cierre de temporadas | — | **No implementado.** RF-16 (cerrar temporada y congelar `final_standings`) es Fase 7; hoy no existe ningún job programado |
 
 **Variables de entorno**
 
-- API: `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`, `ALLOWED_ORIGINS`, `PORT`
-- Web: `VITE_API_URL`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
+- API (Render, secretos cargados a mano en el dashboard — `render.yaml` los marca `sync: false`): `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `ALLOWED_ORIGINS`, `PORT`. (`SUPABASE_JWT_SECRET` ya no hace falta — la validación es contra JWKS, ver §1.)
+- Web (Vercel, se hornean en el build — hay que cargarlas ahí, no alcanza con `.env` local): `VITE_API_URL`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
 
-**CI (GitHub Actions)**: en cada PR → typecheck + lint + tests. En merge a `main` → migraciones y deploy (Vercel y Render se enganchan al repo por su cuenta).
+**CI (GitHub Actions, `.github/workflows/ci.yml`)**: en cada PR y push a `main` → typecheck + lint + test (job `check`). Push a `main` además corre el test de contrato con La Nación (§9.6, no bloqueante) y, si `check` pasa, aplica las migraciones pendientes contra Supabase (job `migrate`, necesita el secreto `DATABASE_URL` cargado en GitHub → Settings → Secrets). El deploy en sí lo disparan Vercel y Render por su cuenta al detectar el push, conectando cada uno directamente al repo — no hay un paso de CI que los dispare.
 
-**Seguridad operativa**: CORS restringido a los dominios de Vercel; `helmet`; rate limit de 100 req/min por IP y 20 escrituras/min por usuario; la service role key jamás sale del backend.
+**Seguridad operativa**: CORS restringido a los dominios de Vercel (`ALLOWED_ORIGINS`); `helmet`; rate limit **pendiente** (ver §9.6, no implementado todavía); la service role key jamás sale del backend.
 
 ---
 

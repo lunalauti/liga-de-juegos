@@ -81,12 +81,12 @@
 
 ## Fase 5 — Deploy (~4 h)
 
-- [ ] **T5.1** Deploy de la API en Render + variables de entorno + `/health`. §7
-- [ ] **T5.2** Deploy de la web en Vercel + variables + dominio. §7
-- [ ] **T5.3** CORS y redirect URLs de Supabase Auth apuntando a los dominios reales.
-- [ ] **T5.4** GitHub Actions: typecheck + lint + test en PR; migraciones en merge a `main`.
-- [ ] **T5.5** Ping externo cada 10 min contra `/health` para el cold start. §7
-- [ ] **T5.6** **Prueba de aceptación del MVP** con los criterios de `01-requirements.md` §7, hecha desde el celular.
+- [~] **T5.1** Deploy de la API en Render + variables de entorno + `/health`. §7 **Preparado, falta tu cuenta.** `render.yaml` (Blueprint) listo y probado: `npm start` levanta el server real. Encontré y corregí un problema real antes de subirlo — `tsx` estaba en `devDependencies`, y Render instala con `NODE_ENV=production` (saltea devDependencies): el server no hubiera arrancado nunca. Falta: entrar a render.com, "New → Blueprint", conectar `lunalauti/liga-de-juegos`, y cargar a mano los 4 secretos que `render.yaml` deja marcados (`DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `ALLOWED_ORIGINS`).
+- [~] **T5.2** Deploy de la web en Vercel + variables + dominio. §7 **Preparado, falta tu cuenta.** `vercel.json` en la raíz define build/output para el monorepo, con rewrite a `index.html` para que las rutas de React Router no den 404 al refrescar. Falta: entrar a vercel.com, importar `lunalauti/liga-de-juegos`, y cargar `VITE_API_URL`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (se hornean en el build, no alcanza con tenerlas en `.env` local).
+- [ ] **T5.3** CORS y redirect URLs de Supabase Auth apuntando a los dominios reales. **Bloqueado hasta T5.1/T5.2** — no existen los dominios todavía. En cuanto tengas las URLs de Render y Vercel, lo hago: `ALLOWED_ORIGINS` en Render y las Redirect URLs en Supabase Auth → Settings → URL Configuration.
+- [x] **T5.4** GitHub Actions: typecheck + lint + test en PR; migraciones en merge a `main`. **Hecho.** `.github/workflows/ci.yml`, dos jobs (`check`, `migrate`). De paso: el proyecto tenía un script `lint` que apuntaba a un ESLint nunca instalado — lo dejé andando de verdad (`eslint.config.js`, flat config, TS + React) antes de meterlo en CI. Encontró 122 errores reales de configuración (globals de Node/browser faltantes, un archivo vendorizado que no debía lintearse) y una regla nueva (`react-hooks/set-state-in-effect`) que marcaba como error un patrón ya probado contra producción — la apagué a propósito, documentado en el config. Falta: cargar el secreto `DATABASE_URL` en GitHub → Settings → Secrets para que el job `migrate` funcione.
+- [ ] **T5.5** Ping externo cada 10 min contra `/health` para el cold start. §7 **Bloqueado hasta T5.1** — no hay URL de Render todavía. Servicio sugerido: cron-job.org (gratis, no necesita tarjeta).
+- [ ] **T5.6** **Prueba de aceptación del MVP** con los criterios de `01-requirements.md` §7, hecha desde el celular. **Bloqueado hasta T5.1/T5.2** — necesita el sistema desplegado de verdad, no local.
 
 ## Fase 6 — Modos de competencia (~6 h)
 

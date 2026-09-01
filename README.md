@@ -2,14 +2,15 @@
 
 Registro y competencia de los juegos diarios de La Nación (Crucigrama, Cruci Experto, Sudoku Avanzado) entre amigos.
 
-**Estado:** Fase 4 completa — **MVP jugable.** Motor de puntuación (suma, desempates, drop-worst, ausencias) con 21 tests, y las pantallas Hoy, Tabla y Detalle del día funcionando contra Supabase real. Con esto el sistema ya se puede usar con los amigos. Sigue la Fase 5 (deploy) en `specs/03-tasks.md`.
+**Estado:** repo en https://github.com/lunalauti/liga-de-juegos, con CI (typecheck + lint + test) en cada push. Infraestructura de deploy lista como código (`render.yaml`, `vercel.json`) — falta conectar las cuentas de Render y Vercel para que quede desplegado de verdad (Fase 5, `specs/03-tasks.md`).
 
 ## Setup
 
 ```bash
 npm install
-npm test          # 11 tests
+npm test          # 70 tests
 npm run typecheck
+npm run lint
 npm run dev:web   # http://localhost:5173 — ver /kitchen-sink
 npm run dev:api   # http://localhost:3001/health
 ```
@@ -19,6 +20,15 @@ Copiá `.env.example` a `.env` y completá las llaves de Supabase (Project Setti
 ```bash
 node apps/api/scripts/migrate.mjs   # aplica supabase/migrations/*.sql, idempotente
 ```
+
+## Deploy
+
+Todo lo que sigue está preparado como código (`render.yaml`, `vercel.json`, `.github/workflows/ci.yml`), pero conectar las cuentas es un paso manual que no se puede automatizar:
+
+1. **Render** — [render.com](https://render.com) → New → Blueprint → conectar `lunalauti/liga-de-juegos`. Carga a mano los 4 secretos que `render.yaml` deja marcados: `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `ALLOWED_ORIGINS`.
+2. **Vercel** — [vercel.com](https://vercel.com) → Import Project → mismo repo. Carga `VITE_API_URL`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (se hornean en el build).
+3. **GitHub Actions** — Settings → Secrets and variables → Actions → agregar `DATABASE_URL`, para que el job de migraciones corra en cada push a `main`.
+4. Avisar para terminar T5.3 (CORS + redirect URLs de Supabase) con los dominios reales.
 
 ## Cómo funciona la competencia
 

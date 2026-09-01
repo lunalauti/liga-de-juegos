@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    name: typecheck + lint + test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+
+      # Test de contrato contra la API real de La Nación (specs/02-design.md §9.6):
+      # corre sólo en main, no en cada PR, para no depender de la red en cada push.
+      - name: Test de contrato con La Nación
+        if: github.ref == 'refs/heads/main'
+        run: npx vitest run apps/api/src/services/lanacion.test.ts
+        env:
+          RUN_LN_CONTRACT_TEST: '1'
+        continue-on-error: true # si La Nación está caída, no bloquea el deploy — sólo avisa
+
+  migrate:
+    name: aplicar migraciones a Supabase
+    needs: check
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Aplicar supabase/migrations/*.sql
+        run: node apps/api/scripts/migrate.mjs
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}

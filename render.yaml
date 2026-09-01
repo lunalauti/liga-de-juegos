@@ -1,0 +1,29 @@
+# Blueprint de Render para la API (specs/02-design.md §7). Al conectar este repo
+# en Render (New → Blueprint), esto arma el servicio solo; sólo hay que cargar
+# los secretos marcados `sync: false` a mano en el dashboard.
+services:
+  - type: web
+    name: liga-de-juegos-api
+    runtime: node
+    plan: free
+    region: oregon
+    rootDir: apps/api
+    buildCommand: cd ../.. && npm ci
+    # Corre TS directo con tsx, sin paso de build — mismo runtime que dev
+    # (apps/api/package.json). `tsx` vive en dependencies, no devDependencies,
+    # porque Render instala con NODE_ENV=production (saltea devDependencies).
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: PORT
+        value: 3001
+      - key: ALLOWED_ORIGINS
+        sync: false # dominio de Vercel una vez desplegado, ej. https://liga-de-juegos.vercel.app
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
