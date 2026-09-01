@@ -28,13 +28,13 @@
 
 ## Fase 2 — Grupos (~6 h)
 
-- [ ] **T2.1** Generador de `invite_code` con formato legible al dictado (`CRUCI-84`) + test de colisión. [RF-3] §6.5
-- [ ] **T2.2** API `POST /groups`, `GET /groups/:id`, `PATCH /groups/:id`, `POST /groups/join`. [RF-3, RF-4, RF-5]
-- [ ] **T2.3** Zod schema de `groups.settings` + validación al escribir. [RF-17] §3.2
-- [ ] **T2.4** API: `regenerate-code`, remover miembro, guard "no podés quedarte sin admin". [RF-5]
-- [ ] **T2.5** Web: crear grupo, unirse con código, selector de grupo en el header (persistido). [RF-3, RF-4] §6.2
-- [ ] **T2.6** Web: pantalla de grupo según artboard 04 (código grande con copiar y compartir por WhatsApp, miembros, palmarés). [RF-5]
-- [ ] **T2.7** Web: panel de settings del grupo, sólo admin. [RF-17]
+- [x] **T2.1** Generador de `invite_code` con formato legible al dictado (`CRUCI-84`) + test de colisión. [RF-3] §6.5 **Hecho y verificado**: el caso exacto del diseño ("Los del crucigrama" → `CRUCI-XX`) tiene test propio.
+- [x] **T2.2** API `POST /groups`, `GET /groups/:id`, `PATCH /groups/:id`, `POST /groups/join`. [RF-3, RF-4, RF-5] **Hecho y verificado contra Supabase real** (dos usuarios, creación, unión idempotente, código inválido).
+- [x] **T2.3** Zod schema de `groups.settings` + validación al escribir. [RF-17] §3.2 **Hecho.** Merge parcial + revalidación cruzada (ej. `primary_period` tiene que estar en `period_types`), probado con un caso inválido real.
+- [x] **T2.4** API: `regenerate-code`, remover miembro, guard "no podés quedarte sin admin". [RF-5] **Hecho y verificado**: intentar remover al único admin devuelve 409, remover a otro miembro funciona.
+- [x] **T2.5** Web: crear grupo, unirse con código, selector de grupo (persistido en `localStorage`, `useActiveGroup`). [RF-3, RF-4] §6.2 **Hecho y verificado en el navegador contra la API real.** El selector visible sólo aparece con 2+ grupos, no hay artboard propio para eso.
+- [x] **T2.6** Web: pantalla de grupo según artboard 04 (código grande con copiar y compartir por WhatsApp, miembros, palmarés). [RF-5] **Hecho y verificado**: copiar al portapapeles confirmado, WhatsApp abre `wa.me` con el código. El palmarés no tiene datos hasta la Fase 7 (temporadas) — se muestra un texto que lo explica en vez de data inventada.
+- [x] **T2.7** Web: panel de settings del grupo, sólo admin. [RF-17] **Hecho y verificado**: cambio de modo de puntuación guardado y confirmado con una lectura directa a la base.
 
 ## Fase 3 — Carga de resultados (~7 h)
 

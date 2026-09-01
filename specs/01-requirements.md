@@ -212,3 +212,4 @@ El MVP está listo cuando, con el sistema desplegado:
 | D4 | ¿Los grupos son privados o hay ranking global? | **Sólo privados** en v1 | Medio |
 | D5 | ¿Se pueden agregar otros juegos del diario? | Sí, el catálogo de juegos es data, no código | Bajo |
 | D6 | ¿Qué pasa si La Nación no publica un juego un día? | El admin puede marcar un día como anulado para el grupo | Bajo |
+| D9 | ¿Qué pasa con un grupo si su creador borra la cuenta? | **Sin resolver.** `groups.created_by` bloquea el borrado del perfil mientras tenga grupos creados (encontrado durante testing: borrar ese usuario tira un error 500 de integridad referencial, no un mensaje claro). No hay RF que pida borrar cuentas en v1, así que se dejó así a propósito — pero si se agrega esa función hay que decidir: ¿se transfiere el grupo a otro admin, se archiva, o se bloquea el borrado con un mensaje entendible? | Medio si se agrega borrado de cuenta |

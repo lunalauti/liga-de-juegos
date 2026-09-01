@@ -2,7 +2,7 @@
 
 Registro y competencia de los juegos diarios de La Nación (Crucigrama, Cruci Experto, Sudoku Avanzado) entre amigos.
 
-**Estado:** Fase 1 completa. Monorepo, sistema de diseño verificado contra el canvas, base de datos migrada con RLS activa, y autenticación funcionando de punta a punta contra Supabase real (login, sesión persistente, perfil). Sigue la Fase 2 (grupos) en `specs/03-tasks.md`.
+**Estado:** Fase 2 completa. Auth + grupos funcionando de punta a punta contra Supabase real: crear grupo, código de invitación `CRUCI-84`, unirse, panel de admin (juegos activos, reglas de puntuación), remover miembros con resguardo de último admin. Sigue la Fase 3 (carga de resultados) en `specs/03-tasks.md`.
 
 ## Setup
 
