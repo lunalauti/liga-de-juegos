@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "node -v && npm -v && echo '--- node_modules/.bin (raíz) ---' && ls node_modules/.bin/ | grep -i vite; echo '--- apps/web/node_modules existe? ---' && ls apps/web/node_modules 2>&1 | head -5; echo '--- apps/web/node_modules/.bin ---' && ls apps/web/node_modules/.bin/ 2>&1 | head -20; echo '--- fin diagnóstico ---' && npm run build -w @liga/web",
+  "buildCommand": "sh scripts/vercel-build.sh",
   "installCommand": "npm ci",
   "outputDirectory": "apps/web/dist",
   "framework": "vite",
