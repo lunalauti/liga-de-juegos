@@ -2,34 +2,11 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { groupSettingsPatchSchema, groupSettingsSchema, defaultGroupSettings, type GroupSettings } from '@liga/shared';
 import { db } from '../db.js';
-import { badRequest, conflict, forbidden, notFound } from '../errors.js';
+import { badRequest, conflict, notFound } from '../errors.js';
 import { generateInviteCode } from '../services/inviteCode.js';
+import { getMembership, requireMember, requireAdmin } from '../services/authz.js';
 
 export const groupsRouter = Router();
-
-// ---------------------------------------------------------------------------
-// Helpers de autorización. RLS es la segunda barrera (specs/02-design.md §3.4);
-// la API valida esto explícitamente para poder devolver errores claros.
-// ---------------------------------------------------------------------------
-async function getMembership(groupId: string, userId: string) {
-  const r = await db.query(
-    `select role from public.group_members where group_id = $1 and user_id = $2`,
-    [groupId, userId],
-  );
-  return r.rows[0] as { role: 'admin' | 'member' } | undefined;
-}
-
-async function requireMember(groupId: string, userId: string) {
-  const m = await getMembership(groupId, userId);
-  if (!m) throw forbidden('No sos parte de este grupo');
-  return m;
-}
-
-async function requireAdmin(groupId: string, userId: string) {
-  const m = await requireMember(groupId, userId);
-  if (m.role !== 'admin') throw forbidden('Sólo el admin del grupo puede hacer esto');
-  return m;
-}
 
 function serializeGroup(
   group: Record<string, unknown>,

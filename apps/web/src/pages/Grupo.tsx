@@ -176,6 +176,7 @@ function GroupSettingsForm({ groupId, token, onSaved }: { groupId: string; token
   const [dropWorstN, setDropWorstN] = useState(0);
   const [absencePolicy, setAbsencePolicy] = useState<'penalize' | 'ignore'>('penalize');
   const [scoringMode, setScoringMode] = useState<'total_time' | 'position_points'>('total_time');
+  const [requireVerified, setRequireVerified] = useState(false);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -187,7 +188,14 @@ function GroupSettingsForm({ groupId, token, onSaved }: { groupId: string; token
       await apiFetch(`/groups/${groupId}`, {
         method: 'PATCH',
         accessToken: token,
-        body: { settings: { drop_worst_n: dropWorstN, absence_policy: absencePolicy, scoring_mode: scoringMode } },
+        body: {
+          settings: {
+            drop_worst_n: dropWorstN,
+            absence_policy: absencePolicy,
+            scoring_mode: scoringMode,
+            require_verified: requireVerified,
+          },
+        },
       });
       setMsg('Guardado. Se aplica a la temporada en curso.');
       onSaved();
@@ -226,6 +234,11 @@ function GroupSettingsForm({ groupId, token, onSaved }: { groupId: string; token
           value={dropWorstN}
           onChange={(e) => setDropWorstN(Number(e.target.value))}
         />
+      </label>
+
+      <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
+        <input type="checkbox" checked={requireVerified} onChange={(e) => setRequireVerified(e.target.checked)} />
+        Sólo cuentan los tiempos verificados (con link de La Nación)
       </label>
 
       {msg && <p role="status" style={{ fontSize: 13, color: '#16513C', margin: 0 }}>{msg}</p>}

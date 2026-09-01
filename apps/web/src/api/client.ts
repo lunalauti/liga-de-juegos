@@ -1,5 +1,10 @@
 export class ApiClientError extends Error {
-  constructor(readonly status: number, readonly code: string, message: string) {
+  constructor(
+    readonly status: number,
+    readonly code: string,
+    message: string,
+    readonly details: Record<string, unknown> = {},
+  ) {
     super(message);
   }
 }
@@ -23,7 +28,7 @@ export async function apiFetch<T>(
   const json = await res.json().catch(() => null);
   if (!res.ok) {
     const err = json?.error;
-    throw new ApiClientError(res.status, err?.code ?? 'UNKNOWN', err?.message ?? 'Algo salió mal');
+    throw new ApiClientError(res.status, err?.code ?? 'UNKNOWN', err?.message ?? 'Algo salió mal', err?.details ?? {});
   }
   return json as T;
 }

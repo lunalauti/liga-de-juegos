@@ -6,6 +6,7 @@ import Perfil from './pages/Perfil';
 import Grupo from './pages/Grupo';
 import GroupNew from './pages/GroupNew';
 import GroupJoin from './pages/GroupJoin';
+import Cargar from './pages/Cargar';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AppFrame } from './components/AppFrame';
 
@@ -20,10 +21,7 @@ export default function App() {
         path="/"
         element={<ProtectedRoute><AppFrame><Placeholder title="Hoy" task="T4.8 · artboard 01" /></AppFrame></ProtectedRoute>}
       />
-      <Route
-        path="/cargar"
-        element={<ProtectedRoute><AppFrame><Placeholder title="Cargar tiempos" task="T3.14 · artboard 02" /></AppFrame></ProtectedRoute>}
-      />
+      <Route path="/cargar" element={<ProtectedRoute><AppFrame><Cargar /></AppFrame></ProtectedRoute>} />
       <Route
         path="/ranking"
         element={<ProtectedRoute><AppFrame><Placeholder title="Tabla" task="T4.7 · artboard 03" /></AppFrame></ProtectedRoute>}

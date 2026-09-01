@@ -2,7 +2,7 @@
 
 Registro y competencia de los juegos diarios de La Nación (Crucigrama, Cruci Experto, Sudoku Avanzado) entre amigos.
 
-**Estado:** Fase 2 completa. Auth + grupos funcionando de punta a punta contra Supabase real: crear grupo, código de invitación `CRUCI-84`, unirse, panel de admin (juegos activos, reglas de puntuación), remover miembros con resguardo de último admin. Sigue la Fase 3 (carga de resultados) en `specs/03-tasks.md`.
+**Estado:** Fase 3 completa (carga de resultados). Se puede importar un resultado real desde el link de La Nación con preview antes de confirmar, cargar los 3 juegos a mano con DNF, y editar/borrar dentro de la ventana de 48 h. Sigue la Fase 4 (motor de puntuación y ranking — el MVP jugable) en `specs/03-tasks.md`.
 
 ## Setup
 

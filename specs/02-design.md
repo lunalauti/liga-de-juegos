@@ -254,7 +254,8 @@ Códigos: `400` validación, `401` sin token, `403` sin permiso, `404`, `409` co
 | `DELETE` | `/groups/:id/members/:userId` | Remover miembro (admin) | RF-5 |
 | `POST` | `/groups/join` | Unirse con `{ code }` | RF-4 |
 | `GET` | `/groups/:id/day?date=` | Grilla jugador × juego de un día | RF-12, RF-20 |
-| `POST` | `/entries/import` | Importar desde un link de La Nación `{ group_ids, url }` | RF-6 |
+| `POST` | `/entries/import/preview` | Sólo lectura: qué se detectó y qué pasaría, sin guardar nada. Agregado en Fase 3.5 — sin esto, "Descartar" en la UI no tenía nada que deshacer | RF-6 |
+| `POST` | `/entries/import` | Confirma e importa de verdad desde un link de La Nación `{ group_ids, url }` | RF-6 |
 | `POST` | `/entries` | Upsert manual de un resultado | RF-6b, RF-7, RF-9 |
 | `POST` | `/entries/bulk` | Upsert de varios juegos y/o grupos de una | RF-6, RNF-2 |
 | `DELETE` | `/entries/:id` | Borrar dentro de ventana | RF-9 |
@@ -532,5 +533,17 @@ Un mismo link se puede importar a **todos los grupos del jugador de una sola vez
 | Cambian la ruta o el formato del JSON | Un solo módulo (`services/lanacion.ts`) con parser Zod; si falla, error claro y fallback a carga manual. Un test de contrato contra un uuid real avisa cuando cambie |
 | Bloquean el acceso por User-Agent u origen | Se llama desde el backend con headers de browser; si bloquean, el front puede llamar directo (el endpoint tiene CORS `*`) |
 | Borran resultados viejos | Se guarda `external_payload` completo al importar: si el link muere, el dato ya es nuestro |
-| Uso abusivo | Una llamada por link importado, cacheada 24 h. Rate limit propio de 30 importaciones/hora por usuario. Es un volumen despreciable para ellos |
+| Uso abusivo | Una llamada por link importado, cacheada 24 h. Falta el rate limit por usuario (era parte del plan original; no está implementado todavía — lo trae la Fase 5 junto con el resto del rate limiting de la API, ver §7) |
 | Alguien pega el link de otro | El binding de `lanacion_user_id` lo detecta desde el segundo link, y la unicidad global impide duplicarlo |
+
+### 9.7 Correcciones de esquema que salieron de probar contra Supabase real
+
+Ninguna cambia el modelo de §3; son ajustes a las reglas `on delete` que el testing de la Fase 3 encontró rotas — el patrón en los tres casos es el mismo que D9: una referencia que existe para trazabilidad histórica no puede bloquear el borrado de la fila que señala.
+
+| Migración | Qué corrige |
+|---|---|
+| `0006_audit_survives_delete.sql` | `entry_audit.entry_id` tenía `on delete cascade` hacia `entries` — borrar un resultado se llevaba puesto su propio log de auditoría, justo lo que RF-9 pide conservar. Pasa a `on delete set null`. |
+| `0007_audit_actor_nullable.sql` | `entry_audit.actor_id` no tenía ninguna cláusula (default RESTRICT) — bloqueaba borrar cualquier cuenta que alguna vez hubiera cargado o editado un resultado. Pasa a `on delete set null`. |
+| `0005_imported_results_nullable_user.sql` | Mismo problema en `imported_results.user_id`. La query de "¿quién ya cargó este link?" pasó a `left join` para que el link siga reclamado aunque esa cuenta ya no exista. |
+
+También: `apps/api/src/db.ts` fuerza el parser de `date` de `pg` a devolver el string tal cual llega de Postgres. Por default, `pg` construye un `Date` de JS con la zona horaria **del proceso**, no UTC — en una máquina en Argentina da la fecha correcta de casualidad, y se corre un día en un servidor con `TZ=UTC` (Render). `puzzle_date` es una fecha pura, nunca un instante (§5.5); ahora lo es de verdad, no sólo en el papel.

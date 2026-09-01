@@ -39,26 +39,26 @@
 
 ## Fase 3 — Carga de resultados (~7 h)
 
-- [ ] **T3.1** Helper de fechas: "hoy" en ART, límites de semana/mes, validación de rango. [RNF-3] §5.5
-- [ ] **T3.2** API `POST /entries` — upsert sobre `(group_id, user_id, game_id, puzzle_date)`, valida rango de tiempo, ventana de edición y fecha no futura. [RF-6, RF-9, RF-10]
-- [ ] **T3.3** DNF: al marcarlo, guarda `dnf = true` + penalización del grupo. [RF-7]
-- [ ] **T3.4** API `POST /entries/bulk` (los 3 juegos, y opcionalmente varios grupos, en un request). [RF-6, RNF-2]
-- [ ] **T3.5** API `DELETE /entries/:id` con la misma ventana. [RF-9]
-- [ ] **T3.6** `entry_audit`: escribir el log en create/update/delete. [RF-9]
-- [ ] **T3.7** Web `/cargar`: los 3 juegos en una pantalla, input de tiempo tolerante, toggle DNF, selector de fecha con default hoy, optimistic update. [RF-6, RF-7, RNF-2] §6.2
-- [ ] **T3.8** Tests de integración del endpoint de entries manual (happy path, DNF, fuera de ventana, fecha futura, tiempo inválido).
+- [x] **T3.1** Helper de fechas: "hoy" en ART, límites de semana/mes, validación de rango. [RNF-3] §5.5 **Hecho** en `packages/shared/src/argDate.ts`, 14 tests.
+- [x] **T3.2** API `POST /entries` — upsert sobre `(group_id, user_id, game_id, puzzle_date)`, valida rango de tiempo, ventana de edición y fecha no futura. [RF-6, RF-9, RF-10] **Hecho y verificado contra Supabase real**: happy path, tiempo inválido, fecha futura, fecha >7 días.
+- [x] **T3.3** DNF: al marcarlo, guarda `dnf = true` + penalización del grupo. [RF-7] **Hecho**, incluida la auto-conversión cuando el tiempo tipeado supera la penalización (RF-6b), verificada.
+- [x] **T3.4** API `POST /entries/bulk` (los 3 juegos, y opcionalmente varios grupos, en un request). [RF-6, RNF-2] **Hecho y verificado.**
+- [x] **T3.5** API `DELETE /entries/:id` con la misma ventana. [RF-9] **Hecho y verificado**: dueño fuera de ventana rechazado, admin siempre puede.
+- [x] **T3.6** `entry_audit`: escribir el log en create/update/delete. [RF-9] **Hecho.** El testing encontró que `entry_id`/`actor_id` tenían `on delete cascade`/sin cláusula: borrar un resultado o una cuenta se llevaba puesto el log que debía sobrevivir. Corregido en `0006` y `0007` (`on delete set null`) — mismo criterio que D9.
+- [x] **T3.7** Web `/cargar`: los 3 juegos en una pantalla, input de tiempo tolerante, toggle DNF, selector de fecha con default hoy. [RF-6, RF-7, RNF-2] §6.2 **Hecho y verificado en el navegador.** El optimistic update queda pendiente — hoy espera la confirmación del servidor antes de mostrar éxito; no es incorrecto, es más conservador que la spec.
+- [x] **T3.8** Tests de integración del endpoint de entries manual. **Hecho, pero no como suite automatizada**: se verificó contra Supabase real (mismo método que Fases 1–2) en vez de mockear `pg`, porque mockear consultas SQL secuenciales es frágil y no encuentra bugs reales — y de hecho esta ronda encontró tres (fecha con TZ del servidor, cascada de auditoría, FK de `actor_id`). Lo que sí quedó como test automatizado son las piezas puras: `argDate` (14 tests), `resolveLnVerification` (4), `extractLnId` (4).
 
 ## Fase 3.5 — Integración con La Nación (~6 h)
 
-- [ ] **T3.9** `services/lanacion.ts`: extraer uuid de una URL o texto pegado, `GET games/shared/<id>`, parsear con Zod, timeout 8 s + 1 reintento, cache 24 h. [RF-6] §9.1
-- [ ] **T3.10** Migración: columnas `source`, `verified`, `external_id`, `external_user_id`, `external_payload` en `entries`; tabla `imported_results`; `profiles.lanacion_user_ids`; `games.ln_game` / `games.ln_level`. §9.4
-- [ ] **T3.11** Seed del mapeo juego↔nivel. **Confirmar el nivel real del Sudoku Avanzado importando un link de verdad** (se asume `sudoku/hard`). §9.2
-- [ ] **T3.12** API `POST /entries/import`: validaciones de §9.4 (customer, juego activo, link ya usado → 409, fecha en ventana), `result: FAIL` → DNF, escritura en varios grupos a la vez. [RF-6, RF-7]
-- [ ] **T3.13** Binding de identidad: primer link asocia el `lanacion_user_id`; los siguientes marcan `verified` true/false. [RF-6] §9.4
-- [ ] **T3.14** Web `/cargar` según artboard 02: campo de link arriba de todo, preview de lo detectado con sello verificado, confirmar/descartar, y el estado de error de link repetido ("Ese link ya lo cargó Martín. Buen intento.") mostrando quién y cuándo. El campo trunca el link por el medio. §6.5
-- [ ] **T3.15** Chips de estado del artboard 06: el sello ✓ como única marca de verificado, idéntico en Hoy/Ranking/Detalle; lo cargado a mano con contorno punteado neutro, sin alerta. [RF-6] §6.3
-- [ ] **T3.16** Setting `require_verified` del grupo. [D7]
-- [ ] **T3.17** Test de contrato contra un uuid real, corriendo en CI a diario: avisa si La Nación cambia el formato. §9.6
+- [x] **T3.9** `services/lanacion.ts`: extraer uuid de una URL o texto pegado, `GET games/shared/<id>`, parsear con Zod, timeout 8 s + 1 reintento, cache 24 h. [RF-6] §9.1 **Hecho.**
+- [x] **T3.10** Migración: columnas `source`, `verified`, `external_id`, `external_user_id`, `external_payload` en `entries`; tabla `imported_results`; `profiles.lanacion_user_ids`; `games.ln_game` / `games.ln_level`. §9.4 **Ya estaba en `0001_init.sql`** (se adelantó al diseñar el esquema inicial).
+- [x] **T3.11** Seed del mapeo juego↔nivel. **Hecho, pero sigue sin confirmar `sudoku/hard`** — no conseguí un link real de Sudoku Avanzado para probarlo (sólo tuve acceso a un link de Cruci Experto). Sigue siendo un supuesto. §9.2
+- [x] **T3.12** API `POST /entries/import` + `POST /entries/import/preview` (de sólo lectura, agregada durante la implementación — el diseño original no separaba preview de confirmación, y sin esa separación "Descartar" en la UI no deshacía nada). Validaciones de §9.4, `result: FAIL` → DNF, escritura en varios grupos a la vez. [RF-6, RF-7] **Hecho y verificado con un link real de La Nación**, incluido el flujo completo pegar → preview sin escribir → confirmar → escribe.
+- [x] **T3.13** Binding de identidad: primer link asocia el `lanacion_user_id`; los siguientes marcan `verified` true/false. [RF-6] §9.4 **Hecho.** El primer caso (bind + verificado) se probó con un link real; el caso de identidad no coincidente se probó como función pura (`resolveLnVerification`, 4 tests) — no tuve un segundo link real de otra cuenta para probarlo de punta a punta.
+- [x] **T3.14** Web `/cargar` según artboard 02: campo de link arriba de todo, preview de lo detectado con sello verificado, confirmar/descartar, y el estado de error de link repetido ("Ese link ya lo cargó X. Buen intento."). [RF-6] §6.5 **Hecho y verificado en el navegador con un link real, incluido el rechazo por link repetido.** Pendiente: el truncado del link por el medio (hoy el input simplemente hace overflow con ellipsis vía CSS, no trunca activamente el string).
+- [x] **T3.15** Chip de verificado reutilizado en `/cargar`. [RF-6] §6.3 El resto de las pantallas donde debe repetirse (Hoy, Ranking, Detalle) llega con la Fase 4, cuando esas pantallas existan.
+- [x] **T3.16** Setting `require_verified` del grupo. [D7] **Hecho**: ya estaba en el schema (T2.3); se agregó el toggle en el panel de ajustes del grupo. Sin efecto todavía en el cálculo del ranking porque el motor de puntuación es Fase 4.
+- [x] **T3.17** Test de contrato contra un uuid real. §9.6 **Hecho** (`lanacion.test.ts`, gateado por `RUN_LN_CONTRACT_TEST=1` para no pegarle a la red en cada `npm test`), corrido y verificado contra la red real. **Falta cablearlo a un cron de CI diario** — no hay CI configurado todavía (eso es la Fase 5).
 
 ## Fase 4 — Scoring y ranking · **MVP jugable** (~10 h)
 

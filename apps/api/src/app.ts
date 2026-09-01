@@ -6,6 +6,8 @@ import { requireAuth } from './middleware/auth.js';
 import { meRouter } from './routes/me.js';
 import { gamesRouter } from './routes/games.js';
 import { groupsRouter } from './routes/groups.js';
+import { entriesRouter } from './routes/entries.js';
+import { entriesImportRouter } from './routes/entriesImport.js';
 
 export function createApp() {
   const app = express();
@@ -19,7 +21,7 @@ export function createApp() {
     res.json({ ok: true, service: 'liga-de-juegos-api', now: new Date().toISOString() });
   });
 
-  app.use('/api/v1', requireAuth, meRouter, gamesRouter, groupsRouter);
+  app.use('/api/v1', requireAuth, meRouter, gamesRouter, groupsRouter, entriesImportRouter, entriesRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);
