@@ -15,6 +15,8 @@ interface DayResponse {
   games: { slug: string; name: string }[];
   rows: DayRow[];
   bestPerGame: Record<string, { userId: string; seconds: number } | null>;
+  /** D6/T6.5: null si el día no está anulado; si lo está, el id sirve para reactivarlo. */
+  wholeDayBlackoutId: string | null;
 }
 
 /** Artboard 04 · "Detalle del día": grilla jugador × juego, navegación ← →. RF-12, RF-20. */
@@ -29,8 +31,9 @@ export default function Dia() {
 
   const [data, setData] = useState<DayResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [blackoutBusy, setBlackoutBusy] = useState(false);
 
-  useEffect(() => {
+  const load = () => {
     if (!token || !activeGroup) {
       setLoading(false); // sin grupo, no hay nada que pedir — si no, esto queda "Cargando…" para siempre
       return;
@@ -39,10 +42,36 @@ export default function Dia() {
     apiFetch<DayResponse>(`/groups/${activeGroup.id}/day?date=${puzzleDate}`, { accessToken: token })
       .then(setData)
       .finally(() => setLoading(false));
-  }, [token, activeGroup, puzzleDate]);
+  };
+
+  useEffect(load, [token, activeGroup, puzzleDate]);
 
   if (loadingMe) return <Screen><p style={{ color: '#6B6357' }}>Cargando…</p></Screen>;
   if (!activeGroup) return <NoGroupState />;
+
+  // D6/T6.5: sólo el admin puede anular un día (ej. La Nación no publicó un
+  // juego), y sólo tiene sentido en un día ya pasado o de hoy, nunca a futuro
+  // (la navegación ya lo impide, pero el botón no debería aparecer ahí tampoco).
+  const canToggleBlackout = activeGroup.role === 'admin' && !!data && puzzleDate <= todayInArgentina();
+
+  const toggleBlackout = async () => {
+    if (!token || !activeGroup || !data) return;
+    setBlackoutBusy(true);
+    try {
+      if (data.wholeDayBlackoutId) {
+        await apiFetch(`/groups/${activeGroup.id}/blackouts/${data.wholeDayBlackoutId}`, { method: 'DELETE', accessToken: token });
+      } else {
+        await apiFetch(`/groups/${activeGroup.id}/blackouts`, {
+          method: 'POST',
+          accessToken: token,
+          body: { puzzleDate, gameSlug: null },
+        });
+      }
+      load();
+    } finally {
+      setBlackoutBusy(false);
+    }
+  };
 
   return (
     <Screen>
@@ -62,6 +91,24 @@ export default function Dia() {
           →
         </button>
       </div>
+
+      {data?.wholeDayBlackoutId && (
+        <div style={{ background: '#F1EBDD', border: '1px dashed #C9C0AC', padding: '10px 14px', fontSize: 13, color: '#4A4438', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+          <span>Este día está anulado — no cuenta para el ranking.</span>
+          {canToggleBlackout && (
+            <button type="button" className="btn btn-outline-secondary btn-sm" disabled={blackoutBusy} onClick={toggleBlackout}>
+              Reactivar
+            </button>
+          )}
+        </div>
+      )}
+      {canToggleBlackout && !data?.wholeDayBlackoutId && (
+        <div style={{ textAlign: 'right' }}>
+          <button type="button" className="btn btn-outline-secondary btn-sm" disabled={blackoutBusy} onClick={toggleBlackout}>
+            Anular este día
+          </button>
+        </div>
+      )}
 
       {loading || !data ? (
         <p style={{ color: '#6B6357' }}>Cargando…</p>

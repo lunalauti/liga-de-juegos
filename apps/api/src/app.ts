@@ -10,6 +10,7 @@ import { entriesRouter } from './routes/entries.js';
 import { entriesImportRouter } from './routes/entriesImport.js';
 import { leaderboardRouter } from './routes/leaderboard.js';
 import { dayRouter } from './routes/day.js';
+import { blackoutsRouter } from './routes/blackouts.js';
 
 export function createApp() {
   const app = express();
@@ -33,6 +34,7 @@ export function createApp() {
     entriesRouter,
     leaderboardRouter,
     dayRouter,
+    blackoutsRouter,
   );
 
   app.use(notFoundHandler);

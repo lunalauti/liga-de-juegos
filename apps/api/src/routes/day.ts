@@ -37,7 +37,7 @@ dayRouter.get('/groups/:id/day', async (req, res, next) => {
         [groupId, puzzleDate],
       ),
       db.query(
-        `select bd.puzzle_date, g.slug as game_slug from public.blackout_dates bd
+        `select bd.id, bd.puzzle_date, g.slug as game_slug from public.blackout_dates bd
            left join public.games g on g.id = bd.game_id
           where bd.group_id = $1 and bd.puzzle_date = $2`,
         [groupId, puzzleDate],
@@ -45,7 +45,8 @@ dayRouter.get('/groups/:id/day', async (req, res, next) => {
     ]);
 
     const games: { slug: string; name: string }[] = gamesRes.rows;
-    const blackoutAll = blackoutsRes.rows.some((b) => b.game_slug === null);
+    const wholeDayBlackout = blackoutsRes.rows.find((b) => b.game_slug === null) ?? null;
+    const blackoutAll = wholeDayBlackout !== null;
     const blackoutGames = new Set(blackoutsRes.rows.map((b) => b.game_slug).filter(Boolean));
 
     const entryByKey = new Map(entriesRes.rows.map((e) => [`${e.user_id}|${e.game_slug}`, e]));
@@ -82,6 +83,9 @@ dayRouter.get('/groups/:id/day', async (req, res, next) => {
       games,
       rows,
       bestPerGame,
+      // D6/T6.5: null si el día no está anulado; si lo está, el id sirve para
+      // reactivarlo (DELETE /groups/:id/blackouts/:id) sin una consulta aparte.
+      wholeDayBlackoutId: wholeDayBlackout?.id ?? null,
     });
   } catch (err) {
     next(err);
