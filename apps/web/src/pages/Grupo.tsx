@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { initialsOf } from '@liga/shared';
+import { initialsOf, type GroupSettings } from '@liga/shared';
 import { useMe } from '../hooks/useMe';
 import { useActiveGroup } from '../hooks/useActiveGroup';
 import { apiFetch, ApiClientError } from '../api/client';
@@ -67,6 +67,7 @@ interface GroupDetailData {
   createdAt: string;
   inviteCode: string;
   members: { userId: string; displayName: string; avatar: string | null; role: string }[];
+  settings: GroupSettings;
 }
 
 function GroupDetail({ group, token, onChanged }: { group: MyGroup; token: string | undefined; onChanged: () => void }) {
@@ -152,6 +153,7 @@ function GroupDetail({ group, token, onChanged }: { group: MyGroup; token: strin
           groupId={group.id}
           groupName={group.name}
           token={token}
+          settings={detail?.settings}
           onSaved={() => {
             onChanged();
             setReloadTick((n) => n + 1);
@@ -167,12 +169,14 @@ function GroupSettingsPanel({
   groupId,
   groupName,
   token,
+  settings,
   onSaved,
   onDeleted,
 }: {
   groupId: string;
   groupName: string;
   token: string | undefined;
+  settings: GroupSettings | undefined;
   onSaved: () => void;
   onDeleted: () => void;
 }) {
@@ -184,7 +188,7 @@ function GroupSettingsPanel({
       </button>
       {open && (
         <>
-          <GroupSettingsForm groupId={groupId} token={token} onSaved={onSaved} />
+          <GroupSettingsForm groupId={groupId} token={token} settings={settings} onSaved={onSaved} />
           <DeleteGroupSection groupId={groupId} groupName={groupName} token={token} onDeleted={onDeleted} />
         </>
       )}
@@ -281,13 +285,36 @@ function DeleteGroupSection({
   );
 }
 
-function GroupSettingsForm({ groupId, token, onSaved }: { groupId: string; token: string | undefined; onSaved: () => void }) {
+function GroupSettingsForm({
+  groupId,
+  token,
+  settings,
+  onSaved,
+}: {
+  groupId: string;
+  token: string | undefined;
+  settings: GroupSettings | undefined;
+  onSaved: () => void;
+}) {
   const [dropWorstN, setDropWorstN] = useState(0);
   const [absencePolicy, setAbsencePolicy] = useState<'penalize' | 'ignore'>('penalize');
   const [scoringMode, setScoringMode] = useState<'total_time' | 'position_points'>('total_time');
   const [requireVerified, setRequireVerified] = useState(false);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+
+  // Bug real encontrado probando en producción: este form arrancaba SIEMPRE en
+  // los defaults hardcodeados, nunca en lo que el grupo tenía guardado — "Guardar"
+  // sin tocar cada campo pisaba en silencio cualquier ajuste ya hecho (ej. abrir
+  // el panel sólo para cambiar el modo de puntuación resetaba drop_worst_n a 0).
+  // Sincroniza con lo que realmente devuelve la API, no con un default fijo.
+  useEffect(() => {
+    if (!settings) return;
+    setDropWorstN(settings.drop_worst_n);
+    setAbsencePolicy(settings.absence_policy);
+    setScoringMode(settings.scoring_mode);
+    setRequireVerified(settings.require_verified);
+  }, [settings]);
 
   async function save() {
     if (!token) return;
