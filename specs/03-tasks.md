@@ -106,11 +106,11 @@
 
 ## Fase 6 — Modos de competencia (~6 h)
 
-- [ ] **T6.1** `scoring/positionPoints.ts` + tests. [RF-13] §5.2
-- [ ] **T6.2** Exponer `scoring_mode` en el leaderboard y en el panel de settings. [RF-13, RF-17]
+- [x] **T6.1** `scoring/positionPoints.ts` + tests. [RF-13] §5.2 **Hecho**, 7 tests. Mismo patrón que `totalTime.ts` (D2): un ranking independiente por juego, sin total cruzado. `drop_worst_n` descarta los N peores días EN PUNTOS (el de menos puntos), no en tiempo — unidad invertida respecto de `total_time`, documentado en el código. Reusa el mismo fix de empates (T4b.8): puntos y tiempo total iguales → `tied`, no el alfabético inventando un 1º/2º.
+- [x] **T6.2** Exponer `scoring_mode` en el leaderboard y en el panel de settings. [RF-13, RF-17] **Hecho y verificado en producción real**: cambié el grupo real a "Puntos por posición" desde Ajustes, confirmé que `/ranking` y Home mostraban puntos en vez de tiempo (podio, tabla, "tu posición"), y volví el grupo a "Tiempo total" para no dejar la config alterada. `GET /groups/:id/leaderboard` ya no rechaza el modo con 400; `gapToLeader`/`gapToPodium`/`deltaVsYesterday` son sensibles al modo (ascendente en tiempo, descendente en puntos). **Bug real encontrado en esta verificación**: el panel de ajustes (`GroupSettingsForm`) arrancaba siempre en los defaults hardcodeados, nunca con lo que el grupo tenía guardado de verdad — "Guardar" sin tocar cada campo pisaba en silencio cualquier ajuste ya hecho. Corregido: ahora sincroniza con `GET /groups/:id` (que ya devolvía `settings`, sólo faltaba leerlo en el front). Reproducido y confirmado el fix en producción: cambié `drop_worst_n` a 2, guardé, cerré y reabrí el panel — mostraba 2, no 0.
 - [ ] **T6.3** API `GET /groups/:id/h2h` + matriz en la web. [RF-13]
 - [x] ~~**T6.4** Ranking por juego individual (mismo endpoint, filtro por `game`).~~ **Superada por el cambio de alcance de D2 (2026-09-01, ver Fase 4b): el ranking por juego dejó de ser un filtro opcional sobre un ranking combinado — es el único ranking que existe.** No queda nada que hacer acá.
-- [ ] **T6.5** `blackout_dates`: API + acción del admin "anular este día". [D6]
+- [x] **T6.5** `blackout_dates`: API + acción del admin "anular este día". [D6] **Hecho y verificado en producción real**: anulé hoy, vi el banner "Este día está anulado" con celdas en `·` y el botón "Reactivar", y lo reactivé para dejar el día como estaba. `GET/POST/DELETE /groups/:id/blackouts`, admin only, idempotente. Migración `0009` con dos índices únicos parciales (juego puntual / día entero) para que anular dos veces no duplique filas.
 
 ## Fase 7 — Temporadas e historia (~5 h)
 
