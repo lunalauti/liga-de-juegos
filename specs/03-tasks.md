@@ -114,10 +114,10 @@
 
 ## Fase 7 — Temporadas e historia (~5 h)
 
-- [ ] **T7.1** Creación automática de `seasons` al primer entry del período. [RF-16]
-- [ ] **T7.2** Cron 00:10 ART: cerrar temporadas vencidas y congelar `final_standings`. [RF-16] §5.4
-- [ ] **T7.3** API `GET /groups/:id/seasons` + palmarés.
-- [ ] **T7.4** Web: palmarés por mes en la pantalla de grupo, según artboard 04. [RF-16]
+- [x] **T7.1** Creación automática de `seasons` al primer entry del período. [RF-16] **Hecho y verificado contra Supabase real.** `ensureOpenSeasons` se llama desde `upsertEntry` (services/entries.ts), así que corre solo tanto en carga manual como en importación de La Nación — un solo lugar, no dos rutas duplicando la lógica. Verificado con un grupo descartable creado y borrado en la misma corrida: crea la season `open`, y llamarlo de nuevo no la duplica (`on conflict do nothing`).
+- [x] **T7.2** Cron 00:10 ART: cerrar temporadas vencidas y congelar `final_standings`. [RF-16] §5.4 **Hecho y verificado contra Supabase real.** No hay Cron Jobs en el plan free de Render (RNF-6): en vez de eso, `POST /internal/cron/close-seasons` — mismo patrón que el ping de `/health` (T5.5), un cron externo gratuito (cron-job.org) lo golpea una vez al día. Fuera del stack de JWT (como `/health`), protegido con un secreto compartido (`CRON_SECRET`, header `x-cron-secret`) — 2 tests cubren el rechazo sin secreto y con uno incorrecto. Verificado end-to-end: cargué resultados de un mes ya terminado (agosto, con "hoy" en septiembre — sin mockear nada), corrí `closeExpiredSeasons`, y el `final_standings` quedó con el ranking correcto por juego (el de menor tiempo, 1º). **Falta que vos dés de alta el cron en cron-job.org** (ya tenés cuenta ahí, de T5.5) — `POST https://liga-de-juegos-api.onrender.com/internal/cron/close-seasons` una vez al día (ej. 03:10 UTC = 00:10 ART), con el header `x-cron-secret: <el valor que ya cargué en Render>`.
+- [x] **T7.3** API `GET /groups/:id/seasons` + palmarés. **Hecho**, 5 tests. `computePalmares` es una función pura (separada de la query a Supabase) que cuenta un título por juego a quien fue 1º en una temporada cerrada — un empate por el 1º puesto (T4b.8) cuenta como título para los dos, ninguna moneda decide "quién ganó de verdad".
+- [x] **T7.4** Web: palmarés por juego en la pantalla de grupo, según artboard 04. [RF-16] **Hecho.** Reemplaza el placeholder "El palmarés se arma con la primera temporada cerrada del grupo" por la lista real cuando hay datos; si todavía no hay ninguna temporada cerrada, sigue mostrando ese mismo texto (nada que romper para un grupo nuevo).
 
 ## Fase 8 — Estadísticas (~5 h)
 

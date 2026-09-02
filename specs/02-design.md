@@ -266,6 +266,7 @@ Códigos: `400` validación, `401` sin token, `403` sin permiso, `404`, `409` co
 | `GET` | `/groups/:id/entries?from=&to=&userId=` | Historial crudo | RF-19 |
 | `GET` | `/groups/:id/leaderboard?period=month&date=` | Ranking calculado | RF-11, RF-13 |
 | `GET` | `/groups/:id/seasons` | Temporadas + palmarés | RF-16 |
+| `POST` | `/internal/cron/close-seasons` | Cierra temporadas vencidas (cron externo, header `x-cron-secret`, fuera del stack de JWT) | RF-16 |
 | `GET` | `/groups/:id/stats?userId=` | Racha, consistencia, PB, completion | RF-14 |
 | `GET` | `/groups/:id/h2h` | Matriz cabeza a cabeza | RF-13 |
 
@@ -381,7 +382,7 @@ Estas métricas quedan fuera del cambio de D2 — no son "ranking", son estadís
 
 Cálculo **on-read** con cache en memoria (TTL 60 s, clave `group:period:date`), invalidado al escribir un entry del grupo. Con 20 jugadores × 3 juegos × 31 días son ~1.900 filas: se calcula en milisegundos. Nada de tablas materializadas ni jobs — es complejidad que no se paga sola (RNF-5).
 
-Un job nocturno (Render cron, 00:10 ART) sí hace una cosa: cerrar las temporadas vencidas y congelar `final_standings` (RF-16).
+Cerrar las temporadas vencidas y congelar `final_standings` (RF-16, Fase 7) sí es un job aparte — pero no un Cron Job nativo de Render: ese producto no está en el plan free (RNF-6). Mismo patrón que el ping de `/health` de T5.5: `POST /internal/cron/close-seasons`, un endpoint fuera del stack de JWT (como `/health`) protegido por un secreto compartido (`CRON_SECRET`, header `x-cron-secret`), golpeado una vez al día por un cron externo gratuito (cron-job.org). `services/seasons.ts` hace el trabajo real: `ensureOpenSeasons` (llamado desde `upsertEntry` en cada carga, T7.1) crea la fila `open` en `seasons` la primera vez que hay un resultado en un período nuevo; `closeExpiredSeasons` busca las `open` con `ends_on` ya pasado, corre el motor de puntuación sobre ese rango exacto y guarda un ranking por juego (D2) en `final_standings`, más `rules_snapshot` con las settings vigentes al cierre — para que un cambio de configuración posterior no reescriba una temporada ya cerrada (RF-17).
 
 ### 5.5 Manejo de fechas
 
@@ -469,7 +470,7 @@ Ninguno agrega consultas nuevas: todos se derivan de la grilla que el motor de p
 
 **Variables de entorno**
 
-- API (Render, secretos cargados a mano en el dashboard — `render.yaml` los marca `sync: false`): `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `ALLOWED_ORIGINS`, `PORT`. (`SUPABASE_JWT_SECRET` ya no hace falta — la validación es contra JWKS, ver §1.)
+- API (Render, secretos cargados a mano en el dashboard — `render.yaml` los marca `sync: false`): `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `ALLOWED_ORIGINS`, `PORT`, `CRON_SECRET` (T7.2, el cron externo lo manda en `x-cron-secret`). (`SUPABASE_JWT_SECRET` ya no hace falta — la validación es contra JWKS, ver §1.)
 - Web (Vercel, se hornean en el build — hay que cargarlas ahí, no alcanza con `.env` local): `VITE_API_URL`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
 
 **CI (GitHub Actions, `.github/workflows/ci.yml`)**: en cada PR y push a `main` → typecheck + lint + test (job `check`). Push a `main` además corre el test de contrato con La Nación (§9.6, no bloqueante) y, si `check` pasa, aplica las migraciones pendientes contra Supabase (job `migrate`, necesita el secreto `DATABASE_URL` cargado en GitHub → Settings → Secrets). El deploy en sí lo disparan Vercel y Render por su cuenta al detectar el push, conectando cada uno directamente al repo — no hay un paso de CI que los dispare.

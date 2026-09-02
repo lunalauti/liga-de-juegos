@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { initialsOf, type GroupSettings } from '@liga/shared';
+import { initialsOf, GAMES, type GroupSettings } from '@liga/shared';
 import { useMe } from '../hooks/useMe';
 import { useActiveGroup } from '../hooks/useActiveGroup';
 import { apiFetch, ApiClientError } from '../api/client';
@@ -61,6 +61,9 @@ export default function Grupo() {
   );
 }
 
+/** RF-16, T7.3 — títulos por juego. Un empate por el 1º puesto (T4b.8) cuenta para los dos. */
+type Palmares = { gameSlug: string; leaders: { userId: string; displayName: string; titles: number }[] }[];
+
 interface GroupDetailData {
   id: string;
   name: string;
@@ -73,6 +76,7 @@ interface GroupDetailData {
 function GroupDetail({ group, token, onChanged }: { group: MyGroup; token: string | undefined; onChanged: () => void }) {
   const [detail, setDetail] = useState<GroupDetailData | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(true);
+  const [palmares, setPalmares] = useState<Palmares | null>(null);
   const [copyLabel, setCopyLabel] = useState('Copiar');
   const [reloadTick, setReloadTick] = useState(0);
 
@@ -84,6 +88,11 @@ function GroupDetail({ group, token, onChanged }: { group: MyGroup; token: strin
     apiFetch<GroupDetailData>(`/groups/${group.id}`, { accessToken: token })
       .then((d) => !cancelled && setDetail(d))
       .finally(() => !cancelled && setLoadingDetail(false));
+    // T7.3/T7.4: el palmarés no bloquea el resto de la pantalla — si falla, el
+    // resto del grupo sigue andando, sólo no se muestra esa sección.
+    apiFetch<{ palmares: Palmares }>(`/groups/${group.id}/seasons`, { accessToken: token })
+      .then((r) => !cancelled && setPalmares(r.palmares))
+      .catch(() => {});
     return () => {
       cancelled = true;
     };
@@ -144,9 +153,7 @@ function GroupDetail({ group, token, onChanged }: { group: MyGroup; token: strin
         ))}
       </div>
 
-      <p style={{ fontSize: 12, color: '#6B6357', lineHeight: 1.6 }}>
-        El palmarés se arma con la primera temporada cerrada del grupo.
-      </p>
+      <PalmaresSection palmares={palmares} />
 
       {group.role === 'admin' && (
         <GroupSettingsPanel
@@ -162,6 +169,40 @@ function GroupDetail({ group, token, onChanged }: { group: MyGroup; token: strin
         />
       )}
     </>
+  );
+}
+
+/** T7.4, artboard 04 · RF-16 — palmarés: título por juego a quien fue 1º en cada temporada cerrada. */
+function PalmaresSection({ palmares }: { palmares: Palmares | null }) {
+  if (!palmares || palmares.length === 0) {
+    return (
+      <p style={{ fontSize: 12, color: '#6B6357', lineHeight: 1.6 }}>
+        El palmarés se arma con la primera temporada cerrada del grupo.
+      </p>
+    );
+  }
+  return (
+    <div className="lj-card" style={{ marginBottom: 14 }}>
+      <div style={{ padding: '10px 14px', borderBottom: '1px solid #DDD6C8', background: '#F1EBDD' }}>
+        <span className="lj-label" style={{ color: '#4A4438' }}>Palmarés</span>
+      </div>
+      {palmares.map((p, i) => (
+        <div key={p.gameSlug} style={{ padding: '10px 14px', borderBottom: i < palmares.length - 1 ? '1px solid #EDE7DA' : 'none' }}>
+          <div style={{ fontSize: 11, letterSpacing: '.06em', textTransform: 'uppercase', color: '#8C8271', marginBottom: 6 }}>
+            {GAMES.find((g) => g.slug === p.gameSlug)?.name ?? p.gameSlug}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {p.leaders.map((l) => (
+              <div key={l.userId} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span className="lj-avatar">{initialsOf(l.displayName)}</span>
+                <span style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>{l.displayName}</span>
+                <span className="lj-t" style={{ fontSize: 13 }}>{l.titles} {l.titles === 1 ? 'vez' : 'veces'}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 

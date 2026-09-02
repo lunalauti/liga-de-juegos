@@ -1,4 +1,5 @@
 import type { Pool, PoolClient } from 'pg';
+import { ensureOpenSeasons } from './seasons.js';
 
 export interface EntryWrite {
   groupId: string;
@@ -60,6 +61,10 @@ export async function upsertEntry(client: Pool | PoolClient, write: EntryWrite, 
     `insert into public.entry_audit (entry_id, actor_id, action, before, after) values ($1, $2, $3, $4, $5)`,
     [entry.id, actorId, before.rows.length ? 'update' : 'create', before.rows[0] ?? null, entry],
   );
+
+  // T7.1/RF-16: garantiza que exista una `season` abierta para el período de este
+  // resultado — sin esto, T7.2 no tendría nada que cerrar cuando el período termine.
+  await ensureOpenSeasons(client, write.groupId, write.puzzleDate);
 
   return entry;
 }

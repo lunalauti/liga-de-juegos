@@ -15,4 +15,18 @@ describe('API', () => {
     expect(res.body.error).toMatchObject({ code: 'NOT_FOUND' });
     expect(res.body.error.message).toContain('/no-existe');
   });
+
+  describe('T7.2 — POST /internal/cron/close-seasons, fuera del stack de JWT', () => {
+    it('rechaza sin x-cron-secret', async () => {
+      const res = await request(createApp()).post('/internal/cron/close-seasons');
+      expect(res.status).toBe(401);
+    });
+
+    it('rechaza con un x-cron-secret que no coincide', async () => {
+      process.env['CRON_SECRET'] = 'el-secreto-de-verdad';
+      const res = await request(createApp()).post('/internal/cron/close-seasons').set('x-cron-secret', 'cualquier-otra-cosa');
+      expect(res.status).toBe(401);
+      delete process.env['CRON_SECRET'];
+    });
+  });
 });
