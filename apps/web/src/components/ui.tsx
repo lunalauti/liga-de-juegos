@@ -6,7 +6,7 @@ export function Seal() {
   return <span className="lj-seal" aria-hidden="true">✓</span>;
 }
 
-type ChipKind = 'verified' | 'manual' | 'dnf' | 'streak' | 'wins';
+type ChipKind = 'verified' | 'manual' | 'dnf' | 'streak' | 'wins' | 'tied';
 
 export function Chip({ kind, children }: { kind: ChipKind; children: ReactNode }) {
   return (

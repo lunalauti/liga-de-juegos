@@ -156,6 +156,9 @@ Además del tiempo total por juego (modo default), el grupo deberá poder activa
 **RF-15 — Desempates**
 Dentro del ranking de **cada juego**, el sistema deberá desempatar en este orden: (1) más victorias diarias en ese juego, (2) menos DNF en ese juego, (3) mejor tiempo individual en ese juego durante la temporada, (4) orden alfabético.
 
+- **El orden alfabético decide en qué orden se listan dos jugadores, no quién queda 1º y quién 2º.** Si después de aplicar los criterios (1)-(3) dos jugadores siguen exactamente empatados, el sistema deberá mostrarlo como un **empate real** (misma posición, marcado explícitamente como "Empate" en la interfaz) — nunca inventar un 1º y un 2º con el alfabético, que no es una diferencia deportiva. Pedido explícito del usuario tras ver el caso real, 2026-09-01.
+- Cuando dos o más jugadores empatan por un puesto, el siguiente jugador distinto ocupa el puesto que corresponde salteando los empatados (ranking de competición estándar: 1º, 1º, 3º — no 1º, 1º, 2º). Si dos empatan por el primer puesto, no hay segundo puesto.
+
 **RF-16 — Cierre e historial de temporadas**
 - Cuando termina una temporada, el sistema deberá congelar la tabla final **de cada juego** y guardarla como histórico consultable.
 - El sistema deberá mostrar un palmarés del grupo: cuántos títulos ganó cada jugador, **por juego** (ej. "3 veces campeón de Sudoku Avanzado, 1 vez de Crucigrama").

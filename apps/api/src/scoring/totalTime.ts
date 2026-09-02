@@ -40,7 +40,19 @@ function scoreGame(game: ScoringGame, members: ScoringMember[], grid: ResolvedCe
   const ranked = rows.filter((r) => r.totalSeconds !== null).sort(compareRows);
   const unranked = rows.filter((r) => r.totalSeconds === null).sort((a, b) => a.displayName.localeCompare(b.displayName, 'es'));
 
-  ranked.forEach((r, i) => (r.rank = i + 1));
+  // Ranking de competición estándar (1, 1, 3 — no 1, 2, 3): dos filas con
+  // exactamente los mismos criterios reales (RF-15, sin contar el alfabético,
+  // que sólo decide el orden de listado) comparten posición y quedan marcadas
+  // `tied`. El alfabético nunca inventa un 1º y un 2º donde hay un empate real.
+  ranked.forEach((r, i) => {
+    const prev = ranked[i - 1];
+    const tiedWithPrev = i > 0 && prev !== undefined && rowsAreTied(prev, r);
+    r.rank = tiedWithPrev ? prev!.rank : i + 1;
+    if (tiedWithPrev) {
+      r.tied = true;
+      prev!.tied = true;
+    }
+  });
   unranked.forEach((r, i) => (r.rank = ranked.length + i + 1));
 
   return { gameSlug: game.slug, gameName: game.name, rows: [...ranked, ...unranked] };
@@ -66,6 +78,7 @@ function buildRow(member: ScoringMember, gameCells: ResolvedCell[], dropWorstN: 
       displayName: member.displayName,
       avatar: member.avatar,
       rank: null,
+      tied: false,
       totalSeconds: null,
       avgSeconds: null,
       bestSeconds: null,
@@ -98,6 +111,7 @@ function buildRow(member: ScoringMember, gameCells: ResolvedCell[], dropWorstN: 
     displayName: member.displayName,
     avatar: member.avatar,
     rank: null, // se asigna después de ordenar
+    tied: false, // se completa afuera si corresponde
     totalSeconds,
     avgSeconds,
     bestSeconds,
@@ -145,4 +159,19 @@ function compareRows(a: LeaderboardRow, b: LeaderboardRow): number {
   const bestB = b.bestSeconds ?? Infinity;
   if (bestA !== bestB) return bestA - bestB;
   return a.displayName.localeCompare(b.displayName, 'es');
+}
+
+/**
+ * Empate real: los 3 criterios de desempate de RF-15 (además del total, que ya
+ * es igual porque `ranked` está agrupado por `compareRows`) coinciden. El
+ * alfabético NO cuenta acá — es el único criterio que siempre "decide" algo,
+ * y por eso mismo es el que no puede convertir un empate real en un 1º y un 2º.
+ */
+function rowsAreTied(a: LeaderboardRow, b: LeaderboardRow): boolean {
+  return (
+    a.totalSeconds === b.totalSeconds &&
+    a.dailyWins === b.dailyWins &&
+    a.dnfCount === b.dnfCount &&
+    a.bestSeconds === b.bestSeconds
+  );
 }

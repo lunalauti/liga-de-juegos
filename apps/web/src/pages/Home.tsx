@@ -12,6 +12,7 @@ interface LeaderboardRow {
   displayName: string;
   totalSeconds: number | null;
   rank: number | null;
+  tied: boolean;
   gapToPodium: number | null;
   deltaVsYesterday: number | null;
 }
@@ -79,15 +80,23 @@ export default function Home() {
 
   // Podio de hoy, por juego (RF-12/RF-18): top 3 más rápidos de cada juego activo,
   // entre quienes lo completaron (un DNF no compite por el podio de velocidad).
-  const gamePodiums = GAMES.map((g) => ({
-    gameSlug: g.slug,
-    gameName: g.name,
-    rows: day.rows
+  // Posición de competición estándar (1, 1, 3): dos tiempos iguales comparten
+  // posición y quedan marcados `tied`, no se les inventa un 1º y un 2º.
+  const gamePodiums = GAMES.map((g) => {
+    const sorted = day.rows
       .filter((r) => r.cells[g.slug]?.status === 'played')
       .map((r) => ({ userId: r.userId, displayName: r.displayName, seconds: r.cells[g.slug]!.seconds!, verified: r.cells[g.slug]!.verified }))
-      .sort((a, b) => a.seconds - b.seconds)
-      .slice(0, 3),
-  })).filter((gp) => gp.rows.length > 0);
+      .sort((a, b) => a.seconds - b.seconds);
+    const positions: number[] = [];
+    const withPosition = sorted.map((r, i) => {
+      const tiedWithPrev = i > 0 && sorted[i - 1]!.seconds === r.seconds;
+      const tiedWithNext = i < sorted.length - 1 && sorted[i + 1]!.seconds === r.seconds;
+      const position = tiedWithPrev ? positions[i - 1]! : i + 1;
+      positions.push(position);
+      return { ...r, position, tied: tiedWithPrev || tiedWithNext };
+    });
+    return { gameSlug: g.slug, gameName: g.name, rows: withPosition.slice(0, 3) };
+  }).filter((gp) => gp.rows.length > 0);
 
   return (
     <Screen>
@@ -112,6 +121,7 @@ export default function Home() {
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
                 <span className="lj-display" style={{ fontSize: 30, lineHeight: 0.9 }}>{row.rank ?? '—'}º</span>
                 <span style={{ fontSize: 13, fontWeight: 600 }}>{ranking.gameName}</span>
+                {row.tied && <Chip kind="tied">Empate</Chip>}
                 {row.deltaVsYesterday !== null && row.deltaVsYesterday !== 0 && (
                   <span className="lj-t" style={{ fontSize: 12, color: '#16513C' }}>
                     {row.deltaVsYesterday > 0 ? '▲' : '▼'} {Math.abs(row.deltaVsYesterday)}
@@ -138,11 +148,12 @@ export default function Home() {
           {gamePodiums.map((gp, gi) => (
             <div key={gp.gameSlug} style={{ borderBottom: gi < gamePodiums.length - 1 ? '1px solid #DDD6C8' : 'none' }}>
               <div style={{ padding: '8px 14px 0', fontSize: 11, letterSpacing: '.06em', textTransform: 'uppercase', color: '#8C8271' }}>{gp.gameName}</div>
-              {gp.rows.map((p, i) => (
+              {gp.rows.map((p) => (
                 <div key={p.userId} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '8px 14px' }}>
-                  <PositionBadge position={i + 1} />
+                  <PositionBadge position={p.position} />
                   <span className="lj-avatar">{initialsOf(p.displayName)}</span>
                   <span style={{ flex: 1, fontSize: 14, fontWeight: 600 }}>{p.displayName}</span>
+                  {p.tied && <Chip kind="tied">Empate</Chip>}
                   {p.verified && <span className="lj-seal" style={{ color: '#16513C' }}>✓</span>}
                   <span className="lj-t" style={{ fontSize: 15 }}>{formatTime(p.seconds)}</span>
                 </div>

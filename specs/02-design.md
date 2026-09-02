@@ -281,6 +281,7 @@ Códigos: `400` validación, `401` sin token, `403` sin permiso, `404`, `409` co
       "rows": [{
         "user": { "id": "…", "display_name": "Lautaro", "avatar": "🦊" },
         "rank": 1,
+        "tied": false,
         "total_seconds": 9120,
         "avg_seconds": 456,
         "best_seconds": 388,
@@ -336,8 +337,13 @@ entrada: entries del grupo en [desde, hasta], settings, miembros, juegos activos
    f. Desempatar dentro de ese juego: daily_wins ↓, dnf_count ↑, mejor tiempo individual ↑,
       display_name (RF-15) — todos los criterios ya estaban scopeados a un jugador; ahora también
       quedan scopeados a un juego.
+   g. Asignar `rank` con ranking de competición estándar (1, 1, 3 — no 1, 2, 3, ver nota abajo):
+      dos filas cuyo total_seconds, daily_wins, dnf_count Y mejor tiempo individual coinciden
+      EXACTAMENTE comparten la misma posición y quedan marcadas `tied: true` (RF-15).
 3. La respuesta trae un ranking por cada juego activo (§4), sin combinarlos.
 ```
+
+**Nota sobre empates reales (RF-15, pedido explícito del usuario, 2026-09-01):** el orden alfabético (paso f, último criterio) decide en qué ORDEN se listan dos filas — nunca decide el `rank`. Si tras (1)-(3) dos jugadores siguen empatados, el motor los marca `tied: true` y ambos reciben el mismo `rank`; el próximo jugador con un total distinto salta al puesto que corresponde (si dos empatan por el 1º, el siguiente es 3º, no 2º — no hay "segundo puesto" cuando el primero lo ocupan dos personas). Antes de este fix, el alfabético fingía una diferencia inexistente: dos tiempos idénticos se mostraban como 1º y 2º sin ninguna indicación de que en realidad estaban empatados.
 
 **Nota:** el DNF se guarda con la penalización *vigente al momento de cargar*, pero el motor **recalcula** usando la penalización actual del grupo. Así, cambiar la penalización (RF-17) reordena la temporada en curso sin tocar filas. Esto no cambia con D2.
 

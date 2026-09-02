@@ -58,6 +58,15 @@ export interface LeaderboardRow {
   avatar: string | null;
   /** `null` para quien no participó ni un solo día — no compite, no es "primero" por default. */
   rank: number | null;
+  /**
+   * `true` cuando esta fila y alguna adyacente comparten exactamente el mismo
+   * `totalSeconds`, `dailyWins`, `dnfCount` y `bestSeconds` — un empate real,
+   * no resuelto por ninguno de los criterios de RF-15. El orden alfabético
+   * decide en qué orden se listan, pero NO las convierte en 1º y 2º: comparten
+   * `rank` y el front debe mostrar "Empate", no fingir una diferencia que no
+   * existe (pedido explícito del usuario, 2026-09-01).
+   */
+  tied: boolean;
   totalSeconds: number | null;
   avgSeconds: number | null;
   bestSeconds: number | null;

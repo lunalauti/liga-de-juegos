@@ -150,6 +150,8 @@ body {
   &--dnf { border: 1px solid $danger; color: $danger; font-weight: 600; }
   &--streak { border: 1px solid $ln-rule; background: $ln-paper-2; color: $ln-ink-2; }
   &--wins { background: $ln-ink; color: $ln-paper; font-weight: 600; }
+  // Empate real (2026-09-01): mismo tratamiento visual que "manual", ni error ni logro — es un hecho.
+  &--tied { border: 1px dashed #b3aa98; color: #8c8271; font-weight: 600; }
 }
 
 /* El sello ✓: única marca de verificado, idéntica en todas las pantallas. */

@@ -121,24 +121,43 @@ describe('scoreTotalTime · empates dentro de un juego, un criterio a la vez (RF
     expect(sofi.dailyWins).toBe(1); // ganó el 30 (200 < 300)
     expect(nacho.dailyWins).toBe(1); // ganó el 31 (150 < 250)
     // Total y victorias empatados exactos → sigue al próximo criterio (mejor individual): Nacho (150 < 200).
+    // Es una diferencia REAL (bestSeconds distinto) → no es empate, rankean distinto.
     expect(cruci.rows.map((r) => r.userId)).toEqual(['nacho', 'sofi']);
+    expect(nacho.rank).toBe(1);
+    expect(sofi.rank).toBe(2);
+    expect(nacho.tied).toBe(false);
+    expect(sofi.tied).toBe(false);
   });
 
-  it('con totales y DNF empatados, gana quien tuvo mejor tiempo individual', () => {
+  it('con totales iguales, gana quien tuvo mejor tiempo individual — no es empate', () => {
     const { rankings } = scoreTotalTime(
       baseInput({
+        days: ['2026-08-30', '2026-08-31'],
         entries: [
-          { userId: 'sofi', gameSlug: 'crucigrama', puzzleDate: '2026-08-31', durationSeconds: 400, dnf: false, verified: true },
-          { userId: 'nacho', gameSlug: 'crucigrama', puzzleDate: '2026-08-31', durationSeconds: 400, dnf: false, verified: true },
+          // Sofi: 400 + 600 = 1000. Nacho: 500 + 500 = 1000. Mismo total, 0 DNF,
+          // 1 victoria diaria cada uno (Sofi gana el 30, Nacho el 31) — pero el
+          // mejor tiempo individual difiere: Sofi 400 < Nacho 500.
+          { userId: 'sofi', gameSlug: 'crucigrama', puzzleDate: '2026-08-30', durationSeconds: 400, dnf: false, verified: true },
+          { userId: 'sofi', gameSlug: 'crucigrama', puzzleDate: '2026-08-31', durationSeconds: 600, dnf: false, verified: true },
+          { userId: 'nacho', gameSlug: 'crucigrama', puzzleDate: '2026-08-30', durationSeconds: 500, dnf: false, verified: true },
+          { userId: 'nacho', gameSlug: 'crucigrama', puzzleDate: '2026-08-31', durationSeconds: 500, dnf: false, verified: true },
         ],
       }),
     );
     const cruci = byGame(rankings, 'crucigrama');
-    // Empate exacto en todo → desempata alfabético (Nacho antes que Sofi).
-    expect(cruci.rows.map((r) => r.userId)).toEqual(['nacho', 'sofi']);
+    const sofi = cruci.rows.find((r) => r.userId === 'sofi')!;
+    const nacho = cruci.rows.find((r) => r.userId === 'nacho')!;
+    expect(sofi.totalSeconds).toBe(1000);
+    expect(nacho.totalSeconds).toBe(1000);
+    expect(sofi.dailyWins).toBe(1);
+    expect(nacho.dailyWins).toBe(1);
+    expect(sofi.rank).toBe(1); // 400 < 500 de mejor individual
+    expect(nacho.rank).toBe(2);
+    expect(sofi.tied).toBe(false);
+    expect(nacho.tied).toBe(false);
   });
 
-  it('con total y victorias diarias empatados, gana quien tiene menos DNF', () => {
+  it('con total y victorias diarias empatados, gana quien tiene menos DNF — no es empate', () => {
     const { rankings } = scoreTotalTime(
       baseInput({
         entries: [
@@ -153,9 +172,13 @@ describe('scoreTotalTime · empates dentro de un juego, un criterio a la vez (RF
     expect(cruci.rows[0]!.totalSeconds).toBe(1200);
     expect(cruci.rows[1]!.totalSeconds).toBe(1200);
     expect(cruci.rows.map((r) => r.userId)).toEqual(['nacho', 'sofi']); // Nacho: 0 DNF vs 1
+    expect(cruci.rows[0]!.rank).toBe(1);
+    expect(cruci.rows[1]!.rank).toBe(2);
+    expect(cruci.rows[0]!.tied).toBe(false);
+    expect(cruci.rows[1]!.tied).toBe(false);
   });
 
-  it('si todo empata, desempata alfabético', () => {
+  it('empate real (2026-09-01, pedido del usuario): mismo total, dailyWins, DNF y mejor tiempo → "tied", NO 1º y 2º', () => {
     const { rankings } = scoreTotalTime(
       baseInput({
         entries: [
@@ -164,7 +187,57 @@ describe('scoreTotalTime · empates dentro de un juego, un criterio a la vez (RF
         ],
       }),
     );
-    expect(byGame(rankings, 'crucigrama').rows.map((r) => r.userId)).toEqual(['nacho', 'sofi']);
+    const cruci = byGame(rankings, 'crucigrama');
+    // El orden de LISTADO sigue siendo alfabético (Nacho antes que Sofi)...
+    expect(cruci.rows.map((r) => r.userId)).toEqual(['nacho', 'sofi']);
+    // ...pero el alfabético ya NO decide el rank: comparten la misma posición,
+    // marcada como empate. No hay un 1º y un 2º donde en realidad es un empate.
+    expect(cruci.rows[0]!.rank).toBe(1);
+    expect(cruci.rows[1]!.rank).toBe(1);
+    expect(cruci.rows[0]!.tied).toBe(true);
+    expect(cruci.rows[1]!.tied).toBe(true);
+  });
+
+  it('empate de 3 (cadena): los 3 comparten rank y tied, ninguno queda afuera', () => {
+    const { rankings } = scoreTotalTime(
+      baseInput({
+        members: [
+          { userId: 'sofi', displayName: 'Sofi', avatar: null },
+          { userId: 'nacho', displayName: 'Nacho', avatar: null },
+          { userId: 'belu', displayName: 'Belu', avatar: null },
+        ],
+        entries: [
+          { userId: 'sofi', gameSlug: 'crucigrama', puzzleDate: '2026-08-31', durationSeconds: 500, dnf: false, verified: true },
+          { userId: 'nacho', gameSlug: 'crucigrama', puzzleDate: '2026-08-31', durationSeconds: 500, dnf: false, verified: true },
+          { userId: 'belu', gameSlug: 'crucigrama', puzzleDate: '2026-08-31', durationSeconds: 500, dnf: false, verified: true },
+        ],
+      }),
+    );
+    const cruci = byGame(rankings, 'crucigrama');
+    expect(cruci.rows.map((r) => r.rank)).toEqual([1, 1, 1]);
+    expect(cruci.rows.every((r) => r.tied)).toBe(true);
+  });
+
+  it('empate para el 1º puesto: el siguiente distinto es 3º, no 2º (ranking de competición estándar)', () => {
+    const { rankings } = scoreTotalTime(
+      baseInput({
+        members: [
+          { userId: 'sofi', displayName: 'Sofi', avatar: null },
+          { userId: 'nacho', displayName: 'Nacho', avatar: null },
+          { userId: 'belu', displayName: 'Belu', avatar: null },
+        ],
+        entries: [
+          { userId: 'sofi', gameSlug: 'crucigrama', puzzleDate: '2026-08-31', durationSeconds: 400, dnf: false, verified: true },
+          { userId: 'nacho', gameSlug: 'crucigrama', puzzleDate: '2026-08-31', durationSeconds: 400, dnf: false, verified: true },
+          { userId: 'belu', gameSlug: 'crucigrama', puzzleDate: '2026-08-31', durationSeconds: 900, dnf: false, verified: true },
+        ],
+      }),
+    );
+    const cruci = byGame(rankings, 'crucigrama');
+    const belu = cruci.rows.find((r) => r.userId === 'belu')!;
+    expect(cruci.rows.filter((r) => r.rank === 1)).toHaveLength(2);
+    expect(belu.rank).toBe(3); // no 2º: los dos primeros puestos ya los ocupa el empate
+    expect(belu.tied).toBe(false);
   });
 });
 

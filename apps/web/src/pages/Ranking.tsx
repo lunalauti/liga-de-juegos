@@ -13,6 +13,8 @@ interface Row {
   displayName: string;
   avatar: string | null;
   rank: number | null;
+  /** Empate real (no resuelto por RF-15) — el front tiene que decirlo, no fingir un 1º/2º. */
+  tied: boolean;
   totalSeconds: number | null;
   dnfCount: number;
   dailyWins: number;
@@ -215,7 +217,11 @@ function Podium({ rows }: { rows: Row[] }) {
             </span>
             <span style={{ fontSize: isFirst ? 14 : 13, fontWeight: isFirst ? 700 : 600 }}>{r.displayName}</span>
             <span className="lj-t" style={{ fontSize: isFirst ? 21 : 16, fontWeight: isFirst ? 700 : 600 }}>{formatTime(r.totalSeconds!)}</span>
-            {isFirst && <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, letterSpacing: '.14em', textTransform: 'uppercase', opacity: 0.85 }}>Puntera</span>}
+            {(isFirst || r.tied) && (
+              <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, letterSpacing: '.14em', textTransform: 'uppercase', opacity: 0.85 }}>
+                {isFirst && r.tied ? 'Puntera · Empate' : isFirst ? 'Puntera' : 'Empate'}
+              </span>
+            )}
           </div>
         );
       })}
@@ -233,6 +239,7 @@ function RankingRow({ row, isMe }: { row: Row; isMe: boolean }) {
         <span className="lj-avatar">{initialsOf(row.displayName)}</span>
         <span style={{ fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.displayName}</span>
         {row.verifiedTotal > 0 && row.verifiedCount === row.verifiedTotal && <span className="lj-seal" style={{ color: '#16513C' }}>✓</span>}
+        {row.tied && <Chip kind="tied">Empate</Chip>}
         {row.dnfCount > 0 && <Chip kind="dnf">{row.dnfCount} DNF</Chip>}
         {row.dailyWins > 0 && <Chip kind="wins">{row.dailyWins} victorias</Chip>}
       </div>
