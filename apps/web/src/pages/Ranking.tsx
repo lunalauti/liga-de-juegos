@@ -15,6 +15,8 @@ interface Row {
   rank: number | null;
   /** Empate real (no resuelto por RF-15) — el front tiene que decirlo, no fingir un 1º/2º. */
   tied: boolean;
+  /** Sólo tiene valor en modo `position_points` (Fase 6, RF-13) — ver `scoringMode`. */
+  points: number | null;
   totalSeconds: number | null;
   dnfCount: number;
   dailyWins: number;
@@ -27,6 +29,8 @@ interface Winner { gameSlug: string; gameName: string; displayName: string; seco
 interface Pending { userId: string; displayName: string }
 interface LeaderboardResponse {
   period: { type: Period; startsOn: string; endsOn: string };
+  /** RF-13/RF-17: config del grupo, igual para los N juegos activos. */
+  scoringMode: 'total_time' | 'position_points';
   games: { slug: string; name: string }[];
   rankings: GameRanking[];
   todaysGameWinners: Winner[];
@@ -96,14 +100,17 @@ export default function Ranking() {
         <p style={{ color: '#6B6357', fontSize: 14, padding: '20px 0' }}>Todavía nadie cargó nada en este período.</p>
       ) : (
         <>
-          <Podium rows={ranking.rows.filter((r) => r.totalSeconds !== null).slice(0, 3)} />
+          <Podium
+            rows={ranking.rows.filter((r) => (data.scoringMode === 'position_points' ? r.points !== null : r.totalSeconds !== null)).slice(0, 3)}
+            pointsMode={data.scoringMode === 'position_points'}
+          />
 
           <div className="lj-card">
             <div style={{ display: 'grid', gridTemplateColumns: '30px 1fr 78px', gap: 8, padding: '7px 14px', background: '#F1EBDD', borderBottom: '1px solid #DDD6C8', fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: '#6B6357' }}>
-              <span>Pos</span><span>Jugador</span><span style={{ textAlign: 'right' }}>Tiempo</span>
+              <span>Pos</span><span>Jugador</span><span style={{ textAlign: 'right' }}>{data.scoringMode === 'position_points' ? 'Puntos' : 'Tiempo'}</span>
             </div>
             {ranking.rows.map((r) => (
-              <RankingRow key={r.userId} row={r} isMe={r.userId === me?.id} />
+              <RankingRow key={r.userId} row={r} isMe={r.userId === me?.id} pointsMode={data.scoringMode === 'position_points'} />
             ))}
           </div>
 
@@ -182,7 +189,7 @@ function TabButton({ label, active, onClick }: { label: string; active: boolean;
   );
 }
 
-function Podium({ rows }: { rows: Row[] }) {
+function Podium({ rows, pointsMode }: { rows: Row[]; pointsMode: boolean }) {
   if (rows.length === 0) return null;
   const order = rows.length === 3 ? [rows[1], rows[0], rows[2]] : rows; // 2do-1ro-3ro visualmente
   return (
@@ -216,7 +223,7 @@ function Podium({ rows }: { rows: Row[] }) {
               {initialsOf(r.displayName)}
             </span>
             <span style={{ fontSize: isFirst ? 14 : 13, fontWeight: isFirst ? 700 : 600 }}>{r.displayName}</span>
-            <span className="lj-t" style={{ fontSize: isFirst ? 21 : 16, fontWeight: isFirst ? 700 : 600 }}>{formatTime(r.totalSeconds!)}</span>
+            <span className="lj-t" style={{ fontSize: isFirst ? 21 : 16, fontWeight: isFirst ? 700 : 600 }}>{pointsMode ? `${r.points} pts` : formatTime(r.totalSeconds!)}</span>
             {(isFirst || r.tied) && (
               <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, letterSpacing: '.14em', textTransform: 'uppercase', opacity: 0.85 }}>
                 {isFirst && r.tied ? 'Puntera · Empate' : isFirst ? 'Puntera' : 'Empate'}
@@ -229,8 +236,9 @@ function Podium({ rows }: { rows: Row[] }) {
   );
 }
 
-function RankingRow({ row, isMe }: { row: Row; isMe: boolean }) {
-  const variant = isMe ? 'me' : row.rank === 1 ? 'leader' : row.totalSeconds === null ? 'idle' : 'default';
+function RankingRow({ row, isMe, pointsMode }: { row: Row; isMe: boolean; pointsMode: boolean }) {
+  const participates = pointsMode ? row.points !== null : row.totalSeconds !== null;
+  const variant = isMe ? 'me' : row.rank === 1 ? 'leader' : !participates ? 'idle' : 'default';
   const bg = variant === 'me' ? '#EFF4EF' : variant === 'leader' ? '#FBF8F1' : '#fff';
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '30px 1fr 78px', gap: 8, alignItems: 'center', padding: '9px 14px', borderBottom: '1px solid #EDE7DA', background: bg, borderLeft: variant === 'me' ? '4px solid #16513C' : 'none' }}>
@@ -243,7 +251,9 @@ function RankingRow({ row, isMe }: { row: Row; isMe: boolean }) {
         {row.dnfCount > 0 && <Chip kind="dnf">{row.dnfCount} DNF</Chip>}
         {row.dailyWins > 0 && <Chip kind="wins">{row.dailyWins} victorias</Chip>}
       </div>
-      <span className="lj-t" style={{ textAlign: 'right', fontSize: 17 }}>{row.totalSeconds !== null ? formatTime(row.totalSeconds) : '—'}</span>
+      <span className="lj-t" style={{ textAlign: 'right', fontSize: 17 }}>
+        {pointsMode ? (row.points !== null ? `${row.points} pts` : '—') : row.totalSeconds !== null ? formatTime(row.totalSeconds) : '—'}
+      </span>
     </div>
   );
 }

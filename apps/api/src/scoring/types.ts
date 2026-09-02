@@ -67,6 +67,12 @@ export interface LeaderboardRow {
    * existe (pedido explícito del usuario, 2026-09-01).
    */
   tied: boolean;
+  /**
+   * Sólo tiene valor en modo `position_points` (§5.2, Fase 6): puntos acumulados
+   * de la temporada en ese juego. En modo `total_time` queda `null` — el ranking
+   * ordena por `totalSeconds`, no por esto.
+   */
+  points: number | null;
   totalSeconds: number | null;
   avgSeconds: number | null;
   bestSeconds: number | null;

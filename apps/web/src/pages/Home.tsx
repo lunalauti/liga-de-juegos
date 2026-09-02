@@ -11,6 +11,7 @@ interface LeaderboardRow {
   userId: string;
   displayName: string;
   totalSeconds: number | null;
+  points: number | null;
   rank: number | null;
   tied: boolean;
   gapToPodium: number | null;
@@ -19,6 +20,7 @@ interface LeaderboardRow {
 interface GameRanking { gameSlug: string; gameName: string; rows: LeaderboardRow[] }
 interface LeaderboardResponse {
   period: { type: string };
+  scoringMode: 'total_time' | 'position_points';
   rankings: GameRanking[];
 }
 interface DayCell { status: 'played' | 'dnf' | 'absent' | 'blackout'; seconds: number | null; verified: boolean }
@@ -129,9 +131,15 @@ export default function Home() {
                 )}
               </div>
               <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <span className="lj-t" style={{ fontSize: 16 }}>{row.totalSeconds !== null ? formatTime(row.totalSeconds) : '—'}</span>
+                <span className="lj-t" style={{ fontSize: 16 }}>
+                  {lb.scoringMode === 'position_points'
+                    ? row.points !== null ? `${row.points} pts` : '—'
+                    : row.totalSeconds !== null ? formatTime(row.totalSeconds) : '—'}
+                </span>
                 {row.gapToPodium !== null && row.gapToPodium > 0 && (
-                  <span style={{ fontSize: 10, color: '#6B6357' }}>a {formatTime(row.gapToPodium)} del podio</span>
+                  <span style={{ fontSize: 10, color: '#6B6357' }}>
+                    a {lb.scoringMode === 'position_points' ? `${row.gapToPodium} pts` : formatTime(row.gapToPodium)} del podio
+                  </span>
                 )}
               </div>
             </div>

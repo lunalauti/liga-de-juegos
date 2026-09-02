@@ -79,6 +79,7 @@ function buildRow(member: ScoringMember, gameCells: ResolvedCell[], dropWorstN: 
       avatar: member.avatar,
       rank: null,
       tied: false,
+      points: null,
       totalSeconds: null,
       avgSeconds: null,
       bestSeconds: null,
@@ -112,6 +113,7 @@ function buildRow(member: ScoringMember, gameCells: ResolvedCell[], dropWorstN: 
     avatar: member.avatar,
     rank: null, // se asigna después de ordenar
     tied: false, // se completa afuera si corresponde
+    points: null,
     totalSeconds,
     avgSeconds,
     bestSeconds,
