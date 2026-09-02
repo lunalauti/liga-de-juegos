@@ -47,13 +47,11 @@ export interface ScoringInput {
   today: string;
 }
 
-export interface PerGameStats {
-  total: number;
-  avg: number;
-  best: number | null;
-  dnf: number;
-}
-
+/**
+ * Fila del ranking de UN juego (D2, 2026-09-01): ya no hay una fila por jugador con
+ * desglose por juego adentro — hay una tabla independiente por juego, y esto es una
+ * fila de esa tabla, ya scopeada a ese juego.
+ */
 export interface LeaderboardRow {
   userId: string;
   displayName: string;
@@ -61,7 +59,8 @@ export interface LeaderboardRow {
   /** `null` para quien no participó ni un solo día — no compite, no es "primero" por default. */
   rank: number | null;
   totalSeconds: number | null;
-  perGame: Record<string, PerGameStats>;
+  avgSeconds: number | null;
+  bestSeconds: number | null;
   daysPlayed: number;
   dnfCount: number;
   dailyWins: number;
@@ -70,8 +69,15 @@ export interface LeaderboardRow {
   verifiedTotal: number;
 }
 
+/** Ranking completo de un solo juego: podio, orden y desempates propios (RF-11, RF-15). */
+export interface GameRanking {
+  gameSlug: string;
+  gameName: string;
+  rows: LeaderboardRow[];
+}
+
 export interface DailyWinner {
   puzzleDate: string;
   userId: string;
-  totalSeconds: number;
+  seconds: number;
 }

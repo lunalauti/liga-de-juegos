@@ -14,24 +14,28 @@ interface Row {
   avatar: string | null;
   rank: number | null;
   totalSeconds: number | null;
-  perGame: Record<string, { total: number; best: number | null; dnf: number }>;
   dnfCount: number;
   dailyWins: number;
   verifiedCount: number;
   verifiedTotal: number;
   gapToLeader: number | null;
 }
+interface GameRanking { gameSlug: string; gameName: string; rows: Row[] }
 interface Winner { gameSlug: string; gameName: string; displayName: string; seconds: number }
 interface Pending { userId: string; displayName: string }
 interface LeaderboardResponse {
   period: { type: Period; startsOn: string; endsOn: string };
   games: { slug: string; name: string }[];
-  rows: Row[];
+  rankings: GameRanking[];
   todaysGameWinners: Winner[];
   pendingToday: Pending[];
 }
 
-/** Artboard 03 · "Ranking": tabs semana/mes, podio, tabla; desktop aparte. RF-11, RF-12, RF-15. */
+/**
+ * Artboard 03 · "Ranking": selector de juego + tabs semana/mes, podio, tabla; desktop aparte.
+ * RF-11, RF-12, RF-15. Desde D2 (2026-09-01) cada juego tiene su propio ranking, sin total
+ * combinado — por eso el selector de juego manda sobre qué tabla se pinta.
+ */
 export default function Ranking() {
   const { session } = useSession();
   const token = session?.access_token;
@@ -39,6 +43,7 @@ export default function Ranking() {
   const { activeGroup, loading: loadingMe } = useActiveGroupContext();
 
   const [period, setPeriod] = useState<Period>('month');
+  const [gameSlug, setGameSlug] = useState<string | null>(null);
   const [data, setData] = useState<LeaderboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -49,12 +54,19 @@ export default function Ranking() {
     }
     setLoading(true);
     apiFetch<LeaderboardResponse>(`/groups/${activeGroup.id}/leaderboard?period=${period}`, { accessToken: token })
-      .then(setData)
+      .then((res) => {
+        setData(res);
+        // El juego seleccionado sigue vivo mientras exista en la respuesta nueva;
+        // si no (cambió de grupo, o el admin desactivó ese juego), cae al primero.
+        setGameSlug((prev) => (prev && res.rankings.some((r) => r.gameSlug === prev) ? prev : (res.rankings[0]?.gameSlug ?? null)));
+      })
       .finally(() => setLoading(false));
   }, [token, activeGroup, period]);
 
   if (loadingMe) return <Screen><p style={{ color: '#6B6357' }}>Cargando…</p></Screen>;
   if (!activeGroup) return <NoGroupState />;
+
+  const ranking = data?.rankings.find((r) => r.gameSlug === gameSlug) ?? null;
 
   return (
     <Screen>
@@ -63,26 +75,33 @@ export default function Ranking() {
           <span className="lj-card-title" style={{ fontSize: 26 }}>Tabla</span>
           {data && <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, color: '#6B6357' }}>{rangeLabel(data.period.startsOn, data.period.endsOn)}</span>}
         </div>
+        {data && data.rankings.length > 1 && (
+          <div style={{ display: 'flex', gap: 6, paddingBottom: 10, flexWrap: 'wrap' }}>
+            {data.rankings.map((r) => (
+              <GameTab key={r.gameSlug} label={r.gameName} active={r.gameSlug === gameSlug} onClick={() => setGameSlug(r.gameSlug)} />
+            ))}
+          </div>
+        )}
         <div style={{ display: 'flex' }}>
           <TabButton label="Semana" active={period === 'week'} onClick={() => setPeriod('week')} />
           <TabButton label="Mes" active={period === 'month'} onClick={() => setPeriod('month')} />
         </div>
       </div>
 
-      {loading || !data ? (
+      {loading || !data || !ranking ? (
         <p style={{ color: '#6B6357' }}>Cargando…</p>
-      ) : data.rows.length === 0 ? (
+      ) : ranking.rows.length === 0 ? (
         <p style={{ color: '#6B6357', fontSize: 14, padding: '20px 0' }}>Todavía nadie cargó nada en este período.</p>
       ) : (
         <>
-          <Podium rows={data.rows.filter((r) => r.totalSeconds !== null).slice(0, 3)} />
+          <Podium rows={ranking.rows.filter((r) => r.totalSeconds !== null).slice(0, 3)} />
 
           <div className="lj-card">
             <div style={{ display: 'grid', gridTemplateColumns: '30px 1fr 78px', gap: 8, padding: '7px 14px', background: '#F1EBDD', borderBottom: '1px solid #DDD6C8', fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: '#6B6357' }}>
-              <span>Pos</span><span>Jugador</span><span style={{ textAlign: 'right' }}>Total</span>
+              <span>Pos</span><span>Jugador</span><span style={{ textAlign: 'right' }}>Tiempo</span>
             </div>
-            {data.rows.map((r) => (
-              <RankingRow key={r.userId} row={r} isMe={r.userId === me?.id} games={data.games} />
+            {ranking.rows.map((r) => (
+              <RankingRow key={r.userId} row={r} isMe={r.userId === me?.id} />
             ))}
           </div>
 
@@ -114,6 +133,26 @@ export default function Ranking() {
         </>
       )}
     </Screen>
+  );
+}
+
+function GameTab({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        padding: '6px 12px',
+        background: active ? '#16513C' : '#fff',
+        color: active ? '#F6F2EA' : '#4A4438',
+        border: `1px solid ${active ? '#16513C' : '#DDD6C8'}`,
+        fontSize: 13,
+        fontWeight: active ? 700 : 500,
+        cursor: 'pointer',
+      }}
+    >
+      {label}
+    </button>
   );
 }
 
@@ -184,25 +223,18 @@ function Podium({ rows }: { rows: Row[] }) {
   );
 }
 
-function RankingRow({ row, isMe, games }: { row: Row; isMe: boolean; games: { slug: string; name: string }[] }) {
+function RankingRow({ row, isMe }: { row: Row; isMe: boolean }) {
   const variant = isMe ? 'me' : row.rank === 1 ? 'leader' : row.totalSeconds === null ? 'idle' : 'default';
   const bg = variant === 'me' ? '#EFF4EF' : variant === 'leader' ? '#FBF8F1' : '#fff';
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '30px 1fr 78px', gap: 8, alignItems: 'center', padding: '9px 14px', borderBottom: '1px solid #EDE7DA', background: bg, borderLeft: variant === 'me' ? '4px solid #16513C' : 'none' }}>
       <span className="lj-t" style={{ fontSize: 17 }}>{row.rank ?? '—'}</span>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-          <span className="lj-avatar">{initialsOf(row.displayName)}</span>
-          <span style={{ fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.displayName}</span>
-          {row.verifiedTotal > 0 && row.verifiedCount === row.verifiedTotal && <span className="lj-seal" style={{ color: '#16513C' }}>✓</span>}
-          {row.dnfCount > 0 && <Chip kind="dnf">{row.dnfCount} DNF</Chip>}
-          {row.dailyWins > 0 && <Chip kind="wins">{row.dailyWins} victorias</Chip>}
-        </div>
-        <div style={{ display: 'flex', gap: 9, fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, color: '#8C8271' }}>
-          {games.map((g) => (
-            <span key={g.slug}>{g.name[0]} {row.perGame[g.slug] ? formatTime(row.perGame[g.slug]!.total) : '—'}</span>
-          ))}
-        </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
+        <span className="lj-avatar">{initialsOf(row.displayName)}</span>
+        <span style={{ fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.displayName}</span>
+        {row.verifiedTotal > 0 && row.verifiedCount === row.verifiedTotal && <span className="lj-seal" style={{ color: '#16513C' }}>✓</span>}
+        {row.dnfCount > 0 && <Chip kind="dnf">{row.dnfCount} DNF</Chip>}
+        {row.dailyWins > 0 && <Chip kind="wins">{row.dailyWins} victorias</Chip>}
       </div>
       <span className="lj-t" style={{ textAlign: 'right', fontSize: 17 }}>{row.totalSeconds !== null ? formatTime(row.totalSeconds) : '—'}</span>
     </div>

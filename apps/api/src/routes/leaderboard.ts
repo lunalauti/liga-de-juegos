@@ -146,7 +146,7 @@ leaderboardRouter.get('/groups/:id/leaderboard', async (req, res, next) => {
         period: { type: period, startsOn: bounds.start, endsOn: bounds.end, status: 'open' },
         scoringMode: 'total_time',
         games: roster.games,
-        rows: [],
+        rankings: roster.games.map((g) => ({ gameSlug: g.slug, gameName: g.name, rows: [] })),
         todaysGameWinners: [],
         pendingToday: roster.members,
       };
@@ -160,18 +160,26 @@ leaderboardRouter.get('/groups/:id/leaderboard', async (req, res, next) => {
     // inicio del período, no hay base de comparación (T4.10).
     const yesterday = addDays(clippedEnd, -1);
     const yResult = yesterday >= bounds.start ? await runScoring(groupId, roster, gameIdBySlug, bounds.start, yesterday) : null;
-    const yesterdayRankByUser = new Map((yResult?.rows ?? []).map((r) => [r.userId, r.rank]));
 
-    const rows = (result?.rows ?? []).map((row) => {
-      const yRank = yesterdayRankByUser.get(row.userId) ?? null;
-      const leaderSeconds = result!.rows.find((r) => r.totalSeconds !== null)?.totalSeconds ?? null;
-      const podiumSeconds = result!.rows.filter((r) => r.totalSeconds !== null)[2]?.totalSeconds ?? leaderSeconds;
-      return {
-        ...row,
-        deltaVsYesterday: yRank !== null && row.rank !== null ? yRank - row.rank : null,
-        gapToLeader: row.totalSeconds !== null && leaderSeconds !== null ? row.totalSeconds - leaderSeconds : null,
-        gapToPodium: row.totalSeconds !== null && podiumSeconds !== null ? row.totalSeconds - podiumSeconds : null,
-      };
+    // D2 (2026-09-01): delta/gap se calculan DENTRO de cada juego — el líder y el
+    // podio de Crucigrama no tienen nada que ver con los de Sudoku.
+    const rankings = (result?.rankings ?? []).map((ranking) => {
+      const yRanking = yResult?.rankings.find((r) => r.gameSlug === ranking.gameSlug);
+      const yesterdayRankByUser = new Map((yRanking?.rows ?? []).map((r) => [r.userId, r.rank]));
+      const leaderSeconds = ranking.rows.find((r) => r.totalSeconds !== null)?.totalSeconds ?? null;
+      const podiumSeconds = ranking.rows.filter((r) => r.totalSeconds !== null)[2]?.totalSeconds ?? leaderSeconds;
+
+      const rows = ranking.rows.map((row) => {
+        const yRank = yesterdayRankByUser.get(row.userId) ?? null;
+        return {
+          ...row,
+          deltaVsYesterday: yRank !== null && row.rank !== null ? yRank - row.rank : null,
+          gapToLeader: row.totalSeconds !== null && leaderSeconds !== null ? row.totalSeconds - leaderSeconds : null,
+          gapToPodium: row.totalSeconds !== null && podiumSeconds !== null ? row.totalSeconds - podiumSeconds : null,
+        };
+      });
+
+      return { gameSlug: ranking.gameSlug, gameName: ranking.gameName, rows };
     });
 
     // Ganadores del día de HOY por juego (no por el período completo) — panel desktop del artboard 03.
@@ -189,7 +197,7 @@ leaderboardRouter.get('/groups/:id/leaderboard', async (req, res, next) => {
       period: { type: period, startsOn: bounds.start, endsOn: bounds.end, status: bounds.end < today ? 'closed' : 'open' },
       scoringMode: 'total_time',
       games: roster.games,
-      rows,
+      rankings,
       todaysGameWinners,
       pendingToday,
     };

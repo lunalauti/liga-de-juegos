@@ -15,9 +15,10 @@ interface LeaderboardRow {
   gapToPodium: number | null;
   deltaVsYesterday: number | null;
 }
+interface GameRanking { gameSlug: string; gameName: string; rows: LeaderboardRow[] }
 interface LeaderboardResponse {
   period: { type: string };
-  rows: LeaderboardRow[];
+  rankings: GameRanking[];
 }
 interface DayCell { status: 'played' | 'dnf' | 'absent' | 'blackout'; seconds: number | null; verified: boolean }
 interface DayRow { userId: string; displayName: string; avatar: string | null; cells: Record<string, DayCell> }
@@ -61,7 +62,6 @@ export default function Home() {
 
   if (!lb || !day) return <Screen><p role="alert" style={{ color: '#A8352A' }}>No pudimos cargar tu tabla.</p></Screen>;
 
-  const myRow = lb.rows.find((r) => r.userId === me?.id) ?? null;
   const myDay = day.rows.find((r) => r.userId === me?.id) ?? null;
   const myGamesLoaded = myDay ? GAMES.filter((g) => myDay.cells[g.slug]?.status !== 'absent' && myDay.cells[g.slug]?.status !== 'blackout') : [];
   const loadedAllThree = myGamesLoaded.length === GAMES.length;
@@ -71,61 +71,82 @@ export default function Home() {
     .filter((r) => GAMES.every((g) => r.cells[g.slug]?.status === 'played' || r.cells[g.slug]?.status === 'dnf'))
     .map((r) => r.displayName);
 
-  // Podio de hoy: entre quienes tienen el día completo, por menor suma (RF-12).
-  const podium = day.rows
-    .filter((r) => GAMES.every((g) => r.cells[g.slug]?.status === 'played' || r.cells[g.slug]?.status === 'dnf'))
-    .map((r) => ({
-      userId: r.userId,
-      displayName: r.displayName,
-      totalSeconds: GAMES.reduce((s, g) => s + (r.cells[g.slug]?.seconds ?? 0), 0),
-      verified: GAMES.every((g) => r.cells[g.slug]?.verified),
-    }))
-    .sort((a, b) => a.totalSeconds - b.totalSeconds)
-    .slice(0, 3);
+  // D2 (2026-09-01): "tu posición" pasa a ser una por juego, no un único número
+  // sumado. `lb.rankings` ya trae una tabla independiente por juego activo.
+  const myPositions = lb.rankings
+    .map((ranking) => ({ ranking, row: ranking.rows.find((r) => r.userId === me?.id) ?? null }))
+    .filter((p): p is { ranking: GameRanking; row: LeaderboardRow } => p.row !== null);
+
+  // Podio de hoy, por juego (RF-12/RF-18): top 3 más rápidos de cada juego activo,
+  // entre quienes lo completaron (un DNF no compite por el podio de velocidad).
+  const gamePodiums = GAMES.map((g) => ({
+    gameSlug: g.slug,
+    gameName: g.name,
+    rows: day.rows
+      .filter((r) => r.cells[g.slug]?.status === 'played')
+      .map((r) => ({ userId: r.userId, displayName: r.displayName, seconds: r.cells[g.slug]!.seconds!, verified: r.cells[g.slug]!.verified }))
+      .sort((a, b) => a.seconds - b.seconds)
+      .slice(0, 3),
+  })).filter((gp) => gp.rows.length > 0);
 
   return (
     <Screen>
       <Eyebrow>{activeGroup.name}</Eyebrow>
 
-      {loadedAllThree ? <LoadedCard myDay={myDay!} rank={myRow?.rank ?? null} /> : <NotLoadedCard othersLoadedToday={othersLoadedToday} onLoad={() => navigate('/cargar')} />}
+      {loadedAllThree ? <LoadedCard myDay={myDay!} /> : <NotLoadedCard othersLoadedToday={othersLoadedToday} onLoad={() => navigate('/cargar')} />}
 
-      {myRow && (
-        <div style={{ background: '#fff', border: '1px solid #DDD6C8', borderLeft: '4px solid #16513C', padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <span className="lj-label">Tu posición · este mes</span>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-              <span className="lj-display" style={{ fontSize: 52, lineHeight: 0.9 }}>{myRow.rank ?? '—'}º</span>
-              {myRow.deltaVsYesterday !== null && myRow.deltaVsYesterday !== 0 && (
-                <span className="lj-t" style={{ fontSize: 13, color: '#16513C' }}>
-                  {myRow.deltaVsYesterday > 0 ? '▲' : '▼'} {Math.abs(myRow.deltaVsYesterday)}
-                </span>
-              )}
-              <span style={{ fontSize: 11, color: '#6B6357' }}>vs. ayer</span>
+      {myPositions.length > 0 && (
+        <div style={{ background: '#fff', border: '1px solid #DDD6C8' }}>
+          <div style={{ padding: '10px 16px', borderBottom: '1px solid #DDD6C8', background: '#F1EBDD' }}>
+            <span className="lj-label" style={{ color: '#4A4438' }}>Tu posición · este mes</span>
+          </div>
+          {myPositions.map(({ ranking, row }, i) => (
+            <div
+              key={ranking.gameSlug}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px',
+                borderBottom: i < myPositions.length - 1 ? '1px solid #EDE7DA' : 'none',
+                borderLeft: '4px solid #16513C',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+                <span className="lj-display" style={{ fontSize: 30, lineHeight: 0.9 }}>{row.rank ?? '—'}º</span>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>{ranking.gameName}</span>
+                {row.deltaVsYesterday !== null && row.deltaVsYesterday !== 0 && (
+                  <span className="lj-t" style={{ fontSize: 12, color: '#16513C' }}>
+                    {row.deltaVsYesterday > 0 ? '▲' : '▼'} {Math.abs(row.deltaVsYesterday)}
+                  </span>
+                )}
+              </div>
+              <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <span className="lj-t" style={{ fontSize: 16 }}>{row.totalSeconds !== null ? formatTime(row.totalSeconds) : '—'}</span>
+                {row.gapToPodium !== null && row.gapToPodium > 0 && (
+                  <span style={{ fontSize: 10, color: '#6B6357' }}>a {formatTime(row.gapToPodium)} del podio</span>
+                )}
+              </div>
             </div>
-          </div>
-          <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <span className="lj-label">Total mes</span>
-            <span className="lj-t" style={{ fontSize: 22 }}>{myRow.totalSeconds !== null ? formatTime(myRow.totalSeconds) : '—'}</span>
-            {myRow.gapToPodium !== null && myRow.gapToPodium > 0 && (
-              <span style={{ fontSize: 11, color: '#6B6357' }}>a {formatTime(myRow.gapToPodium)} del podio</span>
-            )}
-          </div>
+          ))}
         </div>
       )}
 
-      {podium.length > 0 && (
+      {gamePodiums.length > 0 && (
         <div style={{ background: '#fff', border: '1px solid #DDD6C8' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 14px', borderBottom: '1px solid #DDD6C8', background: '#F1EBDD' }}>
             <span className="lj-label" style={{ color: '#4A4438' }}>Podio de hoy</span>
             <Link to="/dia/hoy" style={{ fontSize: 12, color: '#16513C', textDecoration: 'none', borderBottom: '1px solid #16513C' }}>Ver el día</Link>
           </div>
-          {podium.map((p, i) => (
-            <div key={p.userId} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '11px 14px', borderBottom: i < podium.length - 1 ? '1px solid #EDE7DA' : 'none' }}>
-              <PositionBadge position={i + 1} />
-              <span className="lj-avatar">{initialsOf(p.displayName)}</span>
-              <span style={{ flex: 1, fontSize: 14, fontWeight: 600 }}>{p.displayName}</span>
-              {p.verified && <span className="lj-seal" style={{ color: '#16513C' }}>✓</span>}
-              <span className="lj-t" style={{ fontSize: 15 }}>{formatTime(p.totalSeconds)}</span>
+          {gamePodiums.map((gp, gi) => (
+            <div key={gp.gameSlug} style={{ borderBottom: gi < gamePodiums.length - 1 ? '1px solid #DDD6C8' : 'none' }}>
+              <div style={{ padding: '8px 14px 0', fontSize: 11, letterSpacing: '.06em', textTransform: 'uppercase', color: '#8C8271' }}>{gp.gameName}</div>
+              {gp.rows.map((p, i) => (
+                <div key={p.userId} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '8px 14px' }}>
+                  <PositionBadge position={i + 1} />
+                  <span className="lj-avatar">{initialsOf(p.displayName)}</span>
+                  <span style={{ flex: 1, fontSize: 14, fontWeight: 600 }}>{p.displayName}</span>
+                  {p.verified && <span className="lj-seal" style={{ color: '#16513C' }}>✓</span>}
+                  <span className="lj-t" style={{ fontSize: 15 }}>{formatTime(p.seconds)}</span>
+                </div>
+              ))}
             </div>
           ))}
         </div>
@@ -156,20 +177,12 @@ function NotLoadedCard({ othersLoadedToday, onLoad }: { othersLoadedToday: strin
   );
 }
 
-function LoadedCard({ myDay, rank }: { myDay: DayRow; rank: number | null }) {
+function LoadedCard({ myDay }: { myDay: DayRow }) {
   return (
     <div style={{ background: '#fff', border: '1px solid #DDD6C8' }}>
-      <div style={{ padding: '16px 16px 12px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', borderBottom: '1px solid #DDD6C8' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <span className="lj-label" style={{ color: '#16513C' }}>Listo por hoy</span>
-          <span className="lj-card-title" style={{ fontSize: 27 }}>Cargaste los tres</span>
-        </div>
-        {rank !== null && (
-          <div style={{ textAlign: 'right' }}>
-            <div className="lj-display" style={{ fontSize: 34 }}>{rank}º</div>
-            <div className="lj-label" style={{ fontSize: 10 }}>del mes</div>
-          </div>
-        )}
+      <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid #DDD6C8' }}>
+        <span className="lj-label" style={{ color: '#16513C' }}>Listo por hoy</span>
+        <div className="lj-card-title" style={{ fontSize: 27, marginTop: 2 }}>Cargaste los tres</div>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)' }}>
         {GAMES.map((g, i) => {
