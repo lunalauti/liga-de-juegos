@@ -127,22 +127,23 @@ Formato: `RF-x` con criterios de aceptación en formato EARS (*Cuando/Si… el s
 
 ### 5.4 Competencia y rankings
 
-**RF-11 — Ranking por temporada**
-- El sistema deberá calcular, para cada grupo y cada temporada (semana o mes), un ranking ordenado por **tiempo total acumulado ascendente** (menor es mejor), sumando todos los juegos activos.
-- El sistema deberá mostrar además: tiempo por juego, cantidad de días jugados, cantidad de DNF, cantidad de victorias diarias.
+**RF-11 — Ranking por temporada, por juego** *(cambio de alcance, ver D2)*
+- El sistema deberá calcular, para cada grupo, cada temporada (semana o mes) y **cada juego activo, por separado**, un ranking ordenado por **tiempo acumulado ascendente en ese juego** (menor es mejor).
+- **No existe un ranking general que sume los tiempos de distintos juegos.** Crucigrama, Cruci Experto y Sudoku Avanzado no compiten entre sí: tienen duración y dificultad distintas, y sumarlos no dice nada real sobre quién juega mejor. Cada juego tiene su propio podio y su propio campeón de temporada.
+- El sistema deberá mostrar, por jugador y por juego: cantidad de días jugados, cantidad de DNF, cantidad de victorias diarias en ese juego.
 - La semana deberá ir de **lunes a domingo**; el mes, del 1 al último día. Zona horaria Argentina.
 
 **RF-12 — Ranking diario**
-- El sistema deberá mostrar el ranking del día: quién fue más rápido en cada juego y en la suma del día.
-- El sistema deberá otorgar una **victoria diaria** al de menor tiempo total del día entre quienes tienen el día completo.
+- El sistema deberá mostrar el ranking del día **por juego**: quién fue más rápido, ese día, en cada juego activo.
+- El sistema deberá otorgar una **victoria diaria por juego** al de menor tiempo de ese juego ese día — ya no hace falta haber completado los otros juegos del día para ganar una victoria diaria en uno de ellos (eso era una condición del ranking sumado, que dejó de existir).
 
 **RF-13 — Modos de puntuación adicionales**
 
-Además del tiempo total (modo default), el grupo deberá poder activar:
+Además del tiempo total por juego (modo default), el grupo deberá poder activar, **también por juego**:
 
-- **Puntos por posición (estilo F1)**: cada día, por juego, se reparten puntos según el orden de llegada (ej. 5-3-2-1-0…). Neutraliza los días catastróficos: un día pésimo cuesta lo mismo que un día apenas malo. Configurable por el admin.
-- **Descartar los N peores días** (*drop worst*): al cerrar la temporada, se descartan los N peores días de cada jugador. Con `N = 2` mensual, nadie pierde el mes por irse de viaje o por un crucigrama imposible.
-- **Cabeza a cabeza (H2H)**: por cada día y juego, el sistema deberá registrar el resultado contra cada rival, y mostrar una matriz "cuántas veces le gané a cada uno".
+- **Puntos por posición (estilo F1)**: cada día, por juego, se reparten puntos según el orden de llegada (ej. 5-3-2-1-0…). Neutraliza los días catastróficos: un día pésimo cuesta lo mismo que un día apenas malo. Configurable por el admin. El total de la temporada es la suma de puntos **dentro de ese juego**, no entre juegos distintos.
+- **Descartar los N peores tiempos** (*drop worst*): al cerrar la temporada, y **para cada juego por separado**, se descartan los N peores tiempos de cada jugador en ese juego. Con `N = 2` mensual, nadie pierde el mes de Sudoku por un día imposible, sin que eso lo perjudique en el ranking de Crucigrama.
+- **Cabeza a cabeza (H2H)**: por cada día y juego, el sistema deberá registrar el resultado contra cada rival, y mostrar una matriz "cuántas veces le gané a cada uno" — ya era por juego, no cambia.
 
 **RF-14 — Métricas complementarias** (siempre visibles, no definen al campeón)
 - **Racha** (`streak`): días consecutivos con todos los juegos activos completados sin DNF. Se muestra la actual y la mejor histórica.
@@ -153,11 +154,11 @@ Además del tiempo total (modo default), el grupo deberá poder activar:
 - **Mejora**: variación del tiempo promedio contra la temporada anterior.
 
 **RF-15 — Desempates**
-El sistema deberá desempatar en este orden: (1) más victorias diarias, (2) menos DNF, (3) mejor tiempo individual en la temporada, (4) orden alfabético.
+Dentro del ranking de **cada juego**, el sistema deberá desempatar en este orden: (1) más victorias diarias en ese juego, (2) menos DNF en ese juego, (3) mejor tiempo individual en ese juego durante la temporada, (4) orden alfabético.
 
 **RF-16 — Cierre e historial de temporadas**
-- Cuando termina una temporada, el sistema deberá congelar su tabla final y guardarla como histórico consultable.
-- El sistema deberá mostrar un palmarés del grupo: cuántas temporadas ganó cada jugador.
+- Cuando termina una temporada, el sistema deberá congelar la tabla final **de cada juego** y guardarla como histórico consultable.
+- El sistema deberá mostrar un palmarés del grupo: cuántos títulos ganó cada jugador, **por juego** (ej. "3 veces campeón de Sudoku Avanzado, 1 vez de Crucigrama").
 
 ### 5.5 Configuración del grupo
 
@@ -170,13 +171,13 @@ El sistema deberá desempatar en este orden: (1) más victorias diarias, (2) men
 | Período de competencia | mensual | semanal, mensual, ambos |
 | Trato de ausencias | penalizar | penalizar, ignorar |
 | Modo de puntuación | tiempo total | tiempo total, puntos por posición |
-| Drop worst N | 0 | 0–5 |
+| Drop worst N | 0 | 0–5, **aplicado dentro de cada juego** (no días combinados) |
 
 Cambiar la configuración deberá recalcular la temporada en curso, nunca las cerradas.
 
 ### 5.6 Visualización
 
-**RF-18 — Home**: al entrar, el jugador deberá ver de una sola mirada (a) si ya cargó lo de hoy, (b) su posición en la temporada en curso, (c) el podio del día.
+**RF-18 — Home**: al entrar, el jugador deberá ver de una sola mirada (a) si ya cargó lo de hoy, (b) su posición en la temporada en curso **en cada juego activo**, (c) el podio del día **por juego**.
 **RF-19 — Historial personal**: evolución del tiempo por juego a lo largo del tiempo, en gráfico.
 **RF-20 — Detalle de día**: para cualquier fecha, la grilla completa jugador × juego con los tiempos.
 
@@ -207,7 +208,7 @@ El MVP está listo cuando, con el sistema desplegado:
 | # | Pregunta | Default asumido | Impacto si cambia |
 |---|---|---|---|
 | D1 | ¿La competencia es semanal, mensual o las dos? | **Ambas**, con la mensual como principal | Bajo: es config de grupo |
-| D2 | ¿Se compite en la suma de los 3 o también en cada juego por separado? | **Ambas cosas**: ranking general + un ranking por juego | Bajo |
+| D2 | ¿Se compite en la suma de los 3 o también en cada juego por separado? | **Resuelto — cambio de alcance (2026-09-01): sólo por juego.** Se elimina el ranking general que sumaba los tiempos de distintos juegos; cada juego (Crucigrama, Cruci Experto, Sudoku Avanzado) tiene su propio ranking, podio y campeón de temporada. RF-11, RF-12, RF-13, RF-15, RF-16 y RF-18 actualizados. Rompe el contrato de `GET /groups/:id/leaderboard` y el motor de puntuación construidos en la Fase 4 — ver `02-design.md` §5 y las tareas de rework en `03-tasks.md` | **Alto** — toca el motor de puntuación, la API y las pantallas Home/Tabla, todo ya implementado y en producción |
 | D3 | ¿Hace falta verificar los tiempos? | **Resuelto**: el link de La Nación es el comprobante. Lo importado queda marcado como verificado; lo manual, no | — |
 | D7 | ¿Se permite cargar a mano, sabiendo que el link es verificable? | **Sí**, pero marcado como no verificado. El grupo puede exigir link (setting `require_verified`) | Bajo |
 | D8 | ¿Qué pasa si La Nación cambia o corta la API? | La carga manual sigue funcionando; la app degrada, no se rompe | Medio |
@@ -215,4 +216,5 @@ El MVP está listo cuando, con el sistema desplegado:
 | D5 | ¿Se pueden agregar otros juegos del diario? | Sí, el catálogo de juegos es data, no código | Bajo |
 | D6 | ¿Qué pasa si La Nación no publica un juego un día? | El admin puede marcar un día como anulado para el grupo | Bajo |
 | D9 | ¿Qué pasa con un grupo si un admin borra su cuenta? | **Resuelto.** El rol de admin pasa al miembro más antiguo que quede en el grupo; si no queda nadie más, el grupo se borra. Aplica a cualquier admin, no sólo al creador original — si no, el mismo problema reaparece cuando se va un admin promovido después. `created_by` pasa a `NULL` en vez de bloquear el borrado (era la causa del error 500 encontrado en testing). Implementado en `supabase/migrations/0004_creator_departure.sql`, verificado contra Supabase real en los dos escenarios (con sucesor y sin nadie más). | — |
+| D11 | Con el ranking por juego (D2), ¿la racha (RF-14) sigue siendo "completé TODOS los juegos activos ese día" o pasa a ser una racha por juego? | **Default asumido: se mantiene holística**, como hoy — es una métrica de compromiso/hábito diario, no de competencia por juego, y partirla en 3 rachas independientes le resta claridad al home sin que lo haya pedido este cambio. Si se prefiere una racha por juego, es un ajuste acotado a `scoring/stats.ts` (Fase 8, sin implementar todavía) | Bajo — sólo la definición de una métrica secundaria, no toca el motor de ranking |
 | D10 | ¿Un resultado importado con un tiempo real peor que la penalización se capea igual que en la carga manual? | **Resuelto: (b).** El tiempo real importado se guarda tal cual llega, sin capear contra la penalización — a diferencia de la carga manual (RF-6b), donde un tiempo peor que la penalización sí se convierte en DNF. Terminar tarde puede costar más que rendirse; es intencional, no un bug. El link es el comprobante real, y capearlo "escondería" un dato verificado. | — |

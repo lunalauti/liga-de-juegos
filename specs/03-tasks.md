@@ -1,7 +1,7 @@
 # Liga de Juegos — Plan de tareas
 
 > Fase 3 de 3. Cada task es un commit/PR chico, verificable por separado. `[RF-x]` = requerimiento que cubre, `§y` = sección del diseño.
-> Estimación total: **~46–56 h** de trabajo efectivo. El camino más corto a algo usable es la Fase 4 (MVP jugable).
+> Estimación total: **~52–62 h** de trabajo efectivo (incluye la Fase 4b, agregada el 2026-09-01 por el cambio de alcance D2). El camino más corto a algo usable es la Fase 4 (MVP jugable).
 
 ---
 
@@ -79,6 +79,18 @@
 
 > **Bug post-hito, reportado por el usuario probando la app real:** un usuario recién registrado, sin ningún grupo todavía, quedaba en "Cargando…" para siempre en Hoy, Tabla, Cargar y Detalle del día — el `loading` local nunca se apagaba porque el efecto que lo hace sólo corre si hay un grupo activo. Corregido en las 4 pantallas + extraído `<NoGroupState />` compartido. De paso se silenciaron los warnings de deprecación de Sass que imprime Bootstrap (`vite.config.ts`, inofensivos pero eran ruido en la consola).
 
+## Fase 4b — Rework: ranking por juego, no combinado (D2, ~6 h)
+
+**Cambio de requerimientos del 2026-09-01, sobre código ya shippeado y en producción.** Cada grupo elige en qué juegos compite (ya existía, RF-5); lo nuevo es que el ranking se evalúa **por juego**, no como la suma de los 3 tiempos. Ver `01-requirements.md` D2/RF-11/RF-12/RF-15/RF-16/RF-18 y `02-design.md` §5 para el detalle. Reemplaza el trabajo de T4.2, T4.5, T4.7, T4.8, T4.10 (quedan marcadas [x] arriba porque el código que describen existió y funcionó — el rework es un cambio de requerimiento, no un bug de esa entrega).
+
+- [ ] **T4b.1** `scoring/totalTime.ts`: reestructurar para calcular un ranking independiente por juego activo (agrupar la grilla por juego antes de sumar, en vez de sumar todo junto). `computeDailyWinners` se simplifica: ya no necesita `activeGameCount` para exigir "día completo" — ganar el día en un juego sólo depende de ese juego. [RF-11, RF-12] §5.1
+- [ ] **T4b.2** `scoring/dropWorst.ts` / su uso: pasar de "descartar los N peores días combinados" a "descartar los N peores tiempos de cada jugador, dentro de cada juego". [RF-13] §5.1
+- [ ] **T4b.3** Reescribir la suite de tests del motor (T4.4) para el nuevo shape: casos por juego, sin ranking combinado, incluidos los 4 criterios de desempate (RF-15) evaluados dentro de un solo juego.
+- [ ] **T4b.4** API `GET /groups/:id/leaderboard`: `rows` plano → `rankings: [{ gameSlug, gameName, rows }]`, uno por juego activo. `deltaVsYesterday`, `gapToLeader`, `gapToPodium` pasan a vivir dentro de cada elemento de `rankings[].rows`. [RF-11] §4, §5.4. Verificar contra Supabase real con matemática a mano, como se hizo la primera vez (T4.5).
+- [ ] **T4b.5** Web `/ranking`: agregar selector de juego (tabs Crucigrama/Cruci Experto/Sudoku Avanzado) por encima de los tabs Semana/Mes; la tabla pasa a mostrar un solo juego a la vez (posición, jugador, tiempo), no el desglose C/E/S combinado. [RF-11] §6.2
+- [ ] **T4b.6** Web `/` (Home): "tu posición del mes" pasa de un número único a un chip de posición por juego activo (ej. "1º Crucigrama · 3º Sudoku"), cada uno con su propio delta y distancia al podio. Podio de hoy también por juego. [RF-18] §6.2
+- [ ] **T4b.7** Verificación end-to-end contra Supabase/producción real, igual que el resto de la Fase 4: cargar tiempos distintos en 2+ juegos para 2+ personas y confirmar a mano que cada ranking de juego ordena y desempata independiente del otro.
+
 ## Fase 5 — Deploy (~4 h)
 
 - [x] **T5.1** Deploy de la API en Render + variables de entorno + `/health`. §7 **Hecho.** Servicio `liga-de-juegos-api` vivo en `https://liga-de-juegos-api.onrender.com` (Blueprint managed, deploy `4d10718`). `/health` responde `{"ok":true}` (con cold start del plan free, ~30-50s tras inactividad). Los 4 secretos (`DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `ALLOWED_ORIGINS`) ya estaban cargados.
@@ -93,7 +105,7 @@
 - [ ] **T6.1** `scoring/positionPoints.ts` + tests. [RF-13] §5.2
 - [ ] **T6.2** Exponer `scoring_mode` en el leaderboard y en el panel de settings. [RF-13, RF-17]
 - [ ] **T6.3** API `GET /groups/:id/h2h` + matriz en la web. [RF-13]
-- [ ] **T6.4** Ranking por juego individual (mismo endpoint, filtro por `game`). [D2]
+- [x] ~~**T6.4** Ranking por juego individual (mismo endpoint, filtro por `game`).~~ **Superada por el cambio de alcance de D2 (2026-09-01, ver Fase 4b): el ranking por juego dejó de ser un filtro opcional sobre un ranking combinado — es el único ranking que existe.** No queda nada que hacer acá.
 - [ ] **T6.5** `blackout_dates`: API + acción del admin "anular este día". [D6]
 
 ## Fase 7 — Temporadas e historia (~5 h)

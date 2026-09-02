@@ -267,26 +267,42 @@ Códigos: `400` validación, `401` sin token, `403` sin permiso, `404`, `409` co
 
 ### Ejemplo — `GET /groups/:id/leaderboard`
 
+**Cambio de alcance (D2, 2026-09-01): la respuesta ya no es una tabla combinada con `total_seconds` sumado entre juegos — es un ranking independiente por juego.** El shape de abajo reemplaza al `rows` plano que existía hasta la Fase 4.
+
 ```json
 {
   "period": { "type": "month", "starts_on": "2026-08-01", "ends_on": "2026-08-31", "status": "open" },
   "scoring_mode": "total_time",
   "games": [{ "slug": "crucigrama", "name": "Crucigrama", "penalty_seconds": 1200 }],
-  "rows": [{
-    "user": { "id": "…", "display_name": "Lautaro", "avatar": "🦊" },
-    "rank": 1,
-    "total_seconds": 41520,
-    "per_game": { "crucigrama": { "total": 9120, "avg": 456, "best": 388, "dnf": 1 } },
-    "days_played": 20,
-    "dnf_count": 2,
-    "daily_wins": 7,
-    "dropped_days": ["2026-08-14"],
-    "trend": -32
-  }]
+  "rankings": [
+    {
+      "game_slug": "crucigrama",
+      "game_name": "Crucigrama",
+      "rows": [{
+        "user": { "id": "…", "display_name": "Lautaro", "avatar": "🦊" },
+        "rank": 1,
+        "total_seconds": 9120,
+        "avg_seconds": 456,
+        "best_seconds": 388,
+        "days_played": 20,
+        "dnf_count": 2,
+        "daily_wins": 7,
+        "dropped_days": ["2026-08-14"],
+        "verified_count": 18,
+        "verified_total": 20,
+        "trend": -32,
+        "delta_vs_yesterday": 1,
+        "gap_to_leader": 0,
+        "gap_to_podium": 0
+      }]
+    }
+  ],
+  "todays_game_winners": [{ "game_slug": "crucigrama", "game_name": "Crucigrama", "user_id": "…", "display_name": "Lautaro", "seconds": 388 }],
+  "pending_today": [{ "user_id": "…", "display_name": "Gastón" }]
 }
 ```
 
-El front no calcula nada: pinta. Si el modo es `position_points`, aparece `points` y el orden es descendente (RNF-1).
+El front no calcula nada: pinta. `rankings` trae un elemento por cada juego activo del grupo, en el orden del catálogo (`games.sort_order`); cada uno es una tabla completa e independiente, con su propio `rank`, sus propios líderes y su propio podio. Si el modo es `position_points`, cada elemento de `rankings[].rows` trae `points` en vez de (o adjunto a) `total_seconds`, y el orden dentro de ese juego es descendente (RNF-1). `todays_game_winners` no cambia — ya era por juego desde la Fase 4 (T4.10).
 
 ---
 
@@ -294,34 +310,50 @@ El front no calcula nada: pinta. Si el modo es `position_points`, aparece `point
 
 Módulo puro en `apps/api/src/scoring/`: recibe entries + settings, devuelve tabla. Sin I/O, sin fechas implícitas, 100 % testeable — es la parte donde un bug se nota y donde una discusión entre amigos se decide.
 
-### 5.1 Algoritmo (modo `total_time`)
+> **Cambio de alcance (D2, 2026-09-01):** hasta acá el motor calculaba **una** tabla por grupo/temporada, sumando el tiempo de los 3 juegos por jugador. Se elimina esa suma: el motor ahora calcula **una tabla independiente por juego activo**, sin ningún total cruzado entre juegos. Lo que sigue reemplaza a `scoreTotalTime` tal como quedó en la Fase 4 (T4.2, T4.5); las tareas de rework están en `03-tasks.md`.
+
+### 5.1 Algoritmo (modo `total_time`, por juego)
+
+`buildGrid` (T4.1) no cambia: sigue armando una celda por (miembro × juego activo × día no anulado), con la misma resolución de valor. Lo que cambia es cómo se agrupa esa grilla para rankear.
 
 ```
 entrada: entries del grupo en [desde, hasta], settings, miembros, juegos activos, blackouts, hoy
-1. Expandir la grilla: para cada (miembro × juego activo × día no anulado) resolver un valor:
+1. Expandir la grilla (buildGrid, sin cambios):
      - hay entry no-DNF  → duration_seconds
      - hay entry DNF     → penalty_seconds del grupo  (RF-7)
      - no hay entry      → si el día YA TERMINÓ (día < hoy) y absence_policy = "penalize" → penalty_seconds  (RF-8)
                            si no (día = hoy, todavía en curso) → excluido, sin importar absence_policy
                            si absence_policy = "ignore" → excluido de la suma, marcado incompleto
-2. Si drop_worst_n > 0: por jugador, descartar los N días de mayor suma diaria (RF-13)
-3. total_seconds = suma de los valores restantes
-4. Calcular por día el ganador diario (menor suma del día, sólo días completos) → daily_wins (RF-12)
-5. Ordenar ascendente por total_seconds
-6. Desempatar: daily_wins ↓, dnf_count ↑, mejor tiempo individual ↑, display_name (RF-15)
+2. Para CADA JUEGO ACTIVO por separado:
+   a. Filtrar la grilla a las celdas de ese juego.
+   b. Si drop_worst_n > 0: por jugador, descartar los N días de mayor valor EN ESE JUEGO (RF-13) —
+      ya no se suman los 3 juegos de un día para decidir qué se descarta; cada juego decide sus
+      propios peores días de forma independiente. Un desastre en Sudoku no arrastra a Crucigrama.
+   c. total_seconds (de ese juego) = suma de los valores restantes de ese jugador en ese juego.
+   d. Calcular por día el ganador diario DE ESE JUEGO (menor valor ese día, ese juego — ya no hace
+      falta "día completo": al no sumar entre juegos, no hay nada más que comparar) → daily_wins (RF-12)
+   e. Ordenar ascendente por total_seconds dentro de ese juego.
+   f. Desempatar dentro de ese juego: daily_wins ↓, dnf_count ↑, mejor tiempo individual ↑,
+      display_name (RF-15) — todos los criterios ya estaban scopeados a un jugador; ahora también
+      quedan scopeados a un juego.
+3. La respuesta trae un ranking por cada juego activo (§4), sin combinarlos.
 ```
 
-**Nota:** el DNF se guarda con la penalización *vigente al momento de cargar*, pero el motor **recalcula** usando la penalización actual del grupo. Así, cambiar la penalización (RF-17) reordena la temporada en curso sin tocar filas.
+**Nota:** el DNF se guarda con la penalización *vigente al momento de cargar*, pero el motor **recalcula** usando la penalización actual del grupo. Así, cambiar la penalización (RF-17) reordena la temporada en curso sin tocar filas. Esto no cambia con D2.
 
-**Nota sobre "hoy" (RF-8, pedido explícito del usuario tras verlo con un dato real propio):** el día en curso nunca genera una celda de ausencia, sea cual sea `absence_policy`. Cargar sólo uno de los tres juegos del día no infla el total con la penalización de los otros dos hasta que el día efectivamente cierre (mañana). `buildGrid` recibe `today` explícito — nunca lo infiere — y compara `day < today` para decidir si un día "ya terminó". Verificado contra Supabase real: con un solo juego cargado hoy, `total_seconds` del período sólo incluye ese juego, no los otros dos sin cargar.
+**Nota sobre "hoy" (RF-8):** el día en curso nunca genera una celda de ausencia, sea cual sea `absence_policy`. `buildGrid` recibe `today` explícito y compara `day < today`. Esto tampoco cambia con D2 — sigue viviendo en `buildGrid`, que es compartido por todos los juegos.
+
+**Simplificación real que trae este cambio:** `computeDailyWinners` (T4.2) tenía que chequear `cells.length < activeGameCount` para descartar a quien no tuviera el día completo en los 3 juegos, porque comparaba sumas del día entero. Al rankear por juego, esa comparación desaparece: ganar el día en Crucigrama sólo depende de haber jugado Crucigrama ese día, no de haber jugado también Sudoku. Menos código, no más.
 
 ### 5.2 Modo `position_points`
 
-Por cada día y cada juego, ordenar ascendente y repartir `position_points` (los DNF y ausentes quedan últimos y suman 0). El total es la suma de puntos; se ordena descendente. Empate en puntos → desempata por tiempo total ascendente.
+Ya era por juego y por día (RF-13) — no cambia con D2, sólo se aclara que el total de la temporada es la suma de puntos **dentro de ese juego**. Por cada día y cada juego, ordenar ascendente y repartir `position_points` (los DNF y ausentes quedan últimos y suman 0). Dentro de cada juego, se ordena descendente por puntos; empate en puntos → desempata por tiempo total ascendente **de ese juego**.
 
 ### 5.3 Métricas complementarias (RF-14)
 
-- **Racha**: recorrer los días hacia atrás desde hoy; cortar en el primer día con un juego activo sin entry o con DNF.
+Estas métricas quedan fuera del cambio de D2 — no son "ranking", son estadísticas personales/complementarias.
+
+- **Racha**: recorrer los días hacia atrás desde hoy; cortar en el primer día con un juego activo sin entry o con DNF. **Se mantiene holística** (todos los juegos activos), no por juego — decisión explícita, ver D11 en `01-requirements.md`.
 - **Consistencia**: desvío estándar poblacional de los tiempos no-DNF por juego. Se muestra como `±mm:ss`.
 - **PB**: `min(duration_seconds) where dnf = false`, por usuario y juego (usa el índice parcial de §3.3).
 - **Completion**: `entries no-DNF / (días × juegos activos)`.
@@ -363,9 +395,9 @@ Sólo el ranking tiene layout propio de desktop (nav superior + tabla ancha con 
 
 | Pantalla | Qué muestra |
 |---|---|
-| **Hoy** | Card de estado del día (CTA "Cargar mis tiempos" o los tres tiempos con su sello), tu posición del mes en display grande con delta vs. ayer y distancia al podio, y el podio de hoy |
+| **Hoy** | Card de estado del día (CTA "Cargar mis tiempos" o los tres tiempos con su sello), **tu posición del mes en cada juego activo** (D2 — ya no un único número sumado, sino un chip de posición por juego, ej. "1º en Crucigrama · 3º en Sudoku") con delta vs. ayer y distancia al podio de ese juego, y el podio de hoy **por juego** |
 | **Cargar** | Campo de link arriba de todo → preview de lo detectado (juego, fecha, tiempo, sello verificado) → confirmar/descartar. Debajo, plegado, "Cargar a mano" con los tres juegos, toggle DNF por juego y total del día |
-| **Ranking** | Tabs Semana/Mes, podio de tres, tabla con posición, jugador, desglose C/E/S y total. Mi fila con borde verde. Chips por fila: verificado, DNF, racha, victorias |
+| **Ranking** | **Selector de juego** (tabs Crucigrama / Cruci Experto / Sudoku Avanzado, D2) + tabs Semana/Mes dentro de cada juego, podio de tres de ese juego, tabla con posición, jugador y tiempo (ya no hay columna de "total" combinado — cada tabla es de un solo juego). Mi fila con borde verde. Chips por fila: verificado, DNF, racha, victorias |
 | **Detalle del día** | Grilla jugador × juego con navegación ← →, contador "6 de 8 cargaron", mejor de cada columna resaltado, y símbolos distintos para DNF y para no cargó |
 | **Mis estadísticas** | Evolución por juego en 14 días, récord personal, racha actual (y la mejor), consistencia, % completado y tiempos verificados |
 | **Grupo** | Código de invitación grande con copiar y compartir por WhatsApp, miembros, palmarés por mes |
@@ -393,7 +425,7 @@ Detectado al traducir los artboards. Se agregan a los endpoints de §4:
 | `/stats` | `verified_count` / `total_count`, `best_streak` | "72 de 84" y "Tu mejor: 19" |
 | `/me` (home) | quiénes ya cargaron hoy | "Sofi, Nacho y Belén ya cargaron los tres" |
 
-Ninguno agrega consultas nuevas: todos se derivan de la grilla que el motor de puntuación ya arma (§5.1).
+Ninguno agrega consultas nuevas: todos se derivan de la grilla que el motor de puntuación ya arma (§5.1). **Con D2 (2026-09-01), los campos de `/leaderboard` de la tabla de arriba viven dentro de cada elemento de `rankings[].rows[]` (uno por juego), no sueltos en un `rows` combinado — ver el ejemplo actualizado en §4.**
 
 ### 6.5 Diferencias resueltas contra las specs previas
 
@@ -552,6 +584,8 @@ Ninguna cambia el modelo de §3; son ajustes a las reglas `on delete` que el tes
 También: `apps/api/src/db.ts` fuerza el parser de `date` de `pg` a devolver el string tal cual llega de Postgres. Por default, `pg` construye un `Date` de JS con la zona horaria **del proceso**, no UTC — en una máquina en Argentina da la fecha correcta de casualidad, y se corre un día en un servidor con `TZ=UTC` (Render). `puzzle_date` es una fecha pura, nunca un instante (§5.5); ahora lo es de verdad, no sólo en el papel.
 
 ### 9.8 Notas de implementación de la Fase 4 (motor de puntuación)
+
+> **Superado por D2 (2026-09-01):** todo lo de esta sección describe la Fase 4 tal como se implementó originalmente, con un ranking combinado que sumaba los 3 juegos. Ese modelo se reemplaza por el ranking por juego de §5. Se deja el texto original abajo como registro histórico de lo que se construyó y por qué — las tareas de rework están en `03-tasks.md`.
 
 - **`position_points` todavía no está implementado** (es Fase 6). `GET /groups/:id/leaderboard` lo detecta y responde `400 SCORING_MODE_NOT_READY` en vez de calcular mal en silencio — un grupo puede elegir ese modo en los ajustes (T2.7/T3.16) sin que el ranking se rompa, simplemente no anda hasta la Fase 6.
 - **El cache de 60 s (§5.4) se invalida en más lugares de los que el diseño original mencionaba**: no sólo al escribir un `entry`, también al `PATCH /groups/:id` — cambiar `drop_worst_n`, `absence_policy` o los juegos activos afecta el cálculo tanto como cargar un resultado.
