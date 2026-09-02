@@ -96,3 +96,25 @@ export interface DailyWinner {
   userId: string;
   seconds: number;
 }
+
+/** RF-13, §5.2 — cuántas veces `userId` le ganó a `opponentUserId` en un juego, día por día. */
+export interface H2HRecord {
+  opponentUserId: string;
+  wins: number;
+  losses: number;
+}
+
+export interface H2HRow {
+  userId: string;
+  displayName: string;
+  avatar: string | null;
+  /** Uno por cada rival CON el que compartió al menos un día jugado (no incluye a quien nunca jugó nada). */
+  vs: H2HRecord[];
+}
+
+/** Matriz cabeza a cabeza de UN juego — mismo patrón por-juego que el resto desde D2. */
+export interface GameH2H {
+  gameSlug: string;
+  gameName: string;
+  rows: H2HRow[];
+}

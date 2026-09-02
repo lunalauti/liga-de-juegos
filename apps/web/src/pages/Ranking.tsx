@@ -37,6 +37,12 @@ interface LeaderboardResponse {
   pendingToday: Pending[];
 }
 
+/** RF-13, §5.2 — "cuántas veces le gané a cada uno", por juego. */
+interface H2HRecord { opponentUserId: string; wins: number; losses: number }
+interface H2HRow { userId: string; displayName: string; avatar: string | null; vs: H2HRecord[] }
+interface GameH2H { gameSlug: string; gameName: string; rows: H2HRow[] }
+interface H2HResponse { games: GameH2H[] }
+
 /**
  * Artboard 03 · "Ranking": selector de juego + tabs semana/mes, podio, tabla; desktop aparte.
  * RF-11, RF-12, RF-15. Desde D2 (2026-09-01) cada juego tiene su propio ranking, sin total
@@ -51,6 +57,7 @@ export default function Ranking() {
   const [period, setPeriod] = useState<Period>('month');
   const [gameSlug, setGameSlug] = useState<string | null>(null);
   const [data, setData] = useState<LeaderboardResponse | null>(null);
+  const [h2h, setH2h] = useState<H2HResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -59,9 +66,13 @@ export default function Ranking() {
       return;
     }
     setLoading(true);
-    apiFetch<LeaderboardResponse>(`/groups/${activeGroup.id}/leaderboard?period=${period}`, { accessToken: token })
-      .then((res) => {
+    Promise.all([
+      apiFetch<LeaderboardResponse>(`/groups/${activeGroup.id}/leaderboard?period=${period}`, { accessToken: token }),
+      apiFetch<H2HResponse>(`/groups/${activeGroup.id}/h2h?period=${period}`, { accessToken: token }),
+    ])
+      .then(([res, h2hRes]) => {
         setData(res);
+        setH2h(h2hRes);
         // El juego seleccionado sigue vivo mientras exista en la respuesta nueva;
         // si no (cambió de grupo, o el admin desactivó ese juego), cae al primero.
         setGameSlug((prev) => (prev && res.rankings.some((r) => r.gameSlug === prev) ? prev : (res.rankings[0]?.gameSlug ?? null)));
@@ -139,6 +150,8 @@ export default function Ranking() {
               )}
             </div>
           )}
+
+          <H2HCard games={h2h?.games ?? []} gameSlug={gameSlug} myUserId={me?.id} />
         </>
       )}
     </Screen>
@@ -258,6 +271,43 @@ function RankingRow({ row, isMe, pointsMode }: { row: Row; isMe: boolean; points
   );
 }
 
+/**
+ * RF-13, §5.2 — "cabeza a cabeza": cuántas veces le gané a cada rival, en el
+ * juego seleccionado. Mi propio historial, no la matriz completa del grupo —
+ * con más de 3-4 jugadores una matriz NxN no entra en una pantalla de celular
+ * (RNF-2), y "cuántas veces le gané a cada uno" ya está formulado en primera
+ * persona en el requerimiento.
+ */
+function H2HCard({ games, gameSlug, myUserId }: { games: GameH2H[]; gameSlug: string | null; myUserId: string | undefined }) {
+  const game = games.find((g) => g.gameSlug === gameSlug);
+  const myRow = game?.rows.find((r) => r.userId === myUserId);
+  if (!myRow || myRow.vs.length === 0) return null;
+
+  return (
+    <div className="lj-card">
+      <div style={{ padding: '11px 14px', borderBottom: '1px solid #DDD6C8', background: '#F1EBDD' }} className="lj-label">
+        Cabeza a cabeza · {game!.gameName}
+      </div>
+      {myRow.vs.map((v, i) => {
+        const opponent = game!.rows.find((r) => r.userId === v.opponentUserId);
+        return (
+          <div
+            key={v.opponentUserId}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: i < myRow.vs.length - 1 ? '1px solid #EDE7DA' : 'none' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span className="lj-avatar">{initialsOf(opponent?.displayName ?? '?')}</span>
+              <span style={{ fontSize: 13, fontWeight: 600 }}>{opponent?.displayName ?? 'Ex-miembro'}</span>
+            </div>
+            <span className="lj-t" style={{ fontSize: 13 }}>
+              <span style={{ color: '#16513C', fontWeight: 700 }}>{v.wins}</span> — <span style={{ color: '#A8352A', fontWeight: 700 }}>{v.losses}</span>
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 function rangeLabel(start: string, end: string): string {
   const fmt = (d: string) => Number(d.slice(8, 10));

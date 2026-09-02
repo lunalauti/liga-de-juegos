@@ -11,6 +11,7 @@ import { entriesImportRouter } from './routes/entriesImport.js';
 import { leaderboardRouter } from './routes/leaderboard.js';
 import { dayRouter } from './routes/day.js';
 import { blackoutsRouter } from './routes/blackouts.js';
+import { h2hRouter } from './routes/h2h.js';
 
 export function createApp() {
   const app = express();
@@ -35,6 +36,7 @@ export function createApp() {
     leaderboardRouter,
     dayRouter,
     blackoutsRouter,
+    h2hRouter,
   );
 
   app.use(notFoundHandler);
