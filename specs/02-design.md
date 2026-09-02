@@ -250,10 +250,14 @@ Códigos: `400` validación, `401` sin token, `403` sin permiso, `404`, `409` co
 | `POST` | `/groups` | Crear grupo | RF-3 |
 | `GET` | `/groups/:id` | Detalle: miembros, settings, juegos activos | RF-5 |
 | `PATCH` | `/groups/:id` | Editar nombre/settings (admin) | RF-17 |
+| `DELETE` | `/groups/:id` | Borrar el grupo, con confirmación por nombre en el body (admin) | RF-5 |
 | `POST` | `/groups/:id/regenerate-code` | Nuevo código (admin) | RF-5 |
 | `DELETE` | `/groups/:id/members/:userId` | Remover miembro (admin) | RF-5 |
 | `POST` | `/groups/join` | Unirse con `{ code }` | RF-4 |
 | `GET` | `/groups/:id/day?date=` | Grilla jugador × juego de un día | RF-12, RF-20 |
+| `GET` | `/groups/:id/blackouts` | Días anulados vigentes (admin) | D6 |
+| `POST` | `/groups/:id/blackouts` | Anular un día o un juego puntual `{ puzzleDate, gameSlug }` (admin) | D6 |
+| `DELETE` | `/groups/:id/blackouts/:blackoutId` | Reactivar un día anulado (admin) | D6 |
 | `POST` | `/entries/import/preview` | Sólo lectura: qué se detectó y qué pasaría, sin guardar nada. Agregado en Fase 3.5 — sin esto, "Descartar" en la UI no tenía nada que deshacer | RF-6 |
 | `POST` | `/entries/import` | Confirma e importa de verdad desde un link de La Nación `{ group_ids, url }` | RF-6 |
 | `POST` | `/entries` | Upsert manual de un resultado | RF-6b, RF-7, RF-9 |
@@ -354,6 +358,14 @@ entrada: entries del grupo en [desde, hasta], settings, miembros, juegos activos
 ### 5.2 Modo `position_points`
 
 Ya era por juego y por día (RF-13) — no cambia con D2, sólo se aclara que el total de la temporada es la suma de puntos **dentro de ese juego**. Por cada día y cada juego, ordenar ascendente y repartir `position_points` (los DNF y ausentes quedan últimos y suman 0). Dentro de cada juego, se ordena descendente por puntos; empate en puntos → desempata por tiempo total ascendente **de ese juego**.
+
+### 5.2b Modo `h2h` (cabeza a cabeza, RF-13)
+
+Por juego, por día: si ambos jugadores tienen una celda ese día (jugaron, DNF o ausencia penalizada — misma grilla que §5.1), el de menos segundos suma una victoria contra el otro. Empate exacto no le suma a ninguno. Se acumula sobre todos los días del período.
+
+**Nota de implementación:** hace falta llevar un contador de "días compartidos" separado de las victorias — `wins = 0` no alcanza para decidir si dos jugadores nunca coincidieron un día (no debería aparecer nada en la UI) o si coincidieron y siempre empataron (debería aparecer un 0-0). Encontrado por un test propio antes de shippear.
+
+La web muestra el historial del propio jugador contra cada rival compartido, no la matriz NxN completa del grupo — con más de 3-4 jugadores una matriz no entra en una pantalla de celular (RNF-2), y RF-13 ya pide la métrica en primera persona ("cuántas veces le gané a cada uno").
 
 ### 5.3 Métricas complementarias (RF-14)
 
