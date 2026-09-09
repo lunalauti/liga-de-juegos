@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { formatTime, GAMES, initialsOf } from '@liga/shared';
+import { formatTime, initialsOf } from '@liga/shared';
 import { apiFetch } from '../api/client';
 import { useSession } from '../hooks/useSession';
 import { useActiveGroupContext } from '../hooks/useActiveGroupContext';
@@ -19,10 +19,12 @@ interface LeaderboardRow {
   deltaVsYesterday: number | null;
 }
 interface GameRanking { gameSlug: string; gameName: string; rows: LeaderboardRow[] }
+interface Pending { userId: string; displayName: string }
 interface LeaderboardResponse {
   period: { type: string };
   scoringMode: 'total_time' | 'position_points';
   rankings: GameRanking[];
+  pendingToday: Pending[];
 }
 interface DayCell { status: 'played' | 'dnf' | 'absent' | 'blackout'; seconds: number | null; verified: boolean }
 interface DayRow { userId: string; displayName: string; avatar: string | null; cells: Record<string, DayCell> }
@@ -66,13 +68,20 @@ export default function Home() {
 
   if (!lb || !day) return <Screen><p role="alert" style={{ color: '#A8352A' }}>No pudimos cargar tu tabla.</p></Screen>;
 
+  // Bug real reportado por el usuario: esto usaba el catálogo estático de 3
+  // juegos en vez de los que el grupo tiene realmente activos (RF-5, toggle en
+  // Ajustes) — con un solo juego activo, "Cargaste los tres" se mostraba con uno
+  // solo cargado, porque `cells[slug]` para un juego desactivado es `undefined`,
+  // y `undefined !== 'absent'` da `true` (falso positivo). `day.games` ya viene
+  // filtrado por `enabled = true` desde el servidor: es la fuente correcta.
+  const activeGames = day.games;
   const myDay = day.rows.find((r) => r.userId === me?.id) ?? null;
-  const myGamesLoaded = myDay ? GAMES.filter((g) => myDay.cells[g.slug]?.status !== 'absent' && myDay.cells[g.slug]?.status !== 'blackout') : [];
-  const loadedAllThree = myGamesLoaded.length === GAMES.length;
+  const myGamesLoaded = myDay ? activeGames.filter((g) => myDay.cells[g.slug]?.status !== 'absent' && myDay.cells[g.slug]?.status !== 'blackout') : [];
+  const loadedAllThree = activeGames.length > 0 && myGamesLoaded.length === activeGames.length;
 
   const othersLoadedToday = day.rows
     .filter((r) => r.userId !== me?.id)
-    .filter((r) => GAMES.every((g) => r.cells[g.slug]?.status === 'played' || r.cells[g.slug]?.status === 'dnf'))
+    .filter((r) => activeGames.every((g) => r.cells[g.slug]?.status === 'played' || r.cells[g.slug]?.status === 'dnf'))
     .map((r) => r.displayName);
 
   // D2 (2026-09-01): "tu posición" pasa a ser una por juego, no un único número
@@ -85,7 +94,7 @@ export default function Home() {
   // entre quienes lo completaron (un DNF no compite por el podio de velocidad).
   // Posición de competición estándar (1, 1, 3): dos tiempos iguales comparten
   // posición y quedan marcados `tied`, no se les inventa un 1º y un 2º.
-  const gamePodiums = GAMES.map((g) => {
+  const gamePodiums = activeGames.map((g) => {
     const sorted = day.rows
       .filter((r) => r.cells[g.slug]?.status === 'played')
       .map((r) => ({ userId: r.userId, displayName: r.displayName, seconds: r.cells[g.slug]!.seconds!, verified: r.cells[g.slug]!.verified }))
@@ -105,7 +114,18 @@ export default function Home() {
     <Screen>
       <Eyebrow>{activeGroup.name}</Eyebrow>
 
-      {loadedAllThree ? <LoadedCard myDay={myDay!} /> : <NotLoadedCard othersLoadedToday={othersLoadedToday} onLoad={() => navigate('/cargar')} />}
+      {loadedAllThree ? <LoadedCard myDay={myDay!} games={activeGames} /> : <NotLoadedCard othersLoadedToday={othersLoadedToday} onLoad={() => navigate('/cargar')} />}
+
+      {lb.pendingToday.length > 0 && (
+        <div className="lj-card" style={{ padding: 14 }}>
+          <div className="lj-label" style={{ marginBottom: 8 }}>Faltan cargar</div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {lb.pendingToday.map((p) => (
+              <span key={p.userId} style={{ border: '1px solid #DDD6C8', padding: '5px 10px', fontSize: 12, color: '#4A4438' }}>{p.displayName}</span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {myPositions.length > 0 && (
         <div style={{ background: '#fff', border: '1px solid #DDD6C8' }}>
@@ -197,18 +217,20 @@ function NotLoadedCard({ othersLoadedToday, onLoad }: { othersLoadedToday: strin
   );
 }
 
-function LoadedCard({ myDay }: { myDay: DayRow }) {
+function LoadedCard({ myDay, games }: { myDay: DayRow; games: { slug: string; name: string }[] }) {
   return (
     <div style={{ background: '#fff', border: '1px solid #DDD6C8' }}>
       <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid #DDD6C8' }}>
         <span className="lj-label" style={{ color: '#16513C' }}>Listo por hoy</span>
-        <div className="lj-card-title" style={{ fontSize: 27, marginTop: 2 }}>Cargaste los tres</div>
+        <div className="lj-card-title" style={{ fontSize: 27, marginTop: 2 }}>
+          {games.length === 1 ? 'Cargaste el de hoy' : `Cargaste los ${games.length}`}
+        </div>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)' }}>
-        {GAMES.map((g, i) => {
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${games.length}, 1fr)` }}>
+        {games.map((g, i) => {
           const cell = myDay.cells[g.slug];
           return (
-            <div key={g.slug} style={{ padding: '12px 10px', borderRight: i < 2 ? '1px solid #DDD6C8' : undefined, display: 'flex', flexDirection: 'column', gap: 5 }}>
+            <div key={g.slug} style={{ padding: '12px 10px', borderRight: i < games.length - 1 ? '1px solid #DDD6C8' : undefined, display: 'flex', flexDirection: 'column', gap: 5 }}>
               <span style={{ fontSize: 10, letterSpacing: '.06em', textTransform: 'uppercase', color: '#6B6357' }}>{g.name}</span>
               <span className="lj-t" style={{ fontSize: 24 }}>{cell?.seconds !== null && cell?.seconds !== undefined ? formatTime(cell.seconds) : '--:--'}</span>
               {cell?.verified ? <Chip kind="verified">Verificado</Chip> : <Chip kind="manual">A mano</Chip>}

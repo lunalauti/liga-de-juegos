@@ -5,7 +5,7 @@ import { db } from '../db.js';
 import { ApiError, badRequest, conflict } from '../errors.js';
 import { getMembership } from '../services/authz.js';
 import { fetchLnResult, LnFetchError, type LnResult } from '../services/lanacion.js';
-import { upsertEntry, serializeEntry, resolveLnVerification } from '../services/entries.js';
+import { upsertEntry, serializeEntry, resolveLnVerification, isNewPersonalBest } from '../services/entries.js';
 import { invalidateGroupCache } from '../services/leaderboardCache.js';
 
 export const entriesImportRouter = Router();
@@ -158,6 +158,7 @@ entriesImportRouter.post('/entries/import', async (req, res, next) => {
       status: 'created' | 'updated' | 'skipped_not_member' | 'skipped_game_not_active';
       entry?: ReturnType<typeof serializeEntry>;
     }> = [];
+    let importedGameId: string | null = null; // el mismo juego (games.id es global) en todos los grupos donde se guardó
 
     await client.query('begin');
 
@@ -202,6 +203,7 @@ entriesImportRouter.post('/entries/import', async (req, res, next) => {
         },
         actorId,
       );
+      importedGameId = groupGame.game_id;
       groupResults.push({
         groupId,
         status: wasExisting.rows.length > 0 ? 'updated' : 'created',
@@ -225,6 +227,11 @@ entriesImportRouter.post('/entries/import', async (req, res, next) => {
       JSON.stringify(r.ln),
     ]);
 
+    // T8.4/RF-14: se calcula DESPUÉS de escribir, todavía dentro de la
+    // transacción — un DNF nunca es récord, y el tiempo real (r.ln.seconds) es
+    // el mismo en todos los grupos donde se guardó, así que alcanza con chequear una vez.
+    const isPersonalBest = !r.dnf && importedGameId ? await isNewPersonalBest(client, actorId, importedGameId, r.ln.seconds, false) : false;
+
     await client.query('commit');
     for (const g of groupResults) if (g.status === 'created' || g.status === 'updated') invalidateGroupCache(g.groupId);
 
@@ -240,6 +247,7 @@ entriesImportRouter.post('/entries/import', async (req, res, next) => {
       lnSeconds: r.ln.seconds,
       dnf: r.dnf,
       verified: r.verified,
+      isPersonalBest,
       groups: groupResults,
     });
   } catch (err) {

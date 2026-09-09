@@ -69,6 +69,28 @@ export async function upsertEntry(client: Pool | PoolClient, write: EntryWrite, 
   return entry;
 }
 
+/**
+ * T8.4/RF-14 — "destacar el récord personal cuando alguien lo rompe". PB es
+ * GLOBAL por jugador y juego, no por grupo (mismo criterio que `entries_pb_idx`,
+ * §3.3, y `scoring/stats.ts`): llamar DESPUÉS de escribir la entry, así el propio
+ * resultado ya está incluido en el mínimo. Un DNF nunca es récord.
+ */
+export async function isNewPersonalBest(
+  client: Pool | PoolClient,
+  userId: string,
+  gameId: string,
+  durationSeconds: number,
+  dnf: boolean,
+): Promise<boolean> {
+  if (dnf) return false;
+  const r = await client.query(
+    `select min(duration_seconds) as pb from public.entries where user_id = $1 and game_id = $2 and dnf = false`,
+    [userId, gameId],
+  );
+  const pb = r.rows[0]?.pb;
+  return pb !== null && pb !== undefined && Number(pb) === durationSeconds;
+}
+
 export function serializeEntry(e: Record<string, unknown>) {
   return {
     id: e['id'],

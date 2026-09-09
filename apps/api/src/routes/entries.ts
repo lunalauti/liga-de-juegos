@@ -5,7 +5,7 @@ import { isFutureDate, isWithinRetroactiveWindow, isEntryEditable } from '@liga/
 import { db } from '../db.js';
 import { badRequest, conflict, forbidden, notFound } from '../errors.js';
 import { requireMember } from '../services/authz.js';
-import { upsertEntry, serializeEntry } from '../services/entries.js';
+import { upsertEntry, serializeEntry, isNewPersonalBest } from '../services/entries.js';
 import { invalidateGroupCache } from '../services/leaderboardCache.js';
 
 export const entriesRouter = Router();
@@ -103,7 +103,11 @@ async function writeManualEntry(
   );
   invalidateGroupCache(groupId);
 
-  return { entry: serializeEntry(entry), gameSlug: groupGame.slug, autoConvertedToDnf };
+  // T8.4/RF-14: se calcula DESPUÉS del upsert, así el propio resultado ya cuenta
+  // en el mínimo — PB es global por jugador y juego, no por grupo.
+  const isPersonalBest = await isNewPersonalBest(db, actorId, groupGame.game_id, durationSeconds, dnf);
+
+  return { entry: serializeEntry(entry), gameSlug: groupGame.slug, autoConvertedToDnf, isPersonalBest };
 }
 
 // ---------------------------------------------------------------------------
@@ -142,6 +146,7 @@ entriesRouter.post('/entries/bulk', async (req, res, next) => {
       status: 'ok' | 'error';
       entry?: ReturnType<typeof serializeEntry>;
       autoConvertedToDnf?: boolean;
+      isPersonalBest?: boolean;
       error?: { code: string; message: string };
     }> = [];
 
@@ -149,7 +154,14 @@ entriesRouter.post('/entries/bulk', async (req, res, next) => {
       for (const input of body.entries) {
         try {
           const r = await writeManualEntry(groupId, req.user!.id, body.puzzleDate, input);
-          results.push({ groupId, gameSlug: r.gameSlug, status: 'ok', entry: r.entry, autoConvertedToDnf: r.autoConvertedToDnf });
+          results.push({
+            groupId,
+            gameSlug: r.gameSlug,
+            status: 'ok',
+            entry: r.entry,
+            autoConvertedToDnf: r.autoConvertedToDnf,
+            isPersonalBest: r.isPersonalBest,
+          });
         } catch (e) {
           const err = e as { code?: string; message?: string };
           results.push({

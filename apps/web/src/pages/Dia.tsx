@@ -7,7 +7,7 @@ import { useActiveGroupContext } from '../hooks/useActiveGroupContext';
 import { NoGroupState } from '../components/NoGroupState';
 import { LoadingState } from '../components/LoadingState';
 
-interface DayCell { status: 'played' | 'dnf' | 'absent' | 'blackout'; seconds: number | null; verified: boolean }
+interface DayCell { status: 'played' | 'dnf' | 'absent' | 'blackout'; seconds: number | null; verified: boolean; isPersonalBest: boolean }
 interface DayRow { userId: string; displayName: string; avatar: string | null; cells: Record<string, DayCell> }
 interface DayResponse {
   puzzleDate: string;
@@ -131,6 +131,7 @@ export default function Dia() {
             <Legend swatch={<span style={{ width: 14, height: 14, background: '#16513C', display: 'inline-block' }} />} label="Mejor de la columna" />
             <Legend swatch={<span style={{ width: 14, height: 14, border: '1.5px solid #A8352A', color: '#A8352A', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 700 }}>✕</span>} label="DNF (con castigo)" />
             <Legend swatch={<span style={{ width: 14, height: 14, border: '1px dashed #C9C0AC', display: 'inline-block' }} />} label="No cargó" />
+            <Legend swatch={<span style={{ color: '#C9A227', fontSize: 14 }}>★</span>} label="Récord personal" />
           </div>
         </>
       )}
@@ -157,12 +158,14 @@ function DayGridRow({
         const cell = row.cells[g.slug];
         const isBest = bestPerGame[g.slug]?.userId === row.userId && cell?.status === 'played';
         return (
-          <span
-            key={g.slug}
-            className="lj-t"
-            style={{ textAlign: 'right', fontSize: 14, color: cell?.status === 'dnf' ? '#A8352A' : isBest ? '#16513C' : '#14120E', fontWeight: isBest ? 700 : 600 }}
-          >
-            {cell?.status === 'played' || cell?.status === 'dnf' ? formatTime(cell.seconds!) : cell?.status === 'blackout' ? '·' : '—'}
+          <span key={g.slug} style={{ textAlign: 'right', display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', gap: 3 }}>
+            <span
+              className="lj-t"
+              style={{ fontSize: 14, color: cell?.status === 'dnf' ? '#A8352A' : isBest ? '#16513C' : '#14120E', fontWeight: isBest ? 700 : 600 }}
+            >
+              {cell?.status === 'played' || cell?.status === 'dnf' ? formatTime(cell.seconds!) : cell?.status === 'blackout' ? '·' : '—'}
+            </span>
+            {cell?.isPersonalBest && <span aria-label="Récord personal" title="Récord personal" style={{ color: '#C9A227', fontSize: 11 }}>★</span>}
           </span>
         );
       })}

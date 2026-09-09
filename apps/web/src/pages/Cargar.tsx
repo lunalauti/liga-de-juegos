@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { formatTime, todayInArgentina, GAMES } from '@liga/shared';
 import { apiFetch, ApiClientError } from '../api/client';
 import { useSession } from '../hooks/useSession';
@@ -65,11 +65,13 @@ export default function Cargar() {
     if (!token || !url.trim()) return;
     setConfirming(true);
     try {
-      await apiFetch<ImportResponse>('/entries/import', {
+      const result = await apiFetch<ImportResponse>('/entries/import', {
         method: 'POST',
         accessToken: token,
         body: { groupIds, url },
       });
+      // El preview (dry-run) no sabe si es récord — recién se sabe al confirmar de verdad.
+      setPreview((prev) => (prev ? { ...prev, isPersonalBest: result.isPersonalBest } : toPreview(result)));
       setConfirmed(true);
     } catch (e) {
       setImportError({ message: e instanceof ApiClientError ? e.message : 'No pudimos guardarlo. Probá de nuevo.' });
@@ -94,7 +96,10 @@ export default function Cargar() {
       <Screen>
         <Header dateLabel={formatShortDate(preview.puzzleDate)} />
         <div className="lj-card" style={{ padding: 16, textAlign: 'center' }}>
-          <Chip kind="verified">GUARDADO</Chip>
+          <div style={{ display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Chip kind="verified">GUARDADO</Chip>
+            {preview.isPersonalBest && <Chip kind="pb">Récord personal</Chip>}
+          </div>
           <p style={{ marginTop: 10, fontSize: 14, color: '#4A4438' }}>
             {preview.gameName} cargado. Ya está en la tabla.
           </p>
@@ -206,19 +211,50 @@ export default function Cargar() {
 }
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
-interface GameValue { dnf: boolean; time: string; status: SaveStatus; error?: string }
+interface GameValue { dnf: boolean; time: string; status: SaveStatus; error?: string; isPersonalBest?: boolean }
 
 function hasInput(v: GameValue): boolean {
   return v.dnf || v.time.trim() !== '';
 }
 
+interface ActiveGame { slug: string; name: string; shortName: string; penaltySeconds: number }
+
 function ManualEntryForm({ groupId, token }: { groupId: string; token: string | undefined }) {
-  const [values, setValues] = useState<Record<string, GameValue>>(
-    Object.fromEntries(GAMES.map((g) => [g.slug, { dnf: false, time: '', status: 'idle' as SaveStatus }])),
-  );
+  // Bug real reportado por el usuario (mismo que en Home, 2026-09-09): esto
+  // mostraba los 3 juegos del catálogo estático sin importar cuáles el grupo
+  // tiene realmente activos (RF-5, toggle en Ajustes) — el back ya rechazaba con
+  // GAME_NOT_ACTIVE al guardar, pero mostraba la tarjeta igual, confuso. Ahora
+  // pide el detalle real del grupo y sólo pinta los juegos con `enabled`.
+  const [activeGames, setActiveGames] = useState<ActiveGame[] | null>(null);
+  useEffect(() => {
+    if (!token) return;
+    let cancelled = false;
+    apiFetch<{ games: { slug: string; name: string; penaltySeconds: number; enabled: boolean }[] }>(`/groups/${groupId}`, {
+      accessToken: token,
+    }).then((detail) => {
+      if (cancelled) return;
+      setActiveGames(
+        detail.games
+          .filter((g) => g.enabled)
+          .map((g) => ({ slug: g.slug, name: g.name, shortName: GAMES.find((x) => x.slug === g.slug)?.shortName ?? g.name, penaltySeconds: g.penaltySeconds })),
+      );
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [groupId, token]);
+
+  const [values, setValues] = useState<Record<string, GameValue>>({});
+  useEffect(() => {
+    if (!activeGames) return;
+    setValues(Object.fromEntries(activeGames.map((g) => [g.slug, { dnf: false, time: '', status: 'idle' as SaveStatus }])));
+  }, [activeGames]);
+
   const [savingAll, setSavingAll] = useState(false);
 
-  const totalSeconds = GAMES.reduce((sum, g) => {
+  if (!activeGames) return <p style={{ fontSize: 12, color: '#6B6357', marginTop: 12 }}>Cargando…</p>;
+
+  const totalSeconds = activeGames.reduce((sum, g) => {
     const v = values[g.slug]!;
     if (v.dnf) return sum + g.penaltySeconds;
     // Sólo suma si parece un tiempo bien formado; si no, no rompe el total mientras se tipea.
@@ -237,12 +273,12 @@ function ManualEntryForm({ groupId, token }: { groupId: string; token: string | 
     if (!hasInput(v)) return;
     setValues((prev) => ({ ...prev, [slug]: { ...prev[slug]!, status: 'saving', error: undefined } }));
     try {
-      await apiFetch('/entries', {
+      const res = await apiFetch<{ isPersonalBest?: boolean }>('/entries', {
         method: 'POST',
         accessToken: token,
         body: { groupId, puzzleDate: todayInArgentina(), gameSlug: slug, ...(v.dnf ? { dnf: true } : { time: v.time }) },
       });
-      setValues((prev) => ({ ...prev, [slug]: { ...prev[slug]!, status: 'saved' } }));
+      setValues((prev) => ({ ...prev, [slug]: { ...prev[slug]!, status: 'saved', isPersonalBest: res.isPersonalBest } }));
     } catch (e) {
       const msg = e instanceof ApiClientError ? e.message : 'No pudimos guardar';
       setValues((prev) => ({ ...prev, [slug]: { ...prev[slug]!, status: 'error', error: msg } }));
@@ -251,7 +287,8 @@ function ManualEntryForm({ groupId, token }: { groupId: string; token: string | 
 
   /** Guarda de una los juegos completados que todavía no se guardaron individualmente. */
   async function saveAll() {
-    const pending = GAMES.filter((g) => hasInput(values[g.slug]!) && values[g.slug]!.status !== 'saved');
+    if (!activeGames) return;
+    const pending = activeGames.filter((g) => hasInput(values[g.slug]!) && values[g.slug]!.status !== 'saved');
     if (!token || pending.length === 0) return;
     setSavingAll(true);
     try {
@@ -259,14 +296,18 @@ function ManualEntryForm({ groupId, token }: { groupId: string; token: string | 
         const v = values[g.slug]!;
         return v.dnf ? { gameSlug: g.slug, dnf: true } : { gameSlug: g.slug, time: v.time };
       });
-      const res = await apiFetch<{ results: { gameSlug: string; status: 'ok' | 'error'; error?: { message: string } }[] }>(
-        '/entries/bulk',
-        { method: 'POST', accessToken: token, body: { groupIds: [groupId], puzzleDate: todayInArgentina(), entries } },
-      );
+      const res = await apiFetch<{
+        results: { gameSlug: string; status: 'ok' | 'error'; error?: { message: string }; isPersonalBest?: boolean }[];
+      }>('/entries/bulk', { method: 'POST', accessToken: token, body: { groupIds: [groupId], puzzleDate: todayInArgentina(), entries } });
       setValues((prev) => {
         const next = { ...prev };
         for (const r of res.results) {
-          next[r.gameSlug] = { ...next[r.gameSlug]!, status: r.status === 'ok' ? 'saved' : 'error', error: r.error?.message };
+          next[r.gameSlug] = {
+            ...next[r.gameSlug]!,
+            status: r.status === 'ok' ? 'saved' : 'error',
+            error: r.error?.message,
+            isPersonalBest: r.isPersonalBest,
+          };
         }
         return next;
       });
@@ -275,14 +316,14 @@ function ManualEntryForm({ groupId, token }: { groupId: string; token: string | 
     }
   }
 
-  const filledCount = GAMES.filter((g) => hasInput(values[g.slug]!)).length;
-  const pendingCount = GAMES.filter((g) => hasInput(values[g.slug]!) && values[g.slug]!.status !== 'saved').length;
+  const filledCount = activeGames.filter((g) => hasInput(values[g.slug]!)).length;
+  const pendingCount = activeGames.filter((g) => hasInput(values[g.slug]!) && values[g.slug]!.status !== 'saved').length;
 
   return (
     <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
       <p style={{ fontSize: 12, color: '#6B6357' }}>Lo que cargues a mano queda sin verificar. Podés guardar juego por juego.</p>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
-        {GAMES.map((g, i) => {
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${activeGames.length}, 1fr)`, gap: 10 }}>
+        {activeGames.map((g, i) => {
           const v = values[g.slug]!;
           return (
             <div key={g.slug} style={{ position: 'relative', display: 'flex', flexDirection: 'column' }}>
@@ -313,7 +354,10 @@ function ManualEntryForm({ groupId, token }: { groupId: string; token: string | 
               </label>
 
               {v.status === 'saved' ? (
-                <Chip kind="verified">Guardado</Chip>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  <Chip kind="verified">Guardado</Chip>
+                  {v.isPersonalBest && <Chip kind="pb">Récord personal</Chip>}
+                </div>
               ) : (
                 <button
                   type="button"
@@ -331,7 +375,7 @@ function ManualEntryForm({ groupId, token }: { groupId: string; token: string | 
         })}
       </div>
       <p style={{ fontSize: 11, color: '#6B6357' }}>
-        DNF: Crucigrama {formatTime(GAMES[0]!.penaltySeconds)} · Experto {formatTime(GAMES[1]!.penaltySeconds)} · Sudoku {formatTime(GAMES[2]!.penaltySeconds)}
+        DNF: {activeGames.map((g) => `${g.shortName} ${formatTime(g.penaltySeconds)}`).join(' · ')}
       </p>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <span style={{ fontSize: 13, fontWeight: 600 }}>Total del día</span>
@@ -339,7 +383,7 @@ function ManualEntryForm({ groupId, token }: { groupId: string; token: string | 
       </div>
       {filledCount > 1 && pendingCount > 0 && (
         <button type="button" className="btn btn-primary" onClick={() => void saveAll()} disabled={savingAll}>
-          {savingAll ? 'Guardando…' : pendingCount === GAMES.length ? 'Guardar los tres' : `Guardar los ${pendingCount} que faltan`}
+          {savingAll ? 'Guardando…' : pendingCount === activeGames.length ? `Guardar los ${activeGames.length}` : `Guardar los ${pendingCount} que faltan`}
         </button>
       )}
     </div>
@@ -353,6 +397,8 @@ interface ImportResponse {
   lnSeconds: number;
   dnf: boolean;
   verified: boolean;
+  /** Sólo viene en la confirmación (`/entries/import`) — el preview no escribe nada, no hay PB que evaluar. */
+  isPersonalBest?: boolean;
   groups: { groupId: string; entry?: { durationSeconds: number; gameId: string } }[];
 }
 interface ImportPreview {
@@ -361,6 +407,7 @@ interface ImportPreview {
   durationSeconds: number;
   dnf: boolean;
   verified: boolean;
+  isPersonalBest?: boolean;
 }
 interface ImportErrorState {
   message: string;
@@ -375,6 +422,7 @@ function toPreview(r: ImportResponse): ImportPreview {
     durationSeconds: first?.entry?.durationSeconds ?? r.lnSeconds,
     dnf: r.dnf,
     verified: r.verified,
+    isPersonalBest: r.isPersonalBest,
   };
 }
 

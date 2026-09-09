@@ -51,6 +51,23 @@ dayRouter.get('/groups/:id/day', async (req, res, next) => {
 
     const entryByKey = new Map(entriesRes.rows.map((e) => [`${e.user_id}|${e.game_slug}`, e]));
 
+    // T8.4/RF-14: "destacar el récord personal" también en el detalle del día — PB
+    // es global por jugador y juego (no por grupo, ver services/entries.ts), así
+    // que se compara cada celda contra el mínimo histórico de esa persona en ese
+    // juego, en TODOS sus grupos, no sólo éste.
+    const nonDnf = entriesRes.rows.filter((e) => !e.dnf);
+    let pbByUserGame = new Map<string, number>();
+    if (nonDnf.length > 0) {
+      const pbRes = await db.query(
+        `select e.user_id, g.slug as game_slug, min(e.duration_seconds) as pb
+           from public.entries e join public.games g on g.id = e.game_id
+          where e.dnf = false and (e.user_id, g.slug) in (${nonDnf.map((_, i) => `($${i * 2 + 1}, $${i * 2 + 2})`).join(', ')})
+          group by e.user_id, g.slug`,
+        nonDnf.flatMap((e) => [e.user_id, e.game_slug]),
+      );
+      pbByUserGame = new Map(pbRes.rows.map((r) => [`${r.user_id}|${r.game_slug}`, Number(r.pb)]));
+    }
+
     const bestPerGame: Record<string, { userId: string; seconds: number } | null> = {};
     for (const g of games) {
       const best = entriesRes.rows
@@ -60,16 +77,17 @@ dayRouter.get('/groups/:id/day', async (req, res, next) => {
     }
 
     const rows = membersRes.rows.map((m) => {
-      const cells: Record<string, { status: CellStatus; seconds: number | null; verified: boolean }> = {};
+      const cells: Record<string, { status: CellStatus; seconds: number | null; verified: boolean; isPersonalBest: boolean }> = {};
       for (const g of games) {
         if (blackoutAll || blackoutGames.has(g.slug)) {
-          cells[g.slug] = { status: 'blackout', seconds: null, verified: false };
+          cells[g.slug] = { status: 'blackout', seconds: null, verified: false, isPersonalBest: false };
           continue;
         }
         const entry = entryByKey.get(`${m.id}|${g.slug}`);
+        const isPersonalBest = !!entry && !entry.dnf && pbByUserGame.get(`${m.id}|${g.slug}`) === entry.duration_seconds;
         cells[g.slug] = entry
-          ? { status: entry.dnf ? 'dnf' : 'played', seconds: entry.duration_seconds, verified: entry.verified }
-          : { status: 'absent', seconds: null, verified: false };
+          ? { status: entry.dnf ? 'dnf' : 'played', seconds: entry.duration_seconds, verified: entry.verified, isPersonalBest }
+          : { status: 'absent', seconds: null, verified: false, isPersonalBest: false };
       }
       return { userId: m.id, displayName: m.display_name, avatar: m.avatar, cells };
     });

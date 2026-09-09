@@ -13,6 +13,7 @@ import { dayRouter } from './routes/day.js';
 import { blackoutsRouter } from './routes/blackouts.js';
 import { h2hRouter } from './routes/h2h.js';
 import { seasonsRouter } from './routes/seasons.js';
+import { statsRouter } from './routes/stats.js';
 import { cronRouter } from './routes/cron.js';
 
 export function createApp() {
@@ -43,6 +44,7 @@ export function createApp() {
     blackoutsRouter,
     h2hRouter,
     seasonsRouter,
+    statsRouter,
   );
 
   app.use(notFoundHandler);

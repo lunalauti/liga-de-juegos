@@ -152,6 +152,9 @@ body {
   &--wins { background: $ln-ink; color: $ln-paper; font-weight: 600; }
   // Empate real (2026-09-01): mismo tratamiento visual que "manual", ni error ni logro — es un hecho.
   &--tied { border: 1px dashed #b3aa98; color: #8c8271; font-weight: 600; }
+  // Récord personal (T8.4, 2026-09-09): el único uso del ámbar de foco como color de
+  // marca en vez de anillo — a propósito, es la única "celebración" del sistema.
+  &--pb { background: $ln-focus; color: $ln-ink; font-weight: 700; }
 }
 
 /* El sello ✓: única marca de verificado, idéntica en todas las pantallas. */
