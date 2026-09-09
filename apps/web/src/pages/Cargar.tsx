@@ -226,6 +226,7 @@ function ManualEntryForm({ groupId, token }: { groupId: string; token: string | 
   // GAME_NOT_ACTIVE al guardar, pero mostraba la tarjeta igual, confuso. Ahora
   // pide el detalle real del grupo y sólo pinta los juegos con `enabled`.
   const [activeGames, setActiveGames] = useState<ActiveGame[] | null>(null);
+  const [values, setValues] = useState<Record<string, GameValue>>({});
   useEffect(() => {
     if (!token) return;
     let cancelled = false;
@@ -233,22 +234,20 @@ function ManualEntryForm({ groupId, token }: { groupId: string; token: string | 
       accessToken: token,
     }).then((detail) => {
       if (cancelled) return;
-      setActiveGames(
-        detail.games
-          .filter((g) => g.enabled)
-          .map((g) => ({ slug: g.slug, name: g.name, shortName: GAMES.find((x) => x.slug === g.slug)?.shortName ?? g.name, penaltySeconds: g.penaltySeconds })),
-      );
+      const games = detail.games
+        .filter((g) => g.enabled)
+        .map((g) => ({ slug: g.slug, name: g.name, shortName: GAMES.find((x) => x.slug === g.slug)?.shortName ?? g.name, penaltySeconds: g.penaltySeconds }));
+      // Setear los dos juntos, en el mismo tick — con dos efectos separados hay
+      // un frame en el que `activeGames` ya está pero `values` todavía es `{}`,
+      // y `values[g.slug]!.dnf` explota (bug real que rompió esta pantalla en
+      // producción apenas la subí, encontrado al verificarla).
+      setActiveGames(games);
+      setValues(Object.fromEntries(games.map((g) => [g.slug, { dnf: false, time: '', status: 'idle' as SaveStatus }])));
     });
     return () => {
       cancelled = true;
     };
   }, [groupId, token]);
-
-  const [values, setValues] = useState<Record<string, GameValue>>({});
-  useEffect(() => {
-    if (!activeGames) return;
-    setValues(Object.fromEntries(activeGames.map((g) => [g.slug, { dnf: false, time: '', status: 'idle' as SaveStatus }])));
-  }, [activeGames]);
 
   const [savingAll, setSavingAll] = useState(false);
 
