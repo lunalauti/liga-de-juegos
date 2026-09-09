@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { formatTime, initialsOf } from '@liga/shared';
+import { formatTime, initialsOf, todayInArgentina } from '@liga/shared';
 import { apiFetch } from '../api/client';
 import { useSession } from '../hooks/useSession';
 import { useActiveGroupContext } from '../hooks/useActiveGroupContext';
@@ -34,8 +34,7 @@ interface DayResponse { games: { slug: string; name: string }[]; rows: DayRow[] 
 export default function Home() {
   const { session } = useSession();
   const token = session?.access_token;
-  const me = session?.user;
-  const { activeGroup, loading: loadingMe } = useActiveGroupContext();
+  const { activeGroup, me, loading: loadingMe } = useActiveGroupContext();
   const navigate = useNavigate();
 
   const [lb, setLb] = useState<LeaderboardResponse | null>(null);
@@ -112,7 +111,7 @@ export default function Home() {
 
   return (
     <Screen>
-      <Eyebrow>{activeGroup.name}</Eyebrow>
+      <Header groupName={activeGroup.name} displayName={me?.displayName} />
 
       {loadedAllThree ? <LoadedCard myDay={myDay!} games={activeGames} /> : <NotLoadedCard othersLoadedToday={othersLoadedToday} onLoad={() => navigate('/cargar')} />}
 
@@ -251,6 +250,32 @@ function joinNames(names: string[]): string {
 function Screen({ children }: { children: React.ReactNode }) {
   return <div style={{ maxWidth: 420, margin: '0 auto', padding: '20px 20px 32px', display: 'flex', flexDirection: 'column', gap: 16 }}>{children}</div>;
 }
-function Eyebrow({ children }: { children: React.ReactNode }) {
-  return <p className="lj-label" style={{ margin: 0 }}>{children}</p>;
+
+/**
+ * Masthead consistente con el resto de las pantallas de primer nivel (artboard
+ * 01: eyebrow + título serif + chip de avatar, con el mismo borde inferior de
+ * 1.5px que separa el header del contenido en Cargar/Grupo/Stats). El artboard
+ * original pone acá la fecha y "Liga de Juegos" como título fijo; se adaptó al
+ * nombre del grupo activo como título porque esta app soporta pertenecer a más
+ * de un grupo (algo que no existía cuando se dibujó el mockup) — sin eso, nadie
+ * sabría a qué grupo está mirando al entrar.
+ */
+function Header({ groupName, displayName }: { groupName: string; displayName?: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', borderBottom: '1.5px solid #14120E', paddingBottom: 12 }}>
+      <div>
+        <p className="lj-label" style={{ margin: 0 }}>{longDateLabel(todayInArgentina())}</p>
+        <h1 className="lj-display" style={{ fontSize: 27, margin: '2px 0 0' }}>{groupName}</h1>
+      </div>
+      <span style={{ width: 34, height: 34, border: '1.5px solid #14120E', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, flex: '0 0 auto' }}>
+        {initialsOf(displayName ?? '?')}
+      </span>
+    </div>
+  );
+}
+
+function longDateLabel(dateStr: string): string {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const label = new Date(Date.UTC(y!, m! - 1, d!)).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+  return label.charAt(0).toUpperCase() + label.slice(1);
 }

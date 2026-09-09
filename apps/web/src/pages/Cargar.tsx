@@ -445,8 +445,8 @@ function Screen({ children }: { children: React.ReactNode }) {
 
 function Header({ dateLabel }: { dateLabel: string }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-      <h1 className="lj-card-title" style={{ fontSize: 22, margin: 0 }}>Cargar tiempos</h1>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1.5px solid #14120E', paddingBottom: 12 }}>
+      <h1 className="lj-display" style={{ fontSize: 22, margin: 0 }}>Cargar tiempos</h1>
       <span className="lj-label">{dateLabel} ▾</span>
     </div>
   );
