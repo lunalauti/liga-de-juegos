@@ -121,10 +121,14 @@
 
 ## Fase 8 — Estadísticas (~5 h)
 
-- [ ] **T8.1** `scoring/stats.ts`: racha, consistencia, PB, completion, trend + tests. [RF-14] §5.3
-- [ ] **T8.2** API `GET /groups/:id/stats`.
+- [x] **T8.1** `scoring/stats.ts`: racha, consistencia, PB, completion, trend + tests. [RF-14] §5.3 **Hecho**, 13 tests. Racha holística (D11): el día en curso nunca la corta, mismo principio de RF-8 aplicado por primera vez fuera del motor de ranking. Mejor racha histórica separada de la actual (puede ser mayor).
+- [x] **T8.2** API `GET /groups/:id/stats`. **Hecho.** PB es GLOBAL por jugador y juego (no por grupo — mismo criterio que el índice `entries_pb_idx`, §3.3): se pisa el valor scopeado-a-un-grupo que calcula el motor puro con una consulta propia entre todos los grupos del jugador. Incluye `history` (14 días) para el gráfico de T8.3.
 - [ ] **T8.3** Web `/stats` según artboard 04: evolución por juego a 14 días + tarjetas de récord personal, racha (actual y mejor), consistencia, completado y tiempos verificados. [RF-14, RF-19]
-- [ ] **T8.4** Destacar el récord personal cuando alguien lo rompe (badge en la carga y en el día). [RF-14]
+- [x] **T8.4** Destacar el récord personal cuando alguien lo rompe (badge en la carga y en el día). [RF-14] **Hecho.** `services/entries.ts#isNewPersonalBest` corre DESPUÉS de escribir (el propio resultado ya cuenta en el mínimo); cubre carga manual, `/entries/bulk` e importación de La Nación. Chip "Récord personal" (único uso del ámbar de foco como color de marca) en Cargar; ★ en la celda del Detalle del día.
+
+**Bugs reales encontrados y cerrados el 2026-09-09, reportados por el usuario mientras probaba el toggle de juegos activos (RF-5, T6.2):**
+- Home y Cargar usaban el catálogo estático de 3 juegos (`GAMES` de `@liga/shared`) en vez de los juegos que el grupo tiene realmente activos. Con un solo juego activo, Home decía "Cargaste los tres" habiendo cargado uno solo (`cells[slug]` de un juego desactivado es `undefined`, y `undefined !== 'absent'` da `true` — falso positivo), y Cargar mostraba las 3 tarjetas de carga manual aunque 2 fueran a fallar con `GAME_NOT_ACTIVE` al guardar. Corregido: ambas pantallas usan ahora los juegos activos reales (`day.games`, o el detalle del grupo). De paso, Home ahora también muestra "Faltan cargar" (antes sólo lo tenía Ranking).
+- Al arreglar Cargar, un bug propio (dos `useEffect` separados poblando `activeGames` y `values`) rompió la pantalla ENTERA en producción apenas se desplegó — encontrado al verificar el fix en el navegador real, corregido en el commit siguiente (un solo efecto, ambos estados juntos). Recordatorio de por qué siempre se verifica en producción real después de cada deploy, no sólo en CI.
 
 ## Fase 9 — Terminaciones (~5 h)
 
