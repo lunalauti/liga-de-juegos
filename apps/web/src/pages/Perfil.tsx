@@ -2,6 +2,8 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { apiFetch, ApiClientError } from '../api/client';
 import { useSession } from '../hooks/useSession';
 import { LoadingState } from '../components/LoadingState';
+import { getPushUiState, subscribeToPush, unsubscribeFromPush, type PushUiState } from '../lib/push';
+import { promptInstall } from '../lib/installPrompt';
 
 interface Me {
   id: string;
@@ -96,6 +98,8 @@ export default function Perfil() {
         </button>
       </form>
 
+      <NotificationsCard token={token} />
+
       {me && me.groups.length > 0 && (
         <section style={{ marginTop: 28 }}>
           <h2 className="lj-card-title" style={{ fontSize: 18, margin: '0 0 10px' }}>Tus grupos</h2>
@@ -127,4 +131,115 @@ export default function Perfil() {
 
 function Shell({ children }: { children: React.ReactNode }) {
   return <div style={{ maxWidth: 420, margin: '0 auto', padding: '40px 20px' }}>{children}</div>;
+}
+
+/**
+ * T10.4, specs/02-design.md §10.3 — RF-21/RF-22. Seis estados posibles según
+ * plataforma y permiso; ninguno es "el flujo", cada uno es un estado final
+ * válido por sí mismo (§10.3 lo deja explícito). El estado se recalcula, nunca
+ * se guarda en un flag propio: la fuente de verdad de "¿estoy suscripto en
+ * ESTE navegador?" es el navegador mismo (`pushManager.getSubscription()`).
+ */
+function NotificationsCard({ token }: { token: string | undefined }) {
+  const [state, setState] = useState<PushUiState | 'loading'>('loading');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const refresh = () => {
+    getPushUiState()
+      .then(setState)
+      .catch(() => setState('unsupported'));
+  };
+
+  useEffect(refresh, []);
+
+  if (state === 'loading') return null;
+  if (state === 'unsupported') return null; // RNF-9: no aparece nada, no un error
+
+  async function handleInstall() {
+    setError(null);
+    const outcome = await promptInstall();
+    if (outcome === 'accepted') refresh();
+  }
+
+  async function handleToggle(next: boolean) {
+    if (!token) return;
+    setBusy(true);
+    setError(null);
+    try {
+      if (next) {
+        await subscribeToPush(token);
+      } else {
+        await unsubscribeFromPush(token);
+      }
+      refresh();
+    } catch (e) {
+      if (e instanceof Error && e.message === 'PERMISSION_DENIED') {
+        setError('No diste el permiso — no se puede activar sin eso.');
+      } else {
+        setError('No pudimos activar los avisos. Probá de nuevo en un rato.');
+      }
+      refresh();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section style={{ marginTop: 28 }}>
+      <h2 className="lj-card-title" style={{ fontSize: 18, margin: '0 0 10px' }}>Avisos</h2>
+      <div className="lj-card" style={{ padding: 16 }}>
+        {state === 'ios-not-installed' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <p style={{ fontSize: 14, margin: 0, fontWeight: 600 }}>Agregá esto a tu pantalla de inicio para poder recibir avisos</p>
+            <p style={{ fontSize: 13, color: '#4A4438', lineHeight: 1.7, margin: 0 }}>
+              En iPhone, los avisos sólo funcionan si la app está instalada (es una limitación de Apple, no nuestra):
+            </p>
+            <ol style={{ fontSize: 13, color: '#4A4438', lineHeight: 1.7, margin: 0, paddingLeft: 18 }}>
+              <li>Tocá el ícono de Compartir en Safari (el cuadradito con la flecha).</li>
+              <li>Elegí "Agregar a inicio".</li>
+              <li>Abrí Liga de Juegos desde el ícono nuevo, y volvé acá.</li>
+            </ol>
+          </div>
+        )}
+
+        {state === 'installable' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <p style={{ fontSize: 13, color: '#4A4438', margin: 0 }}>Instalá la app para recibir avisos y acceso más rápido.</p>
+            <button type="button" className="btn btn-primary" onClick={() => void handleInstall()}>Instalar app</button>
+          </div>
+        )}
+
+        {(state === 'not-subscribed' || state === 'subscribed') && (
+          <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, cursor: busy ? 'default' : 'pointer' }}>
+            <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <span style={{ fontSize: 14, fontWeight: 600 }}>Avisarme si me faltan tiempos</span>
+              <span style={{ fontSize: 12, color: '#6B6357' }}>Un aviso por día, a la noche, si te queda algo pendiente.</span>
+            </span>
+            <input
+              type="checkbox"
+              role="switch"
+              className="form-check-input"
+              checked={state === 'subscribed'}
+              disabled={busy}
+              onChange={(e) => void handleToggle(e.target.checked)}
+              style={{ flex: '0 0 auto' }}
+            />
+          </label>
+        )}
+
+        {state === 'denied' && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <span style={{ fontSize: 14, fontWeight: 600, color: '#8C8271' }}>Avisarme si me faltan tiempos</span>
+              <span style={{ fontSize: 12, color: '#6B6357' }}>Lo bloqueaste desde el navegador — hay que habilitarlo ahí para poder activarlo acá.</span>
+            </span>
+            <input type="checkbox" role="switch" className="form-check-input" checked={false} disabled style={{ flex: '0 0 auto' }} />
+          </div>
+        )}
+
+        {error && <p role="alert" style={{ color: '#A8352A', fontSize: 12, margin: '10px 0 0' }}>{error}</p>}
+      </div>
+    </section>
+  );
 }

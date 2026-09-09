@@ -27,6 +27,7 @@ CI (typecheck + lint + test, 100+ tests) corre en cada push a `main`, y si pasa 
 - **Cabeza a cabeza**: cuántas veces le ganaste a cada rival, por juego.
 - Al cerrar una temporada queda congelada en el historial — el grupo tiene un **palmarés** con cuántos títulos ganó cada uno, por juego. El cierre lo dispara un cron externo (ver abajo).
 - Estadísticas personales: racha (días seguidos completando todo, sin cortarla el día en curso), consistencia, récord personal (global, no por grupo), % de completado, tiempos verificados, y evolución a 14 días en un gráfico.
+- **Se instala como app** (PWA) y avisa por push si a la noche te quedaron tiempos pendientes — opt-in desde Perfil. En iPhone, el aviso sólo funciona si instalaste la app primero (restricción de Apple, no nuestra).
 
 ## Setup local
 
@@ -50,18 +51,22 @@ node apps/api/scripts/migrate.mjs   # aplica supabase/migrations/*.sql, idempote
 Ya está todo conectado y andando, pero si hay que rearmarlo desde cero (otro Supabase, otra cuenta):
 
 1. **Supabase** — crear el proyecto, correr `node apps/api/scripts/migrate.mjs` contra su `DATABASE_URL`.
-2. **Render** — [render.com](https://render.com) → New → Blueprint → conectar el repo (usa `render.yaml`). Cargar a mano los secretos que quedan marcados `sync: false`: `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `ALLOWED_ORIGINS`, `CRON_SECRET`.
-3. **Vercel** — Import Project → mismo repo (usa `vercel.json`). Cargar `VITE_API_URL`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (se hornean en el build, no alcanza con `.env` local).
+2. **Render** — [render.com](https://render.com) → New → Blueprint → conectar el repo (usa `render.yaml`). Cargar a mano los secretos que quedan marcados `sync: false`: `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `ALLOWED_ORIGINS`, `CRON_SECRET`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` (generadas una sola vez con `npx web-push generate-vapid-keys`).
+3. **Vercel** — Import Project → mismo repo (usa `vercel.json`). Cargar `VITE_API_URL`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_VAPID_PUBLIC_KEY` (la misma clave pública de Render) — se hornean en el build, no alcanza con `.env` local.
 4. **GitHub Actions** — Settings → Secrets → agregar `DATABASE_URL` para que el job de migraciones corra en cada push a `main`.
 5. **Cron externo de cierre de temporadas** (RF-16): el plan free de Render no tiene Cron Jobs nativos, así que el cierre lo dispara un ping de afuera. En [cron-job.org](https://cron-job.org):
    - URL: `POST https://liga-de-juegos-api.onrender.com/internal/cron/close-seasons`
    - Header: `x-cron-secret: <el mismo valor que CRON_SECRET en Render>`
    - Frecuencia: una vez por día alcanza (el cierre depende de la fecha, no de la hora exacta).
-6. **Keep-alive del free tier**: el plan free de Render duerme a los 15 min de inactividad — un segundo cron job pegándole a `GET /health` cada 10 min lo mantiene despierto. `<LoadingState />` en el front también absorbe visualmente el cold start cuando igual llega a dormirse.
+6. **Cron externo del aviso "faltan tus tiempos"** (RF-22): mismo mecanismo, otro job en cron-job.org:
+   - URL: `POST https://liga-de-juegos-api.onrender.com/internal/cron/notify-pending`
+   - Header: `x-cron-secret: <el mismo valor que CRON_SECRET>`
+   - Frecuencia: una vez por día, 00:00 UTC (21:00 ART).
+7. **Keep-alive del free tier**: el plan free de Render duerme a los 15 min de inactividad — un cron job pegándole a `GET /health` cada 10 min lo mantiene despierto. `<LoadingState />` en el front también absorbe visualmente el cold start cuando igual llega a dormirse.
 
 ## Stack
 
-React + Vite (Vercel) · Node + Express (Render) · Postgres + Auth (Supabase) · Bootstrap 5 + SCSS propio
+React + Vite (Vercel) · Node + Express (Render) · Postgres + Auth (Supabase) · Bootstrap 5 + SCSS propio · PWA (`vite-plugin-pwa`) + Web Push (`web-push`)
 
 ## Documentos
 

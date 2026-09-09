@@ -15,6 +15,7 @@ import { h2hRouter } from './routes/h2h.js';
 import { seasonsRouter } from './routes/seasons.js';
 import { statsRouter } from './routes/stats.js';
 import { cronRouter } from './routes/cron.js';
+import { pushRouter } from './routes/push.js';
 import { apiRateLimit, importRateLimit } from './middleware/rateLimit.js';
 
 export function createApp() {
@@ -50,6 +51,7 @@ export function createApp() {
     h2hRouter,
     seasonsRouter,
     statsRouter,
+    pushRouter,
   );
 
   app.use(notFoundHandler);

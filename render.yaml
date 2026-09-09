@@ -28,4 +28,8 @@ services:
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
       - key: CRON_SECRET
-        sync: false # T7.2 — protege POST /internal/cron/close-seasons; lo manda el cron externo en el header x-cron-secret
+        sync: false # T7.2 — protege POST /internal/cron/close-seasons y /internal/cron/notify-pending; lo manda el cron externo en el header x-cron-secret
+      - key: VAPID_PUBLIC_KEY
+        sync: false # T10.2 — generado una sola vez con `npx web-push generate-vapid-keys`; la misma clave va también en Vercel como VITE_VAPID_PUBLIC_KEY
+      - key: VAPID_PRIVATE_KEY
+        sync: false # nunca sale del backend

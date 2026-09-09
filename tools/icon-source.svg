@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Ícono de la PWA (T10.1, specs/02-design.md §10.1). Sin texto a propósito
+       (evita depender de que Newsreader esté instalado en la máquina que
+       rasteriza) — en cambio, el motivo de casillas de crucigrama ya
+       establecido en LoadingState.tsx (lj-loaderFill): una cuadrícula 2×2 con
+       una casilla "tinta" en ámbar, el mismo gesto que la animación de espera. -->
+  <rect width="512" height="512" fill="#16513C" />
+  <rect x="108" y="108" width="140" height="140" fill="#F6F2EA" />
+  <rect x="264" y="108" width="140" height="140" fill="#C9A227" />
+  <rect x="108" y="264" width="140" height="140" fill="#F6F2EA" />
+  <rect x="264" y="264" width="140" height="140" fill="#F6F2EA" />
+</svg>

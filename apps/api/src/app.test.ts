@@ -29,4 +29,18 @@ describe('API', () => {
       delete process.env['CRON_SECRET'];
     });
   });
+
+  describe('T10.6 — POST /internal/cron/notify-pending, mismo patrón que close-seasons', () => {
+    it('rechaza sin x-cron-secret', async () => {
+      const res = await request(createApp()).post('/internal/cron/notify-pending');
+      expect(res.status).toBe(401);
+    });
+
+    it('rechaza con un x-cron-secret que no coincide', async () => {
+      process.env['CRON_SECRET'] = 'el-secreto-de-verdad';
+      const res = await request(createApp()).post('/internal/cron/notify-pending').set('x-cron-secret', 'cualquier-otra-cosa');
+      expect(res.status).toBe(401);
+      delete process.env['CRON_SECRET'];
+    });
+  });
 });
