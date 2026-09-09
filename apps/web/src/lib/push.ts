@@ -16,13 +16,13 @@ export type PushUiState =
   | 'subscribed'
   | 'denied';
 
-function isIOS(): boolean {
+export function isIOS(): boolean {
   // iPadOS 13+ se identifica como Mac con soporte táctil — sin el chequeo de
   // maxTouchPoints, un iPad queda mal clasificado como "desktop".
   return /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 }
 
-function isStandalone(): boolean {
+export function isStandalone(): boolean {
   return window.matchMedia('(display-mode: standalone)').matches || (navigator as { standalone?: boolean }).standalone === true;
 }
 

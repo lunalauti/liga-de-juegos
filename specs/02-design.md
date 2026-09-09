@@ -693,6 +693,8 @@ Una tarjeta nueva "Avisos" en `/perfil`, con contenido que depende del estado de
 
 El toggle se resuelve consultando `registration.pushManager.getSubscription()` al entrar a Perfil, no con un flag propio en el backend — la fuente de verdad de "¿estoy suscripto en ESTE navegador?" es el navegador mismo.
 
+**Pedido explícito del usuario (2026-09-09):** además de la tarjeta en Perfil, Home pregunta directamente ("¿Querés que te avisemos si te faltan tiempos?") la primera vez que entra a la app en ESTE dispositivo — no hay que esperar a que alguien encuentre la tarjeta por su cuenta. "Primera vez" es por dispositivo (`localStorage`), no por cuenta: una suscripción push es por navegador, así que preguntar de nuevo en un dispositivo nuevo (aunque ya se haya contestado en otro) tiene sentido, no es spam. Se pregunta una sola vez — decida lo que decida ("Sí, avisame" o "Ahora no"), no vuelve a insistir solo (mismo criterio de RNF-9 que el permiso denegado). Si el estado ya es `not-subscribed`, "Sí, avisame" suscribe directo ahí mismo (el click en el botón es el gesto real que el navegador necesita para mostrar el permiso); si es `installable` o `ios-not-installed`, manda a Perfil, donde vive el flujo completo con instrucciones — no tiene sentido duplicarlo en el banner.
+
 ### 10.4 El cron diario (servidor)
 
 Mismo patrón que el cierre de temporadas (§5.4): no hay Cron Jobs nativos en el plan free de Render (RNF-6), así que `POST /internal/cron/notify-pending` es un endpoint fuera del stack de JWT, protegido por `x-cron-secret`, golpeado una vez al día por cron-job.org — a las **21:00 ART = 00:00 UTC** (D12).

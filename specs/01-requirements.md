@@ -194,6 +194,7 @@ Cambiar la configuración deberá recalcular la temporada en curso, nunca las ce
 - Un solo aviso por jugador por día, aunque tenga pendientes en más de un grupo — no uno por grupo.
 - Tocar el aviso lleva directo a Cargar.
 - En iPhone, esto **sólo funciona si la app está instalada** (RF-21) — es una limitación de Safari/iOS, no de esta app (ver `02-design.md` §10.6). El sistema deberá explicarlo, no fallar en silencio.
+- El sistema deberá ofrecer activarlo la primera vez que el jugador entra a la app **en cada dispositivo** (no sólo dejarlo escondido en el perfil a que alguien lo encuentre) — sigue siendo opt-in, un "ahora no" no vuelve a preguntar solo.
 
 ## 6. Requerimientos no funcionales
 

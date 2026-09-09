@@ -304,6 +304,29 @@ body {
   .lj-loader__cell { animation: none; background: $primary; opacity: .45; }
 }
 
+/* Minitutorial de instalación (InstallTutorial.tsx, RF-21, pedido del usuario
+   2026-09-09): mismo criterio que el loader de arriba — el gesto se anima
+   para que se entienda de un vistazo, sin depender de leer el texto. */
+@keyframes lj-tutBounce {
+  0%, 100% { transform: translateY(0); opacity: 1; }
+  50% { transform: translateY(-4px); opacity: .55; }
+}
+@keyframes lj-tutPop {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+@keyframes lj-tutRing {
+  0% { transform: scale(.6); opacity: .9; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+.lj-tut-arrow { animation: lj-tutBounce 1.6s ease-in-out infinite; transform-origin: center; }
+.lj-tut-pop { animation: lj-tutPop 1.8s ease-in-out infinite; transform-origin: center; }
+.lj-tut-ring { animation: lj-tutRing 1.6s ease-out infinite; transform-origin: center; }
+
+@media (prefers-reduced-motion: reduce) {
+  .lj-tut-arrow, .lj-tut-pop, .lj-tut-ring { animation: none; }
+}
+
 /* --- Ranking en desktop: la tabla se ensancha, el panel lateral pasa al costado.
    Simplificación consciente de T4.7b: no replica la nav superior del artboard
    desktop pixel a pixel, pero mismo contenido, mismo ancho útil. --- */

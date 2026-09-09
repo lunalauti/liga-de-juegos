@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { apiFetch, ApiClientError } from '../api/client';
 import { useSession } from '../hooks/useSession';
 import { LoadingState } from '../components/LoadingState';
-import { getPushUiState, subscribeToPush, unsubscribeFromPush, type PushUiState } from '../lib/push';
+import { getPushUiState, subscribeToPush, unsubscribeFromPush, isStandalone, type PushUiState } from '../lib/push';
 import { promptInstall } from '../lib/installPrompt';
+import { InstallTutorial } from '../components/InstallTutorial';
 
 interface Me {
   id: string;
@@ -109,6 +110,7 @@ export default function Perfil() {
       </form>
 
       <NotificationsCard token={token} />
+      {!isStandalone() && <InstallTutorial />}
 
       {me && me.groups.length > 0 && (
         <section style={{ marginTop: 28 }}>
