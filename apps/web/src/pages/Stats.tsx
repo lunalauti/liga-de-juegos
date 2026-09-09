@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { formatTime, initialsOf } from '@liga/shared';
 import { apiFetch } from '../api/client';
 import { useSession } from '../hooks/useSession';
@@ -85,9 +86,13 @@ export default function Stats() {
           <div className="lj-label" style={{ marginBottom: 2 }}>Últimos 14 días</div>
           <h1 className="lj-display" style={{ fontSize: 26, margin: 0 }}>Mis estadísticas</h1>
         </div>
-        <span style={{ width: 34, height: 34, border: '1.5px solid #14120E', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, flex: '0 0 auto' }}>
+        <Link
+          to="/perfil"
+          aria-label="Tu perfil"
+          style={{ width: 34, height: 34, border: '1.5px solid #14120E', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, flex: '0 0 auto', color: 'inherit', textDecoration: 'none' }}
+        >
           {initialsOf(me?.displayName ?? '?')}
-        </span>
+        </Link>
       </div>
 
       <div style={{ display: 'flex' }}>

@@ -267,9 +267,13 @@ function Header({ groupName, displayName }: { groupName: string; displayName?: s
         <p className="lj-label" style={{ margin: 0 }}>{longDateLabel(todayInArgentina())}</p>
         <h1 className="lj-display" style={{ fontSize: 27, margin: '2px 0 0' }}>{groupName}</h1>
       </div>
-      <span style={{ width: 34, height: 34, border: '1.5px solid #14120E', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, flex: '0 0 auto' }}>
+      <Link
+        to="/perfil"
+        aria-label="Tu perfil"
+        style={{ width: 34, height: 34, border: '1.5px solid #14120E', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, flex: '0 0 auto', color: 'inherit', textDecoration: 'none' }}
+      >
         {initialsOf(displayName ?? '?')}
-      </span>
+      </Link>
     </div>
   );
 }

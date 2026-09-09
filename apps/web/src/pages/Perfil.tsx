@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { apiFetch, ApiClientError } from '../api/client';
 import { useSession } from '../hooks/useSession';
 import { LoadingState } from '../components/LoadingState';
@@ -16,6 +17,7 @@ interface Me {
 export default function Perfil() {
   const { session, signOut } = useSession();
   const token = session?.access_token;
+  const navigate = useNavigate();
 
   const [me, setMe] = useState<Me | null>(null);
   const [displayName, setDisplayName] = useState('');
@@ -62,6 +64,14 @@ export default function Perfil() {
 
   return (
     <Shell>
+      <button
+        type="button"
+        aria-label="Volver"
+        onClick={() => navigate('/')}
+        style={{ background: 'transparent', border: 'none', fontSize: 20, color: '#4A4438', cursor: 'pointer', padding: 0, marginBottom: 12 }}
+      >
+        ←
+      </button>
       <h1 className="lj-display" style={{ fontSize: 40, margin: '0 0 24px' }}>Tu perfil</h1>
 
       <form onSubmit={handleSubmit} className="lj-card" style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
