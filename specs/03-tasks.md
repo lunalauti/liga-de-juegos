@@ -132,7 +132,7 @@
 
 ## Fase 9 — Terminaciones (~5 h)
 
-- [ ] **T9.0** Pasada de fidelidad contra el diseño: screenshot de cada pantalla implementada vs. su artboard, corregir diferencias, repetir. Mínimo dos rondas.
+- [x] **T9.0** Pasada de fidelidad contra el diseño: screenshot de cada pantalla implementada vs. su artboard, corregir diferencias, repetir. Mínimo dos rondas. **Hecho, dos rondas.** Ronda 1: Home no tenía el masthead que trae todo artboard (eyebrow + título serif + borde inferior de 1.5px + chip de avatar) — quedaba solo el nombre del grupo suelto, sin fecha, sin borde. Se agregó, con el nombre del grupo como título en vez de "Liga de Juegos" fijo (adaptación necesaria: el mockup es de antes de soportar más de un grupo por persona). Cargar tenía el título sin el borde inferior que sí tiene el resto de la app — corregido. Ronda 2: Ranking, Grupo, Detalle del día y Stats ya coinciden estructuralmente con sus artboards (las diferencias que quedan — Ranking con selector de juego en vez de la tabla combinada del mockup, Home con nombre de grupo en vez de fecha fija — son evoluciones reales del diseño post-D2/multi-grupo, no bugs). Confirmado que "Vacío – grupo nuevo" y "Vacío – día sin cargas" (artboard 05) siguen sin construir — eso es T9.2, no una regresión de esta pasada.
 
 - [ ] **T9.1** Pasada de accesibilidad: contraste, anillo de foco ámbar en todo lo interactivo (nunca removido), labels, navegación por teclado. [RNF-7]
 - [ ] **T9.2** Estados vacíos según artboard 05 (grupo recién creado y día sin cargas) + estados de carga y error en el resto. §6.6
