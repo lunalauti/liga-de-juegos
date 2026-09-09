@@ -1,6 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import KitchenSink from './pages/KitchenSink';
-import Placeholder from './pages/Placeholder';
 import Login from './pages/Login';
 import Perfil from './pages/Perfil';
 import Grupo from './pages/Grupo';
@@ -9,6 +8,7 @@ import GroupJoin from './pages/GroupJoin';
 import Cargar from './pages/Cargar';
 import Home from './pages/Home';
 import Ranking from './pages/Ranking';
+import Stats from './pages/Stats';
 import Dia from './pages/Dia';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AppFrame } from './components/AppFrame';
@@ -23,10 +23,7 @@ export default function App() {
       <Route path="/" element={<ProtectedRoute><AppFrame><Home /></AppFrame></ProtectedRoute>} />
       <Route path="/cargar" element={<ProtectedRoute><AppFrame><Cargar /></AppFrame></ProtectedRoute>} />
       <Route path="/ranking" element={<ProtectedRoute><AppFrame><Ranking /></AppFrame></ProtectedRoute>} />
-      <Route
-        path="/stats"
-        element={<ProtectedRoute><AppFrame><Placeholder title="Mis estadísticas" task="T8.3 · artboard 04" /></AppFrame></ProtectedRoute>}
-      />
+      <Route path="/stats" element={<ProtectedRoute><AppFrame><Stats /></AppFrame></ProtectedRoute>} />
       <Route path="/grupo" element={<ProtectedRoute><AppFrame><Grupo /></AppFrame></ProtectedRoute>} />
 
       <Route path="/grupo/nuevo" element={<ProtectedRoute><GroupNew /></ProtectedRoute>} />
