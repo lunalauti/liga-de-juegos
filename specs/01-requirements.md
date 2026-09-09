@@ -31,7 +31,7 @@ Un grupo de amigos resuelve todos los días los juegos del diario La Nación y s
 
 - Sincronización automática sin intervención del jugador. La API de resultados de La Nación (ver `02-design.md` §9) sólo permite leer un resultado **puntual** a partir del id que se genera al tocar "compartir": no hay endpoint de listado ni forma de descubrir los ids. El jugador tiene que pegar el link, igual que hoy lo pega en el chat.
 - Login con la cuenta de La Nación para leer resultados directamente (requeriría credenciales de terceros y el ranking oficial está detrás de su SSO).
-- App nativa iOS/Android (la web responsive alcanza; se puede instalar como PWA más adelante).
+- App nativa iOS/Android (la web responsive alcanza; se instala como PWA — ver §5.7).
 - Chat interno, comentarios, reacciones.
 - Verificación anti-trampa por screenshot/OCR (ver §8, decisión D3).
 - Pagos, premios, apuestas.
@@ -184,6 +184,17 @@ Cambiar la configuración deberá recalcular la temporada en curso, nunca las ce
 **RF-19 — Historial personal**: evolución del tiempo por juego a lo largo del tiempo, en gráfico.
 **RF-20 — Detalle de día**: para cualquier fecha, la grilla completa jugador × juego con los tiempos.
 
+### 5.7 Instalación y notificaciones
+
+**RF-21 — Instalable como PWA**: el sistema deberá poder agregarse a la pantalla de inicio del celular y abrirse como app propia (sin la barra de Chrome/Safari alrededor), con ícono y nombre propios. No agrega modo offline — la app necesita red igual, sólo cambia cómo se abre.
+
+**RF-22 — Aviso de "faltan tus tiempos de hoy"**: el jugador deberá poder activar un aviso (notificación push) que le llega una vez por día si, para la fecha de hoy, todavía tiene pendiente al menos un juego activo de alguno de sus grupos (ni cargado ni marcado DNF; un día anulado — D6 — no cuenta como pendiente).
+
+- Es **opt-in**: nadie recibe nada sin activarlo explícitamente. Apagarlo es igual de fácil que prenderlo.
+- Un solo aviso por jugador por día, aunque tenga pendientes en más de un grupo — no uno por grupo.
+- Tocar el aviso lleva directo a Cargar.
+- En iPhone, esto **sólo funciona si la app está instalada** (RF-21) — es una limitación de Safari/iOS, no de esta app (ver `02-design.md` §10.6). El sistema deberá explicarlo, no fallar en silencio.
+
 ## 6. Requerimientos no funcionales
 
 - **RNF-1 Performance**: cualquier pantalla deberá renderizar en < 2 s en 4G. El ranking se calcula en el servidor, no en el cliente.
@@ -194,6 +205,7 @@ Cambiar la configuración deberá recalcular la temporada en curso, nunca las ce
 - **RNF-6 Costo**: debe correr en los planes gratuitos de Supabase, Render y Vercel.
 - **RNF-7 Accesibilidad**: contraste AA, navegable por teclado, labels en todos los inputs.
 - **RNF-8 Idioma**: español rioplatense. Formato de tiempo `mm:ss`.
+- **RNF-9 Degradación de notificaciones**: en un navegador sin soporte de Push (o con el permiso denegado), el sistema deberá seguir funcionando igual — la opción de avisos simplemente no aparece o queda deshabilitada con una explicación, nunca un error.
 
 ## 7. Criterios de aceptación del MVP
 
@@ -221,3 +233,4 @@ El MVP está listo cuando, con el sistema desplegado:
 | D9 | ¿Qué pasa con un grupo si un admin borra su cuenta? | **Resuelto.** El rol de admin pasa al miembro más antiguo que quede en el grupo; si no queda nadie más, el grupo se borra. Aplica a cualquier admin, no sólo al creador original — si no, el mismo problema reaparece cuando se va un admin promovido después. `created_by` pasa a `NULL` en vez de bloquear el borrado (era la causa del error 500 encontrado en testing). Implementado en `supabase/migrations/0004_creator_departure.sql`, verificado contra Supabase real en los dos escenarios (con sucesor y sin nadie más). | — |
 | D11 | Con el ranking por juego (D2), ¿la racha (RF-14) sigue siendo "completé TODOS los juegos activos ese día" o pasa a ser una racha por juego? | **Default asumido: se mantiene holística**, como hoy — es una métrica de compromiso/hábito diario, no de competencia por juego, y partirla en 3 rachas independientes le resta claridad al home sin que lo haya pedido este cambio. Si se prefiere una racha por juego, es un ajuste acotado a `scoring/stats.ts` (Fase 8, sin implementar todavía) | Bajo — sólo la definición de una métrica secundaria, no toca el motor de ranking |
 | D10 | ¿Un resultado importado con un tiempo real peor que la penalización se capea igual que en la carga manual? | **Resuelto: (b).** El tiempo real importado se guarda tal cual llega, sin capear contra la penalización — a diferencia de la carga manual (RF-6b), donde un tiempo peor que la penalización sí se convierte en DNF. Terminar tarde puede costar más que rendirse; es intencional, no un bug. El link es el comprobante real, y capearlo "escondería" un dato verificado. | — |
+| D12 | RF-22, ¿a qué hora se manda el aviso de "faltan tus tiempos"? | **Default asumido: 21:00 ART**, una vez por día. Suficientemente tarde para que ya haya pasado la mañana/tarde típica de resolverlo, con margen antes de que cambie el día del diario a las 00:00. Configurable cambiando la hora del cron externo (`02-design.md` §10.4), sin tocar código. | Bajo — es un parámetro del cron, no del modelo |

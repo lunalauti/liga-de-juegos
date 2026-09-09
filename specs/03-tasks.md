@@ -144,9 +144,20 @@
 - **Rate limiting por usuario**: nunca se había implementado (quedó pendiente de la Fase 5, ver `02-design.md` §7/§9.6). Se agregó `middleware/rateLimit.ts` (`express-rate-limit`): 120 req/min por usuario en toda `/api/v1`, y un límite más estricto de 30 cada 10 min sólo en `/entries/import*` por el costo de golpear a La Nación en cada import. Se limita por `user_id`, no por IP (varios del grupo comparten wifi de casa). 3 tests nuevos con límites chicos para no depender de tiempo real.
 - **Columna `profiles.lanacion_user_ids` sin uso**: quedó huérfana después del fix del chip "Verificado" (T3.13, 2026-09-09 — ver `02-design.md` §9.4/§9.6). Borrada en `0011_drop_lanacion_user_ids.sql`; no quedaba ninguna referencia en código.
 
+## Fase 10 — PWA y notificaciones (~7 h)
+
+Spec completa en `01-requirements.md` §5.7 (RF-21, RF-22, RNF-9, D12) y `02-design.md` §10, escrita antes de tocar código (pedido explícito del usuario, 2026-09-09) — sacada del backlog porque es "probablemente lo más pedible por el grupo una vez que la usen un tiempo".
+
+- [ ] **T10.1** Manifest + íconos + service worker instalable, sin push todavía. [RF-21] §10.1. `vite-plugin-pwa` en modo `injectManifest` (no `generateSW`: hace falta código propio para el push de T10.6). Íconos 192/512 + maskable, nuevos — no existía ningún asset de marca en el repo hasta ahora. Verificar instalabilidad real en Chrome Android (banner/ícono nativo) y iOS Safari (Compartir → Agregar a inicio).
+- [ ] **T10.2** VAPID keys + tabla `push_subscriptions` + `POST/DELETE /push/subscribe`. [RF-22] §3.1, §10.2. Generar el par una sola vez (`npx web-push generate-vapid-keys`), cargar `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY` en Render y `VITE_VAPID_PUBLIC_KEY` en Vercel.
+- [ ] **T10.3** Service worker: listeners de `push` y `notificationclick`. [RF-22] §10.1/§10.5. `notificationclick` enfoca una pestaña existente o abre `/cargar`.
+- [ ] **T10.4** UI de opt-in en Perfil: detección de plataforma (soporta/no soporta, instalada/no instalada, iOS/no iOS), botón de instalar (`beforeinstallprompt` capturado) o instrucciones manuales (iOS), toggle de avisos resuelto contra `pushManager.getSubscription()`. [RF-21, RF-22, RNF-9] §10.3. Probar los 6 estados de la tabla de §10.3, no sólo el camino feliz.
+- [ ] **T10.5** `services/notifications.ts`: quiénes tienen algo pendiente hoy (por juego activo, por grupo, respetando `blackout_dates`), consolidado por usuario. Tests con casos: sin pendientes, pendiente en un grupo, pendiente en dos grupos (no duplica), todo anulado por blackout.
+- [ ] **T10.6** Tabla `notification_log` + `POST /internal/cron/notify-pending`: manda el push con `web-push` a cada suscripción del usuario, arma el cuerpo con los juegos pendientes (§10.5), limpia suscripciones que devuelven 404/410, y deja registrado el envío (idempotente si el cron se dispara dos veces). [RF-22] §10.4. Mismo patrón de auth que `/internal/cron/close-seasons` (`x-cron-secret`).
+- [ ] **T10.7** Verificación de punta a punta contra un push real (no un mock): suscribirse desde un navegador de verdad, disparar el cron a mano, confirmar que la notificación llega y que tocarla abre Cargar. Después, dar de alta el cron en cron-job.org (acción del usuario, mismo patrón que T7.2): `POST https://liga-de-juegos-api.onrender.com/internal/cron/notify-pending`, una vez al día a las 00:00 UTC (21:00 ART, D12), header `x-cron-secret`.
+
 ## Backlog (post-v1)
 
-- PWA instalable + notificación "faltan tus tiempos de hoy"
 - Resumen semanal automático para pegar en el chat del grupo
 - Ranking global entre grupos [D4]
 - Handicap por nivel (para que entre un novato sin quedar último siempre)

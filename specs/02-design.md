@@ -52,6 +52,8 @@
 | Migraciones | Supabase CLI (`supabase/migrations/*.sql`) | Versionadas en el repo |
 | Tests | Vitest (+ Supertest en la API) | El motor de scoring necesita tests de verdad |
 | Monorepo | npm workspaces | Sin Turborepo: son 3 paquetes |
+| PWA | `vite-plugin-pwa` (Workbox), modo `injectManifest` | Se necesita un service worker con código propio para manejar `push`/`notificationclick` (RF-22) — el modo `generateSW` no permite eso. Sin estrategia de cache offline (§10.1): esta app necesita red igual, el service worker es sólo para instalar + push |
+| Push | `web-push` (Node, API) | Firma VAPID y manda el mensaje al push service que corresponda (FCM, Mozilla, Apple) sin código específico por navegador |
 
 ### Estructura de carpetas
 
@@ -68,11 +70,13 @@ liga-de-juegos/
 │   │       ├── middleware/   # auth, errores, rate limit
 │   │       └── index.ts
 │   └── web/
+│       ├── public/           # manifest.webmanifest, íconos (§10.1)
 │       └── src/
 │           ├── pages/        # Home, Cargar, Ranking, Grupo, Perfil, Historial
 │           ├── components/
 │           ├── hooks/        # useSession, useGroup, useLeaderboard
 │           ├── api/          # cliente HTTP tipado
+│           ├── sw.ts         # service worker: push + notificationclick (§10.1/§10.2)
 │           └── styles/       # _variables.scss + custom.scss
 ├── packages/shared/          # Tipos + esquemas Zod + utils de tiempo
 └── supabase/migrations/
@@ -196,6 +200,29 @@ Todos los `id` son `uuid` con `default gen_random_uuid()`. Todos los timestamps 
 
 | `group_id` | `puzzle_date` | `game_id` NULL = todos | `reason` |
 
+**`push_subscriptions`** — suscripciones push del navegador (RF-21, RF-22, §10)
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| `id` | uuid PK | |
+| `user_id` | uuid → profiles, `on delete cascade` | a diferencia de `entries`, acá sí tiene sentido borrar en cascada: una suscripción sin dueño no sirve para nada |
+| `endpoint` | text UNIQUE NOT NULL | URL del push service (FCM, Mozilla, Apple) — identifica el par navegador+dispositivo |
+| `p256dh` / `auth` | text NOT NULL | claves públicas que devuelve `PushManager.subscribe()`, para cifrar el mensaje |
+| `created_at` | timestamptz | |
+
+Un mismo usuario puede tener varias filas (celu + notebook). `endpoint` único global evita duplicar la misma suscripción si el front reintenta el registro.
+
+**`notification_log`** — qué aviso ya se mandó, para no duplicar (RF-22)
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| `user_id` | uuid → profiles | PK compuesta |
+| `puzzle_date` | date | PK compuesta |
+| `kind` | text | PK compuesta — hoy sólo `pending_today`, deja lugar a otros avisos a futuro sin migrar de nuevo |
+| `sent_at` | timestamptz | |
+
+`PK (user_id, puzzle_date, kind)`: si el cron de §10.4 se dispara dos veces el mismo día (reintento, doble click en "Test run"), el segundo intento no manda nada de nuevo — mismo espíritu idempotente que `ensureOpenSeasons` (§5.4).
+
 ### 3.2 `groups.settings` (jsonb)
 
 ```json
@@ -270,6 +297,9 @@ Códigos: `400` validación, `401` sin token, `403` sin permiso, `404`, `409` co
 | `POST` | `/internal/cron/close-seasons` | Cierra temporadas vencidas (cron externo, header `x-cron-secret`, fuera del stack de JWT) | RF-16 |
 | `GET` | `/groups/:id/stats?userId=` | Racha, consistencia, PB, completion | RF-14 |
 | `GET` | `/groups/:id/h2h` | Matriz cabeza a cabeza | RF-13 |
+| `POST` | `/push/subscribe` | Registra o actualiza la suscripción push del navegador actual `{ endpoint, keys: { p256dh, auth } }` | RF-22 |
+| `DELETE` | `/push/subscribe` | Da de baja una suscripción `{ endpoint }` | RF-22 |
+| `POST` | `/internal/cron/notify-pending` | Manda el aviso de "faltan tus tiempos" a quien corresponda hoy (cron externo, header `x-cron-secret`, fuera del stack de JWT) | RF-22 |
 
 ### Ejemplo — `GET /groups/:id/leaderboard`
 
@@ -468,12 +498,13 @@ Ninguno agrega consultas nuevas: todos se derivan de la grilla que el motor de p
 | Web | Vercel | **Deployado**: `https://liga-de-juegos.vercel.app`. `vercel.json` en la raíz define build/output para el monorepo. Preview por PR (automático de Vercel). Mismo problema que la API: Vercel instala con `NODE_ENV=production`, así que `vite`, `@vitejs/plugin-react`, `sass` y `bootstrap` viven en `dependencies` de `apps/web`, no `devDependencies`. Ese fix no alcanzó — el build seguía fallando (`sh: vite: command not found`, exit 127) hasta encontrar la causa real: el proyecto en el dashboard de Vercel tenía **Root Directory = `apps/api`** y **Framework Preset = Express** (quedó configurado como si fuera el deploy de la API), así que build/install corrían parados en `apps/api`, sin `vite` ni el resto del monorepo. Corregido en Project Settings → Build and Deployment. |
 | API | Render Web Service (free) | **Deployado**: `https://liga-de-juegos-api.onrender.com`, `/health` responde `{"ok":true}`. `render.yaml` (Blueprint). Corre `tsx` directo, sin paso de build — por eso `tsx` vive en `dependencies`, no `devDependencies`: Render instala con `NODE_ENV=production`, que saltea devDependencies. **El plan free duerme a los 15 min de inactividad**: mitigado con un ping externo cada 10 min contra `/health` desde cron-job.org (T5.5) |
 | DB + Auth | Supabase (free) | Migraciones aplicadas por `apps/api/scripts/migrate.mjs`, corrido por CI en cada push a `main` (job `migrate` en `.github/workflows/ci.yml`) |
-| Cron de cierre de temporadas | — | **No implementado.** RF-16 (cerrar temporada y congelar `final_standings`) es Fase 7; hoy no existe ningún job programado |
+| Cron de cierre de temporadas | cron-job.org → `POST /internal/cron/close-seasons` | **Deployado** (Fase 7). Una vez por día, header `x-cron-secret` |
+| Cron de aviso "faltan tus tiempos" | cron-job.org → `POST /internal/cron/notify-pending` | RF-22, §10.4. Una vez por día a las 21:00 ART (D12), mismo header |
 
 **Variables de entorno**
 
-- API (Render, secretos cargados a mano en el dashboard — `render.yaml` los marca `sync: false`): `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `ALLOWED_ORIGINS`, `PORT`, `CRON_SECRET` (T7.2, el cron externo lo manda en `x-cron-secret`). (`SUPABASE_JWT_SECRET` ya no hace falta — la validación es contra JWKS, ver §1.)
-- Web (Vercel, se hornean en el build — hay que cargarlas ahí, no alcanza con `.env` local): `VITE_API_URL`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
+- API (Render, secretos cargados a mano en el dashboard — `render.yaml` los marca `sync: false`): `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `ALLOWED_ORIGINS`, `PORT`, `CRON_SECRET` (T7.2, el cron externo lo manda en `x-cron-secret`), `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` (§10.2, firman los mensajes push — la privada nunca sale del backend). (`SUPABASE_JWT_SECRET` ya no hace falta — la validación es contra JWKS, ver §1.)
+- Web (Vercel, se hornean en el build — hay que cargarlas ahí, no alcanza con `.env` local): `VITE_API_URL`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_VAPID_PUBLIC_KEY` (la misma clave pública de arriba — es pública por diseño, va en el bundle sin problema)
 
 **CI (GitHub Actions, `.github/workflows/ci.yml`)**: en cada PR y push a `main` → typecheck + lint + test (job `check`). Push a `main` además corre el test de contrato con La Nación (§9.6, no bloqueante) y, si `check` pasa, aplica las migraciones pendientes contra Supabase (job `migrate`, necesita el secreto `DATABASE_URL` cargado en GitHub → Settings → Secrets). El deploy en sí lo disparan Vercel y Render por su cuenta al detectar el push, conectando cada uno directamente al repo — no hay un paso de CI que los dispare.
 
@@ -613,3 +644,93 @@ También: `apps/api/src/db.ts` fuerza el parser de `date` de `pg` a devolver el 
 - **El cache de 60 s (§5.4) se invalida en más lugares de los que el diseño original mencionaba**: no sólo al escribir un `entry`, también al `PATCH /groups/:id` — cambiar `drop_worst_n`, `absence_policy` o los juegos activos afecta el cálculo tanto como cargar un resultado.
 - **`initialsOf`** (avatar de dos letras: "Sofi" → "SF", "Nacho Pérez" → "NP") vive en `packages/shared/src/text.ts`, compartida entre Ranking, Detalle del día, Grupo y Home — nombres de una sola palabra necesitan sus propias dos primeras letras, no la inicial de dos palabras que no existen.
 - **T4.7b (layout desktop del ranking) se simplificó**: en vez de un componente aparte con nav superior propia, es CSS responsive sobre la misma pantalla — el mismo contenido se reacomoda en pantallas anchas, sin replicar la barra de navegación superior del artboard desktop.
+
+## 10. PWA y notificaciones push (RF-21, RF-22)
+
+Dos features separadas que comparten un mismo mecanismo (`service worker`), así que se diseñan juntas: **instalar la app** a la pantalla de inicio, y **avisar por push** cuando faltan tiempos por cargar. Ninguna de las dos agrega modo offline — la app sigue necesitando red para todo, sólo cambia *cómo se abre* y que *te puede avisar sin tenerla abierta*.
+
+### 10.1 Instalación
+
+- **Manifest** (`apps/web/public/manifest.webmanifest`, generado por `vite-plugin-pwa`): `name: "Liga de Juegos"`, `short_name: "Liga"`, `theme_color: #16513C` (verde primario), `background_color: #F6F2EA` (el papel del sistema), `display: "standalone"`, `start_url: "/"`.
+- **Íconos**: 192×192, 512×512 y una versión `maskable` (Android recorta el ícono en un círculo/squircle; sin una versión pensada para eso, el logo puede quedar cortado). Monograma simple sobre el verde primario, coherente con el resto del sistema visual (`design/tokens.md`) — no hay assets de marca previos, se crean para esto.
+- **Service worker** (`apps/web/src/sw.ts`, modo `injectManifest` de `vite-plugin-pwa`): sólo lo mínimo para que el navegador considere la app instalable (un `fetch` handler, aunque sea pasamanos a la red) + los listeners de push de §10.2. `registerType: 'autoUpdate'` con `skipWaiting()` + `clients.claim()`: la próxima vez que se abre la app ya está la versión nueva, sin pantalla de "hay una actualización, recargá" — con lo seguido que se deployea este proyecto, una cache agresiva sería un dolor de cabeza más que una ayuda.
+- **Prompt de instalación, por plataforma** (no hay una sola API que sirva en todos lados):
+  - **Chrome/Android/desktop**: evento `beforeinstallprompt` — se captura y se dispara con un botón propio ("Instalar app") en vez del banner automático del navegador, para poder ubicarlo donde tiene sentido (Perfil, §10.3).
+  - **iOS Safari**: **no existe** ese evento. Instalar es manual — Compartir → "Agregar a inicio". El sistema deberá mostrar esas instrucciones paso a paso cuando detecta iOS y la app no está instalada (`navigator.standalone !== true`).
+  - **Ya instalada** (cualquier plataforma): se detecta con `window.matchMedia('(display-mode: standalone)').matches` (o `navigator.standalone` en iOS) — ahí no hay nada que ofrecer, se pasa directo a la opción de avisos.
+
+### 10.2 Suscripción push
+
+```
+1. El jugador toca "Avisarme si me faltan tiempos" en Perfil.
+2. El navegador pide permiso de notificaciones (Notification.requestPermission()).
+   - Si lo niega: queda un mensaje explicando que puede activarlo después
+     desde los ajustes del navegador/sistema. No se vuelve a insistir solo.
+3. Si lo permite: registration.pushManager.subscribe({
+     userVisibleOnly: true,
+     applicationServerKey: VITE_VAPID_PUBLIC_KEY,
+   })
+4. El navegador devuelve { endpoint, keys: { p256dh, auth } }.
+5. POST /push/subscribe con eso — se guarda en push_subscriptions (§3.1).
+```
+
+Apagarlo hace el camino inverso: `subscription.unsubscribe()` en el navegador + `DELETE /push/subscribe` en el servidor.
+
+**VAPID**: par de claves que identifica a esta app ante los push services (FCM, Mozilla, Apple) sin necesitar cuenta en cada uno por separado. Se generan una sola vez (`npx web-push generate-vapid-keys`) y se cargan como secretos — la pública también en el front (§7), la privada sólo en la API, nunca se manda a ningún lado salvo al firmar el envío.
+
+### 10.3 UI de opt-in (Perfil)
+
+Una tarjeta nueva "Avisos" en `/perfil`, con contenido que depende del estado detectado en el momento (no hay flujo lineal — cualquiera de estos es un estado final válido según el navegador/plataforma):
+
+| Estado detectado | Qué se muestra |
+|---|---|
+| Navegador sin soporte de Push (`!('PushManager' in window)`) | Nada, o una línea gris explicando que ese navegador no lo soporta (RNF-9) |
+| iOS, no instalada | Instrucciones "Agregá esto a tu pantalla de inicio para poder recibir avisos" + los 3 pasos manuales |
+| Instalable pero no instalada (Chrome/Android/desktop) | Botón "Instalar app" (dispara el `beforeinstallprompt` capturado) |
+| Instalada (o no hace falta instalar), permiso no pedido todavía | Toggle "Avisarme si me faltan tiempos", apagado |
+| Ya suscripto | Mismo toggle, prendido, con opción de apagarlo |
+| Permiso denegado a nivel navegador | Toggle deshabilitado + "Lo bloqueaste desde el navegador, hay que habilitarlo ahí" |
+
+El toggle se resuelve consultando `registration.pushManager.getSubscription()` al entrar a Perfil, no con un flag propio en el backend — la fuente de verdad de "¿estoy suscripto en ESTE navegador?" es el navegador mismo.
+
+### 10.4 El cron diario (servidor)
+
+Mismo patrón que el cierre de temporadas (§5.4): no hay Cron Jobs nativos en el plan free de Render (RNF-6), así que `POST /internal/cron/notify-pending` es un endpoint fuera del stack de JWT, protegido por `x-cron-secret`, golpeado una vez al día por cron-job.org — a las **21:00 ART = 00:00 UTC** (D12).
+
+```
+1. puzzleDate = hoy en Argentina.
+2. Para cada grupo con al menos un juego activo:
+     para cada miembro sin entry (ni jugado ni DNF) en algún juego activo
+     no anulado (blackout_dates) de hoy → juntar sus juegos pendientes.
+3. Consolidar por user_id (uno puede estar en más de un grupo): un jugador
+   con pendientes en cualquier grupo entra a la lista, una sola vez.
+4. Descartar quienes ya tienen una fila en notification_log para
+   (user_id, puzzleDate, 'pending_today') — no se manda dos veces (§3.1).
+5. Para cada jugador que queda, con >= 1 fila en push_subscriptions:
+   mandar el push (§10.5) a CADA suscripción suya (puede tener celu + notebook).
+   - Si el push service devuelve 404/410 (Gone): esa suscripción ya no
+     existe del otro lado (el usuario desinstaló, borró datos, etc.) —
+     se borra de push_subscriptions. Higiene básica de web-push, si no la
+     tabla crece con basura que nunca más se puede usar.
+6. Insertar (user_id, puzzleDate, 'pending_today') en notification_log,
+   se haya podido mandar el push o no (si no tiene ninguna suscripción
+   activa, tampoco hace falta reintentarlo más tarde el mismo día).
+```
+
+Igual que `closeExpiredSeasons`, esto es puro cálculo + IO — no toca el motor de puntuación ni pasa por el cache del leaderboard.
+
+### 10.5 Contenido del aviso
+
+- **Título**: "Faltan tus tiempos de hoy".
+- **Cuerpo**: los juegos pendientes por nombre — "Sudoku Avanzado sigue sin cargar." / "Crucigrama y Sudoku Avanzado siguen sin cargar." (deduplicados por nombre si el mismo juego está pendiente en más de un grupo).
+- **Al tocarlo**: abre (o enfoca, si ya hay una pestaña) `/cargar` — `notificationclick` en el service worker con `clients.openWindow('/cargar')`.
+
+### 10.6 Limitaciones conocidas
+
+| Limitación | Por qué | Mitigación |
+|---|---|---|
+| iOS/iPadOS necesita la app instalada para recibir push (Safari, iOS 16.4+) | Restricción de Apple, no de esta app ni de la Push API en general | RF-21 existe en buena medida por esto. §10.3 detecta la plataforma y explica el paso extra, no falla en silencio |
+| iOS < 16.4 no soporta Web Push de ninguna forma | Restricción de Apple | Se degrada a "tu iPhone no lo soporta" (RNF-9); nadie se queda sin poder usar el resto de la app |
+| El usuario puede negar el permiso y no hay forma de volver a preguntar por código | Estándar de la Push API en todos los navegadores, por spam de sitios que insisten | El mensaje le dice cómo reactivarlo a mano; no se vuelve a pedir solo |
+| Push silenciado por "No molestar" del sistema operativo, o el navegador cerrado del todo en Android con ahorro de batería agresivo | Fuera del control de la app | Aceptado — es la misma limitación de cualquier notificación push, no específica de esta app |
+| El cron corre a una hora fija (21:00 ART); alguien en otro huso horario recibe el aviso "a destiempo" | RNF-3 ya fija todo el sistema a hora argentina — un grupo de amigos que juega el diario de Argentina está, por definición, en esa zona horaria o cerca | No se resuelve; es consistente con el resto del sistema |
