@@ -72,6 +72,7 @@ interface GroupDetailData {
   inviteCode: string;
   members: { userId: string; displayName: string; avatar: string | null; role: string }[];
   settings: GroupSettings;
+  games: { slug: string; name: string; penaltySeconds: number; enabled: boolean }[];
 }
 
 function GroupDetail({ group, token, onChanged }: { group: MyGroup; token: string | undefined; onChanged: () => void }) {
@@ -162,6 +163,7 @@ function GroupDetail({ group, token, onChanged }: { group: MyGroup; token: strin
           groupName={group.name}
           token={token}
           settings={detail?.settings}
+          games={detail?.games}
           onSaved={() => {
             onChanged();
             setReloadTick((n) => n + 1);
@@ -212,6 +214,7 @@ function GroupSettingsPanel({
   groupName,
   token,
   settings,
+  games,
   onSaved,
   onDeleted,
 }: {
@@ -219,6 +222,7 @@ function GroupSettingsPanel({
   groupName: string;
   token: string | undefined;
   settings: GroupSettings | undefined;
+  games: { slug: string; name: string; penaltySeconds: number; enabled: boolean }[] | undefined;
   onSaved: () => void;
   onDeleted: () => void;
 }) {
@@ -230,7 +234,7 @@ function GroupSettingsPanel({
       </button>
       {open && (
         <>
-          <GroupSettingsForm groupId={groupId} token={token} settings={settings} onSaved={onSaved} />
+          <GroupSettingsForm groupId={groupId} token={token} settings={settings} games={games} onSaved={onSaved} />
           <DeleteGroupSection groupId={groupId} groupName={groupName} token={token} onDeleted={onDeleted} />
         </>
       )}
@@ -331,17 +335,24 @@ function GroupSettingsForm({
   groupId,
   token,
   settings,
+  games,
   onSaved,
 }: {
   groupId: string;
   token: string | undefined;
   settings: GroupSettings | undefined;
+  games: { slug: string; name: string; penaltySeconds: number; enabled: boolean }[] | undefined;
   onSaved: () => void;
 }) {
   const [dropWorstN, setDropWorstN] = useState(0);
   const [absencePolicy, setAbsencePolicy] = useState<'penalize' | 'ignore'>('penalize');
   const [scoringMode, setScoringMode] = useState<'total_time' | 'position_points'>('total_time');
   const [requireVerified, setRequireVerified] = useState(false);
+  // RF-5 — en qué juegos compite el grupo. Arranca con todo el catálogo activo
+  // (subset por default: los 3) hasta que llegue la respuesta real del grupo.
+  const [enabledGames, setEnabledGames] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(GAMES.map((g) => [g.slug, true])),
+  );
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -358,6 +369,13 @@ function GroupSettingsForm({
     setRequireVerified(settings.require_verified);
   }, [settings]);
 
+  useEffect(() => {
+    if (!games) return;
+    setEnabledGames(Object.fromEntries(games.map((g) => [g.slug, g.enabled])));
+  }, [games]);
+
+  const activeCount = Object.values(enabledGames).filter(Boolean).length;
+
   async function save() {
     if (!token) return;
     setSaving(true);
@@ -373,6 +391,7 @@ function GroupSettingsForm({
             scoring_mode: scoringMode,
             require_verified: requireVerified,
           },
+          games: GAMES.map((g) => ({ slug: g.slug, enabled: enabledGames[g.slug] ?? true })),
         },
       });
       setMsg('Guardado. Se aplica a la temporada en curso.');
@@ -386,6 +405,30 @@ function GroupSettingsForm({
 
   return (
     <div className="lj-card" style={{ padding: 14, marginTop: 10, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <span style={{ fontSize: 13, fontWeight: 600 }}>En qué juegos compite el grupo</span>
+        {GAMES.map((g) => (
+          <div key={g.slug} className="form-check form-switch" style={{ paddingLeft: '2.75em' }}>
+            <input
+              className="form-check-input"
+              type="checkbox"
+              role="switch"
+              id={`game-toggle-${g.slug}`}
+              checked={enabledGames[g.slug] ?? true}
+              onChange={(e) => setEnabledGames((prev) => ({ ...prev, [g.slug]: e.target.checked }))}
+            />
+            <label className="form-check-label" htmlFor={`game-toggle-${g.slug}`} style={{ fontSize: 14 }}>
+              {g.name}
+            </label>
+          </div>
+        ))}
+        {activeCount === 0 && (
+          <p role="alert" style={{ fontSize: 12, color: '#A8352A', margin: '2px 0 0' }}>
+            Tiene que haber al menos un juego activo.
+          </p>
+        )}
+      </div>
+
       <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <span style={{ fontSize: 13, fontWeight: 600 }}>Trato de ausencias</span>
         <select className="form-select" value={absencePolicy} onChange={(e) => setAbsencePolicy(e.target.value as typeof absencePolicy)}>
@@ -420,7 +463,7 @@ function GroupSettingsForm({
       </label>
 
       {msg && <p role="status" style={{ fontSize: 13, color: '#16513C', margin: 0 }}>{msg}</p>}
-      <button type="button" className="btn btn-primary" onClick={() => void save()} disabled={saving}>
+      <button type="button" className="btn btn-primary" onClick={() => void save()} disabled={saving || activeCount === 0}>
         {saving ? 'Guardando…' : 'Guardar ajustes'}
       </button>
     </div>

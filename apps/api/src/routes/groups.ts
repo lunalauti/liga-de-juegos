@@ -194,6 +194,24 @@ groupsRouter.patch('/groups/:id', async (req, res, next) => {
     }
 
     if (body.games !== undefined) {
+      // RF-5: "un subconjunto de los disponibles" nunca puede ser el conjunto vacío —
+      // un grupo sin ningún juego activo no tiene nada que rankear. Se valida el
+      // resultado FINAL (lo que ya estaba en group_games + lo que llega en el patch),
+      // no sólo lo que viene en el body, porque el body puede traer sólo el que se
+      // está apagando y dejar los demás implícitos.
+      const currentRes = await db.query(
+        `select g.slug, gg.enabled from public.group_games gg join public.games g on g.id = gg.game_id where gg.group_id = $1`,
+        [groupId],
+      );
+      const finalEnabled = new Map(currentRes.rows.map((r) => [r.slug as string, r.enabled as boolean]));
+      for (const g of body.games) {
+        if (g.enabled !== undefined) finalEnabled.set(g.slug, g.enabled);
+        else if (!finalEnabled.has(g.slug)) finalEnabled.set(g.slug, true); // juego nuevo para este grupo, sin `enabled` explícito
+      }
+      if (![...finalEnabled.values()].some(Boolean)) {
+        throw badRequest('NO_ACTIVE_GAMES', 'Tiene que haber al menos un juego activo en el grupo');
+      }
+
       for (const g of body.games) {
         const gameRow = await db.query(`select id from public.games where slug = $1`, [g.slug]);
         if (gameRow.rows.length === 0) continue;
