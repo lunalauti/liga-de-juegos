@@ -60,6 +60,7 @@ export default function Ranking() {
   const [data, setData] = useState<LeaderboardResponse | null>(null);
   const [h2h, setH2h] = useState<H2HResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!token || !activeGroup) {
@@ -67,6 +68,7 @@ export default function Ranking() {
       return;
     }
     setLoading(true);
+    setError(null);
     Promise.all([
       apiFetch<LeaderboardResponse>(`/groups/${activeGroup.id}/leaderboard?period=${period}`, { accessToken: token }),
       apiFetch<H2HResponse>(`/groups/${activeGroup.id}/h2h?period=${period}`, { accessToken: token }),
@@ -78,6 +80,10 @@ export default function Ranking() {
         // si no (cambió de grupo, o el admin desactivó ese juego), cae al primero.
         setGameSlug((prev) => (prev && res.rankings.some((r) => r.gameSlug === prev) ? prev : (res.rankings[0]?.gameSlug ?? null)));
       })
+      // Sin este catch, un fetch fallido dejaba loading en false pero data en
+      // null — la pantalla quedaba mostrando el LoadingState para siempre, como
+      // si todavía estuviera cargando, en vez de decir que algo salió mal (T9.2).
+      .catch(() => setError('No pudimos cargar la tabla. Probá de nuevo en un rato.'))
       .finally(() => setLoading(false));
   }, [token, activeGroup, period]);
 
@@ -106,7 +112,9 @@ export default function Ranking() {
         </div>
       </div>
 
-      {loading || !data || !ranking ? (
+      {error ? (
+        <p role="alert" style={{ color: '#A8352A', fontSize: 14, padding: '20px 0' }}>{error}</p>
+      ) : loading || !data || !ranking ? (
         <LoadingState compact />
       ) : ranking.rows.length === 0 ? (
         <p style={{ color: '#6B6357', fontSize: 14, padding: '20px 0' }}>Todavía nadie cargó nada en este período.</p>

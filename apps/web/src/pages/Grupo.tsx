@@ -124,38 +124,52 @@ function GroupDetail({ group, token, onChanged }: { group: MyGroup; token: strin
         <h1 className="lj-card-title" style={{ fontSize: 26, margin: '2px 0 0' }}>{group.name}</h1>
       </div>
 
-      <div className="lj-card" style={{ padding: 12, marginBottom: 14 }}>
-        <p className="lj-label" style={{ marginBottom: 6 }}>Código de invitación</p>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-          <span className="lj-t" style={{ fontSize: 29, letterSpacing: '.06em' }}>{group.inviteCode}</span>
-          <button type="button" onClick={copyCode} className="btn btn-outline-dark" style={{ height: 36, padding: '0 12px', fontSize: 13 }}>
-            {copyLabel}
+      {detail && detail.members.length === 1 ? (
+        <>
+          <SoloMemberEmptyState inviteCode={group.inviteCode} onShare={shareWhatsapp} />
+          <div style={{ border: '1px solid #DDD6C8', background: '#FBF8F1', padding: 14, display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
+            <span className="lj-label">Cómo funciona</span>
+            <span style={{ fontSize: 13, color: '#4A4438', lineHeight: 1.6 }}>
+              Un juego por día, o los que el grupo tenga activos. Si no terminás, castigo: el tiempo de penalización que elija el admin.
+            </span>
+          </div>
+        </>
+      ) : (
+        <div className="lj-card" style={{ padding: 12, marginBottom: 14 }}>
+          <p className="lj-label" style={{ marginBottom: 6 }}>Código de invitación</p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+            <span className="lj-t" style={{ fontSize: 29, letterSpacing: '.06em' }}>{group.inviteCode}</span>
+            <button type="button" onClick={copyCode} className="btn btn-outline-dark" style={{ height: 36, padding: '0 12px', fontSize: 13 }}>
+              {copyLabel}
+            </button>
+          </div>
+          <button type="button" onClick={shareWhatsapp} className="btn btn-primary" style={{ marginTop: 10, width: '100%', height: 46 }}>
+            Compartir por WhatsApp
           </button>
         </div>
-        <button type="button" onClick={shareWhatsapp} className="btn btn-primary" style={{ marginTop: 10, width: '100%', height: 46 }}>
-          Compartir por WhatsApp
-        </button>
-      </div>
+      )}
 
-      <div className="lj-card" style={{ marginBottom: 14 }}>
-        <div style={{ padding: '10px 14px', borderBottom: '1px solid #DDD6C8', background: '#F1EBDD', display: 'flex', justifyContent: 'space-between' }}>
-          <span className="lj-label" style={{ color: '#4A4438' }}>Miembros</span>
-          <span className="lj-label">{detail?.members.length ?? '…'}</span>
-        </div>
-        {loadingDetail && <div style={{ padding: 14 }}><LoadingState compact /></div>}
-        {detail?.members.map((m, i) => (
-          <div
-            key={m.userId}
-            style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', borderBottom: i < detail.members.length - 1 ? '1px solid #EDE7DA' : 'none' }}
-          >
-            <span className="lj-avatar">{m.avatar ?? initialsOf(m.displayName)}</span>
-            <span style={{ flex: 1, fontSize: 14, fontWeight: 600 }}>{m.displayName}</span>
-            {m.role === 'admin' && <span className="lj-label" style={{ color: '#8C8271' }}>admin</span>}
+      {(!detail || detail.members.length > 1) && (
+        <div className="lj-card" style={{ marginBottom: 14 }}>
+          <div style={{ padding: '10px 14px', borderBottom: '1px solid #DDD6C8', background: '#F1EBDD', display: 'flex', justifyContent: 'space-between' }}>
+            <span className="lj-label" style={{ color: '#4A4438' }}>Miembros</span>
+            <span className="lj-label">{detail?.members.length ?? '…'}</span>
           </div>
-        ))}
-      </div>
+          {loadingDetail && <div style={{ padding: 14 }}><LoadingState compact /></div>}
+          {detail?.members.map((m, i) => (
+            <div
+              key={m.userId}
+              style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', borderBottom: i < detail.members.length - 1 ? '1px solid #EDE7DA' : 'none' }}
+            >
+              <span className="lj-avatar">{m.avatar ?? initialsOf(m.displayName)}</span>
+              <span style={{ flex: 1, fontSize: 14, fontWeight: 600 }}>{m.displayName}</span>
+              {m.role === 'admin' && <span className="lj-label" style={{ color: '#8C8271' }}>admin</span>}
+            </div>
+          ))}
+        </div>
+      )}
 
-      <PalmaresSection palmares={palmares} />
+      {(!detail || detail.members.length > 1) && <PalmaresSection palmares={palmares} />}
 
       {group.role === 'admin' && (
         <GroupSettingsPanel
@@ -172,6 +186,40 @@ function GroupDetail({ group, token, onChanged }: { group: MyGroup; token: strin
         />
       )}
     </>
+  );
+}
+
+/** Artboard 05 · "Vacío – grupo nuevo": el grupo existe pero todavía sos el único miembro. */
+function SoloMemberEmptyState({ inviteCode, onShare }: { inviteCode: string; onShare: () => void }) {
+  return (
+    <div style={{ position: 'relative', background: '#fff', border: '1.5px solid #14120E', padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
+      <div
+        style={{
+          height: 96,
+          backgroundImage: 'linear-gradient(#E7E0D2 1px, transparent 1px), linear-gradient(90deg, #E7E0D2 1px, transparent 1px)',
+          backgroundSize: '24px 24px',
+          border: '1px solid #DDD6C8',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 15,
+          color: '#8C8271',
+        }}
+        className="lj-card-title"
+      >
+        La tabla arranca vacía
+      </div>
+      <span className="lj-display" style={{ fontSize: 26, lineHeight: 1.1 }}>Sos el único acá adentro</span>
+      <p style={{ fontSize: 13, lineHeight: 1.6, color: '#4A4438', margin: 0 }}>
+        Mandales el código a los muchachos. Sin rivales no hay tabla, hay diario.
+      </p>
+      <button type="button" onClick={onShare} className="btn btn-primary" style={{ marginTop: 4, width: '100%', height: 54, fontSize: 16 }}>
+        Compartir {inviteCode}
+      </button>
+      <Link to="/cargar" className="btn btn-outline-dark" style={{ width: '100%', height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        Cargar mis tiempos igual
+      </Link>
+    </div>
   );
 }
 

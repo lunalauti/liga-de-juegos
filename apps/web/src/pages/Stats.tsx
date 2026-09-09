@@ -53,6 +53,7 @@ export default function Stats() {
   const [data, setData] = useState<StatsResponse | null>(null);
   const [gameSlug, setGameSlug] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!token || !activeGroup) {
@@ -60,11 +61,15 @@ export default function Stats() {
       return;
     }
     setLoading(true);
+    setError(null);
     apiFetch<StatsResponse>(`/groups/${activeGroup.id}/stats?period=${period}`, { accessToken: token })
       .then((res) => {
         setData(res);
         setGameSlug((prev) => (prev && res.games.some((g) => g.gameSlug === prev) ? prev : (res.games[0]?.gameSlug ?? null)));
       })
+      // Sin este catch, un fetch fallido dejaba el LoadingState pegado para
+      // siempre en vez de avisar que algo salió mal (T9.2).
+      .catch(() => setError('No pudimos cargar tus estadísticas. Probá de nuevo en un rato.'))
       .finally(() => setLoading(false));
   }, [token, activeGroup, period]);
 
@@ -90,7 +95,9 @@ export default function Stats() {
         <TabButton label="Mes" active={period === 'month'} onClick={() => setPeriod('month')} />
       </div>
 
-      {loading || !data ? (
+      {error ? (
+        <p role="alert" style={{ color: '#A8352A', fontSize: 14, padding: '20px 0' }}>{error}</p>
+      ) : loading || !data ? (
         <LoadingState compact />
       ) : data.games.length === 0 ? (
         <p style={{ color: '#6B6357', fontSize: 14, padding: '20px 0' }}>Tu grupo no tiene juegos activos todavía.</p>

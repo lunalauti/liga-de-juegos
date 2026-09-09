@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { formatTime, todayInArgentina, addDays, initialsOf, GAMES } from '@liga/shared';
 import { apiFetch } from '../api/client';
 import { useSession } from '../hooks/useSession';
@@ -32,6 +32,7 @@ export default function Dia() {
 
   const [data, setData] = useState<DayResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [blackoutBusy, setBlackoutBusy] = useState(false);
 
   const load = () => {
@@ -40,8 +41,12 @@ export default function Dia() {
       return;
     }
     setLoading(true);
+    setError(null);
     apiFetch<DayResponse>(`/groups/${activeGroup.id}/day?date=${puzzleDate}`, { accessToken: token })
       .then(setData)
+      // Sin este catch, un fetch fallido dejaba el LoadingState pegado para
+      // siempre en vez de avisar que algo salió mal (T9.2).
+      .catch(() => setError('No pudimos cargar este día. Probá de nuevo en un rato.'))
       .finally(() => setLoading(false));
   };
 
@@ -111,10 +116,12 @@ export default function Dia() {
         </div>
       )}
 
-      {loading || !data ? (
+      {error ? (
+        <p role="alert" style={{ color: '#A8352A', fontSize: 14, padding: '20px 0' }}>{error}</p>
+      ) : loading || !data ? (
         <LoadingState compact />
       ) : data.rows.length === 0 ? (
-        <p style={{ color: '#6B6357', fontSize: 14, padding: '20px 0' }}>Nadie cargó nada este día todavía.</p>
+        <DayEmptyState isToday={puzzleDate === todayInArgentina()} />
       ) : (
         <>
           <div>
@@ -169,6 +176,43 @@ function DayGridRow({
           </span>
         );
       })}
+    </div>
+  );
+}
+
+/**
+ * Artboard 05 · "Vacío – día sin cargas". El CTA sólo tiene sentido si se está
+ * mirando el día de hoy: Cargar siempre apunta al puzzle de hoy (no admite
+ * fecha por parámetro), así que en un día pasado vacío mostrarlo llevaría a
+ * cargar el día equivocado.
+ */
+function DayEmptyState({ isToday }: { isToday: boolean }) {
+  return (
+    <div
+      style={{
+        position: 'relative',
+        minHeight: 260,
+        backgroundImage: 'linear-gradient(#EDE7DA 1px, transparent 1px)',
+        backgroundSize: '100% 45px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '0 30px', textAlign: 'center' }}>
+        <span style={{ width: 56, height: 56, border: '1.5px solid #14120E', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }} className="lj-display" aria-hidden="true">
+          —
+        </span>
+        <span className="lj-display" style={{ fontSize: 24, lineHeight: 1.15 }}>Nadie cargó todavía</span>
+        <span style={{ fontSize: 13, color: '#4A4438', lineHeight: 1.6 }}>
+          {isToday ? 'Sé el primero y quedás arriba todo el día.' : 'Este día quedó sin resultados cargados.'}
+        </span>
+        {isToday && (
+          <Link to="/cargar" className="btn btn-primary" style={{ marginTop: 4, height: 52, padding: '0 26px', display: 'inline-flex', alignItems: 'center' }}>
+            Cargar mis tiempos
+          </Link>
+        )}
+      </div>
     </div>
   );
 }
