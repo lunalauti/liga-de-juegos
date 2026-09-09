@@ -560,10 +560,7 @@ El ranking oficial de La Nación sí existe (`games/ranking/...`), pero está de
    - ¿(game, level) mapea a un juego activo?       → si no, "ese juego no está en tu grupo"
    - ¿external_id ya existe?                       → 409 "ese link ya lo cargó Fulano"
    - ¿date dentro de la ventana de carga (7 días)? → si no, rechaza
-4. Identidad:
-   - Si el perfil no tiene ningún lanacion_user_id → lo asocia (primer link = binding).
-   - Si coincide con uno asociado                  → verified = true.
-   - Si no coincide                                → guarda con verified = false y avisa.
+4. Identidad: `verified = true` siempre que el resultado venga de un link resuelto contra el servidor de La Nación (ver nota del 2026-09-09 más abajo).
 5. Escribe el entry con source = "lanacion_link",
    duration_seconds = seconds,
    dnf = (result == "FAIL")  → y en el scoring pesa la penalización del grupo, no `seconds`.
@@ -589,7 +586,11 @@ Un mismo link se puede importar a **todos los grupos del jugador de una sola vez
 | Bloquean el acceso por User-Agent u origen | Se llama desde el backend con headers de browser; si bloquean, el front puede llamar directo (el endpoint tiene CORS `*`) |
 | Borran resultados viejos | Se guarda `external_payload` completo al importar: si el link muere, el dato ya es nuestro |
 | Uso abusivo | Una llamada por link importado, cacheada 24 h. Falta el rate limit por usuario (era parte del plan original; no está implementado todavía — lo trae la Fase 5 junto con el resto del rate limiting de la API, ver §7) |
-| Alguien pega el link de otro | El binding de `lanacion_user_id` lo detecta desde el segundo link, y la unicidad global impide duplicarlo |
+| Alguien pega el link de otro | La unicidad global de `imported_results.external_id` impide duplicarlo (409 "ese link ya lo cargó Fulano") — ya no depende de `lanacion_user_id` (ver nota abajo) |
+
+> **Bug real encontrado el 2026-09-09** (reportado por un usuario: "cargué con el link y me sigue apareciendo A mano"): el diseño original de este punto 4 asumía que `ln.user_id` era un identificador **estable** de la cuenta de La Nación de la persona — se guardaba el primero que aparecía en `profiles.lanacion_user_ids` y se marcaba `verified = false` en cuanto un link posterior traía uno distinto. Con datos reales de producción (3 personas, una semana) se confirmó que **no es estable**: La Nación devuelve un `user_id` distinto en cada link compartido, hasta para la misma persona al día siguiente. Con esa lógica, todo resultado importado quedaba `verified = false` después del primero de cada persona, siempre — el chip "Verificado" estuvo roto para todo el equipo desde que se implementó (Fase 3.5, T3.13), en silencio.
+>
+> La verificación real nunca dependió de ese id: viene de que el link resuelve a un resultado inmutable en el servidor de La Nación (nadie puede inventar un tiempo) y de que `imported_results.external_id` es único globalmente (nadie más puede reclamar el mismo link). Se corrigió `resolveLnVerification()` para que todo import por link quede verificado siempre, se dejó de ligar `lanacion_user_id` al perfil (crecía sin límite, prácticamente un valor distinto por import, sin decidir nada), y se corrió una migración de datos (`0010_fix_verified_lanacion_entries.sql`) para poner `verified = true` en las entries históricas con `source = 'lanacion_link'` que habían quedado mal marcadas. La columna `lanacion_user_ids` en `profiles` y su fila en la tabla de §3 (línea de arriba) quedan sin uso — no se borran todavía por si hace falta auditar el historial.
 
 ### 9.7 Correcciones de esquema que salieron de probar contra Supabase real
 

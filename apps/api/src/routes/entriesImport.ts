@@ -34,7 +34,6 @@ interface Resolved {
   gameName: string;
   dnf: boolean;
   verified: boolean;
-  bindNewId: boolean;
 }
 
 /**
@@ -43,7 +42,7 @@ interface Resolved {
  * quedaría verificado. Compartido por el preview (sólo lectura) y la confirmación
  * (que además escribe). Ver specs/02-design.md §9.4.
  */
-async function resolveImport(actorId: string, url: string): Promise<Resolved> {
+async function resolveImport(url: string): Promise<Resolved> {
   const ln = await fetchLnResult(url);
 
   const already = await db.query(
@@ -74,9 +73,7 @@ async function resolveImport(actorId: string, url: string): Promise<Resolved> {
   ]);
   if (canonicalGame.rows.length === 0) throw badRequest('UNMAPPED_GAME', 'No reconocemos ese juego de La Nación todavía');
 
-  const profile = await db.query(`select lanacion_user_ids from public.profiles where id = $1`, [actorId]);
-  const boundIds: string[] = profile.rows[0]?.lanacion_user_ids ?? [];
-  const { verified, bindNewId } = resolveLnVerification(boundIds, ln.user_id);
+  const { verified } = resolveLnVerification();
 
   return {
     ln,
@@ -84,7 +81,6 @@ async function resolveImport(actorId: string, url: string): Promise<Resolved> {
     gameName: canonicalGame.rows[0].name,
     dnf: ln.result === 'FAIL',
     verified,
-    bindNewId,
   };
 }
 
@@ -107,7 +103,7 @@ entriesImportRouter.post('/entries/import/preview', async (req, res, next) => {
   try {
     const body = importSchema.parse(req.body);
     const actorId = req.user!.id;
-    const r = await resolveImport(actorId, body.url);
+    const r = await resolveImport(body.url);
 
     const groups = [];
     for (const groupId of body.groupIds) {
@@ -151,7 +147,7 @@ entriesImportRouter.post('/entries/import', async (req, res, next) => {
   try {
     const body = importSchema.parse(req.body);
     const actorId = req.user!.id;
-    const r = await resolveImport(actorId, body.url);
+    const r = await resolveImport(body.url);
 
     const groupResults: Array<{
       groupId: string;
@@ -161,13 +157,6 @@ entriesImportRouter.post('/entries/import', async (req, res, next) => {
     let importedGameId: string | null = null; // el mismo juego (games.id es global) en todos los grupos donde se guardó
 
     await client.query('begin');
-
-    if (r.bindNewId) {
-      await client.query(
-        `update public.profiles set lanacion_user_ids = array_append(lanacion_user_ids, $1) where id = $2`,
-        [r.ln.user_id, actorId],
-      );
-    }
 
     for (const groupId of body.groupIds) {
       const membership = await getMembership(groupId, actorId);

@@ -108,14 +108,26 @@ export function serializeEntry(e: Record<string, unknown>) {
 }
 
 /**
- * T3.13 — decide si un resultado importado queda verificado, y si hay que ligar
- * el identificador de La Nación al perfil. Extraída como función pura para poder
- * testear los tres casos (primer link, coincide, no coincide) sin red ni base.
+ * T3.13 — decide si un resultado importado queda verificado. Bug real
+ * encontrado el 2026-09-09 (reportado por el usuario: "cargué con el link y
+ * me sigue apareciendo A mano"): el diseño original (D7/RF-6) asumía que
+ * `ln.user_id` era un identificador ESTABLE de la cuenta de La Nación de la
+ * persona — se guardaba el primero que aparecía y se marcaba "no verificado"
+ * apenas un link posterior traía uno distinto. Con datos reales de varios
+ * días (3 personas, una semana) se confirmó que NO es estable: La Nación
+ * devuelve un id distinto en CADA link compartido, hasta para la misma
+ * persona el día siguiente. Con esa lógica, todo resultado importado quedaba
+ * "no verificado" después del primero, siempre — el chip "Verificado" estaba
+ * roto para todo el mundo desde que se implementó, en silencio.
+ *
+ * La verificación real no depende de este id: viene de que el link resuelve
+ * a un resultado inmutable en el servidor de La Nación (no se puede inventar
+ * un tiempo) y de que `imported_results.external_id` es único globalmente
+ * (nadie más puede reclamar el mismo link — esa sí es una garantía real,
+ * §9.6). Por eso ahora todo resultado importado por link queda verificado,
+ * siempre — se dejó de ligar `lanacion_user_id` al perfil (crecía sin límite
+ * en cada import, prácticamente uno distinto por vez, sin decidir nada).
  */
-export function resolveLnVerification(
-  boundIds: string[],
-  lnUserId: string,
-): { verified: boolean; bindNewId: boolean } {
-  if (boundIds.length === 0) return { verified: true, bindNewId: true };
-  return { verified: boundIds.includes(lnUserId), bindNewId: false };
+export function resolveLnVerification(): { verified: true } {
+  return { verified: true };
 }
