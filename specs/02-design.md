@@ -456,8 +456,9 @@ Ninguno agrega consultas nuevas: todos se derivan de la grilla que el motor de p
 
 - **Selector de grupo** en el header; el grupo activo se guarda en `localStorage`.
 - **Input de tiempo**: campo único que acepta `7:45`, `745`, `1:07:45`. Normaliza a segundos en `packages/shared/time.ts` — misma función en front y back.
-- **Optimistic update** al cargar un tiempo: la fila aparece al instante con la animación `rowIn` (la única del sistema), y TanStack Query invalida el leaderboard al confirmar.
+- **Optimistic update** al cargar un tiempo: la fila aparece al instante con la animación `rowIn`, y TanStack Query invalida el leaderboard al confirmar.
 - **Estados vacíos con intención**, ya diseñados: nada de spinners pelados.
+- **Espera con intención** (2026-09-09, pedido del usuario): `<LoadingState />` (`components/LoadingState.tsx`) reemplaza todo "Cargando…" pelado de la app — cinco casillas de crucigrama que se completan con tinta en loop (`lj-loaderFill`, design/tokens.md §Movimiento) más una frase al azar del mundo de los juegos de diario. Cubre en particular la espera del cold start del free tier de Render (T5.5) sin que se sienta como un error.
 
 ## 7. Deploy
 

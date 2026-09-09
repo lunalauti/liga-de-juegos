@@ -5,6 +5,7 @@ import { useSession } from '../hooks/useSession';
 import { useActiveGroupContext } from '../hooks/useActiveGroupContext';
 import { Chip } from '../components/ui';
 import { NoGroupState } from '../components/NoGroupState';
+import { LoadingState } from '../components/LoadingState';
 
 type Period = 'week' | 'month';
 
@@ -80,7 +81,7 @@ export default function Ranking() {
       .finally(() => setLoading(false));
   }, [token, activeGroup, period]);
 
-  if (loadingMe) return <Screen><p style={{ color: '#6B6357' }}>Cargando…</p></Screen>;
+  if (loadingMe) return <Screen><LoadingState /></Screen>;
   if (!activeGroup) return <NoGroupState />;
 
   const ranking = data?.rankings.find((r) => r.gameSlug === gameSlug) ?? null;
@@ -106,7 +107,7 @@ export default function Ranking() {
       </div>
 
       {loading || !data || !ranking ? (
-        <p style={{ color: '#6B6357' }}>Cargando…</p>
+        <LoadingState compact />
       ) : ranking.rows.length === 0 ? (
         <p style={{ color: '#6B6357', fontSize: 14, padding: '20px 0' }}>Todavía nadie cargó nada en este período.</p>
       ) : (

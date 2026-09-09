@@ -5,6 +5,7 @@ import { useSession } from '../hooks/useSession';
 import { useMe } from '../hooks/useMe';
 import { GameCard, Chip } from '../components/ui';
 import { NoGroupState } from '../components/NoGroupState';
+import { LoadingState } from '../components/LoadingState';
 
 /**
  * Artboard 02 · "Cargar tiempos": el link primero, la carga a mano plegada abajo.
@@ -85,7 +86,7 @@ export default function Cargar() {
     setConfirmed(false);
   }
 
-  if (loadingMe) return <Screen><p style={{ color: '#6B6357' }}>Cargando…</p></Screen>;
+  if (loadingMe) return <Screen><LoadingState /></Screen>;
   if (groupIds.length === 0) return <NoGroupState />;
 
   if (confirmed && preview) {

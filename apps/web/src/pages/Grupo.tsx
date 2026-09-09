@@ -5,6 +5,7 @@ import { useMe } from '../hooks/useMe';
 import { useActiveGroup } from '../hooks/useActiveGroup';
 import { apiFetch, ApiClientError } from '../api/client';
 import type { MyGroup } from '../hooks/useMe';
+import { LoadingState } from '../components/LoadingState';
 
 /**
  * Artboard 04 · "Grupo": eyebrow + título, código de invitación grande con copiar y
@@ -14,7 +15,7 @@ export default function Grupo() {
   const { me, loading, error, refetch, token } = useMe();
   const { activeGroup, selectGroup } = useActiveGroup(me?.groups);
 
-  if (loading) return <Screen><p style={{ color: '#6B6357' }}>Cargando…</p></Screen>;
+  if (loading) return <Screen><LoadingState /></Screen>;
   if (error) return <Screen><p role="alert" style={{ color: '#A8352A' }}>{error}</p></Screen>;
 
   if (!me || me.groups.length === 0) {
@@ -33,7 +34,7 @@ export default function Grupo() {
     );
   }
 
-  if (!activeGroup) return <Screen><p style={{ color: '#6B6357' }}>Cargando…</p></Screen>;
+  if (!activeGroup) return <Screen><LoadingState /></Screen>;
 
   return (
     <Screen>
@@ -140,7 +141,7 @@ function GroupDetail({ group, token, onChanged }: { group: MyGroup; token: strin
           <span className="lj-label" style={{ color: '#4A4438' }}>Miembros</span>
           <span className="lj-label">{detail?.members.length ?? '…'}</span>
         </div>
-        {loadingDetail && <p style={{ padding: 14, color: '#6B6357', fontSize: 13, margin: 0 }}>Cargando…</p>}
+        {loadingDetail && <div style={{ padding: 14 }}><LoadingState compact /></div>}
         {detail?.members.map((m, i) => (
           <div
             key={m.userId}

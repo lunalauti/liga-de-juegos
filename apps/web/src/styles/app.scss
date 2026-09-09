@@ -270,8 +270,35 @@ body {
 }
 .lj-row--entering { animation: rowIn 320ms cubic-bezier(0.2, 0.7, 0.3, 1); }
 
+/* Loader de espera (LoadingState, 2026-09-09): una casilla de crucigrama que se
+   completa con tinta, de a una, en fila — la grilla ya es el lenguaje visual del
+   producto (Detalle del día, Cargar), así que "esperar" se ve como "llenar
+   casilleros" en vez de un spinner genérico. */
+@keyframes lj-loaderFill {
+  0%, 60%, 100% { background: $ln-input; border-color: $ln-rule; }
+  30% { background: $primary; border-color: $primary; }
+}
+.lj-loader {
+  display: inline-flex;
+  gap: 5px;
+}
+.lj-loader__cell {
+  width: 13px;
+  height: 13px;
+  border: 1.5px solid $ln-rule;
+  background: $ln-input;
+  animation: lj-loaderFill 1.4s ease-in-out infinite;
+
+  &:nth-child(1) { animation-delay: 0s; }
+  &:nth-child(2) { animation-delay: .12s; }
+  &:nth-child(3) { animation-delay: .24s; }
+  &:nth-child(4) { animation-delay: .36s; }
+  &:nth-child(5) { animation-delay: .48s; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .lj-row--entering { animation: none; }
+  .lj-loader__cell { animation: none; background: $primary; opacity: .45; }
 }
 
 /* --- Ranking en desktop: la tabla se ensancha, el panel lateral pasa al costado.

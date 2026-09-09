@@ -6,6 +6,7 @@ import { useSession } from '../hooks/useSession';
 import { useActiveGroupContext } from '../hooks/useActiveGroupContext';
 import { Chip, PositionBadge } from '../components/ui';
 import { NoGroupState } from '../components/NoGroupState';
+import { LoadingState } from '../components/LoadingState';
 
 interface LeaderboardRow {
   userId: string;
@@ -59,7 +60,7 @@ export default function Home() {
       .finally(() => setLoading(false));
   }, [token, activeGroup]);
 
-  if (loadingMe || loading) return <Screen><p style={{ color: '#6B6357' }}>Cargando…</p></Screen>;
+  if (loadingMe || loading) return <Screen><LoadingState /></Screen>;
 
   if (!activeGroup) return <NoGroupState />;
 

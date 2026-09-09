@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { apiFetch, ApiClientError } from '../api/client';
 import { useSession } from '../hooks/useSession';
+import { LoadingState } from '../components/LoadingState';
 
 interface Me {
   id: string;
@@ -55,7 +56,7 @@ export default function Perfil() {
     }
   }
 
-  if (loading) return <Shell><p style={{ color: '#6B6357' }}>Cargando tu perfil…</p></Shell>;
+  if (loading) return <Shell><LoadingState /></Shell>;
 
   return (
     <Shell>

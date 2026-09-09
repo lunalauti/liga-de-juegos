@@ -1,4 +1,5 @@
 import { Chip, GameCard, PositionBadge, RankRow } from '../components/ui';
+import { LoadingState } from '../components/LoadingState';
 
 /**
  * Espejo del artboard 06. Sirve para comparar la implementación contra el canvas
@@ -94,6 +95,20 @@ export default function KitchenSink() {
         </div>
         <p style={{ fontSize: 12, color: '#6B6357', lineHeight: 1.6, marginTop: 10 }}>
           Hover y foco son estados reales: pasá el mouse o tabulá. El anillo ámbar no se remueve nunca.
+        </p>
+      </Section>
+
+      <Section title="Espera · LoadingState (2026-09-09)">
+        <div className="lj-card" style={{ padding: 18 }}>
+          <LoadingState />
+        </div>
+        <div className="lj-card" style={{ padding: 14, marginTop: 12 }}>
+          <LoadingState compact />
+        </div>
+        <p style={{ fontSize: 12, color: '#6B6357', lineHeight: 1.6, marginTop: 10 }}>
+          Reemplaza el "Cargando…" pelado en toda la app. La frase sale al azar de un
+          pool del mundo del crucigrama/sudoku, fija por montaje (no rotativa a mitad
+          de una espera larga). Respeta <code>prefers-reduced-motion</code>.
         </p>
       </Section>
     </div>

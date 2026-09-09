@@ -51,4 +51,7 @@ Escala observada en gaps: **4 · 8 · 12 · 14 · 16 · 20 · 24 · 32 · 64**. 
 
 ## Movimiento
 
-Sólo una animación en todo el producto: `rowIn` — al guardar un tiempo, la fila entra desde `translateY(14px)` con fondo `#E8F0EA` que se desvanece. Nada más se mueve.
+Dos animaciones en todo el producto — ambas con `prefers-reduced-motion` respetado:
+
+- `rowIn` — al guardar un tiempo, la fila entra desde `translateY(14px)` con fondo `#E8F0EA` que se desvanece.
+- `lj-loaderFill` (2026-09-09, pedido del usuario) — el "Cargando…" pelado se reemplazó por `<LoadingState />`: una fila de 5 casillas de crucigrama que se completan con tinta de a una, en loop, más una frase al azar del mundo de los juegos de diario ("Abriendo el diario de hoy…", "Afilando el lápiz…"). Nada más se mueve.

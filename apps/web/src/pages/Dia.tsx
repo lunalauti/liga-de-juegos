@@ -5,6 +5,7 @@ import { apiFetch } from '../api/client';
 import { useSession } from '../hooks/useSession';
 import { useActiveGroupContext } from '../hooks/useActiveGroupContext';
 import { NoGroupState } from '../components/NoGroupState';
+import { LoadingState } from '../components/LoadingState';
 
 interface DayCell { status: 'played' | 'dnf' | 'absent' | 'blackout'; seconds: number | null; verified: boolean }
 interface DayRow { userId: string; displayName: string; avatar: string | null; cells: Record<string, DayCell> }
@@ -46,7 +47,7 @@ export default function Dia() {
 
   useEffect(load, [token, activeGroup, puzzleDate]);
 
-  if (loadingMe) return <Screen><p style={{ color: '#6B6357' }}>Cargando…</p></Screen>;
+  if (loadingMe) return <Screen><LoadingState /></Screen>;
   if (!activeGroup) return <NoGroupState />;
 
   // D6/T6.5: sólo el admin puede anular un día (ej. La Nación no publicó un
@@ -111,7 +112,7 @@ export default function Dia() {
       )}
 
       {loading || !data ? (
-        <p style={{ color: '#6B6357' }}>Cargando…</p>
+        <LoadingState compact />
       ) : data.rows.length === 0 ? (
         <p style={{ color: '#6B6357', fontSize: 14, padding: '20px 0' }}>Nadie cargó nada este día todavía.</p>
       ) : (
