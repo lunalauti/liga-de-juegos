@@ -15,3 +15,4 @@ export const unauthorized = (msg = 'Necesitás iniciar sesión') => new ApiError
 export const forbidden = (msg = 'No tenés permiso para esto') => new ApiError(403, 'FORBIDDEN', msg);
 export const notFound = (msg = 'No encontrado') => new ApiError(404, 'NOT_FOUND', msg);
 export const conflict = (code: string, msg: string, d?: Record<string, unknown>) => new ApiError(409, code, msg, d);
+export const tooManyRequests = (msg = 'Estás pidiendo demasiado rápido, esperá un toque') => new ApiError(429, 'RATE_LIMITED', msg);

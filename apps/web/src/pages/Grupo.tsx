@@ -78,6 +78,7 @@ interface GroupDetailData {
 function GroupDetail({ group, token, onChanged }: { group: MyGroup; token: string | undefined; onChanged: () => void }) {
   const [detail, setDetail] = useState<GroupDetailData | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(true);
+  const [detailError, setDetailError] = useState<string | null>(null);
   const [palmares, setPalmares] = useState<Palmares | null>(null);
   const [copyLabel, setCopyLabel] = useState('Copiar');
   const [reloadTick, setReloadTick] = useState(0);
@@ -87,8 +88,12 @@ function GroupDetail({ group, token, onChanged }: { group: MyGroup; token: strin
     if (!token) return;
     let cancelled = false;
     setLoadingDetail(true);
+    setDetailError(null);
     apiFetch<GroupDetailData>(`/groups/${group.id}`, { accessToken: token })
       .then((d) => !cancelled && setDetail(d))
+      // Sin este catch, un fetch fallido dejaba la lista de miembros vacía en
+      // silencio — parecía un grupo sin gente, no un error de red (T9.2).
+      .catch(() => !cancelled && setDetailError('No pudimos cargar el grupo. Probá de nuevo en un rato.'))
       .finally(() => !cancelled && setLoadingDetail(false));
     // T7.3/T7.4: el palmarés no bloquea el resto de la pantalla — si falla, el
     // resto del grupo sigue andando, sólo no se muestra esa sección.
@@ -123,6 +128,8 @@ function GroupDetail({ group, token, onChanged }: { group: MyGroup; token: strin
         <p className="lj-label" style={{ margin: 0 }}>Grupo{since ? ` · ${since}` : ''}</p>
         <h1 className="lj-card-title" style={{ fontSize: 26, margin: '2px 0 0' }}>{group.name}</h1>
       </div>
+
+      {detailError && <p role="alert" style={{ color: '#A8352A', fontSize: 13, margin: '0 0 14px' }}>{detailError}</p>}
 
       {detail && detail.members.length === 1 ? (
         <>

@@ -15,6 +15,7 @@ import { h2hRouter } from './routes/h2h.js';
 import { seasonsRouter } from './routes/seasons.js';
 import { statsRouter } from './routes/stats.js';
 import { cronRouter } from './routes/cron.js';
+import { apiRateLimit, importRateLimit } from './middleware/rateLimit.js';
 
 export function createApp() {
   const app = express();
@@ -34,6 +35,10 @@ export function createApp() {
   app.use(
     '/api/v1',
     requireAuth,
+    apiRateLimit,
+    // Límite más estricto sólo para importar: pega contra La Nación, un
+    // servicio de terceros que puede bloquearnos por volumen (§9.6).
+    (req, res, next) => (req.path.startsWith('/entries/import') ? importRateLimit(req, res, next) : next()),
     meRouter,
     gamesRouter,
     groupsRouter,

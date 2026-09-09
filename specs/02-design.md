@@ -93,8 +93,9 @@ Todos los `id` son `uuid` con `default gen_random_uuid()`. Todos los timestamps 
 | `id` | uuid PK | = `auth.users.id` |
 | `display_name` | text NOT NULL | 2–30 chars |
 | `avatar` | text | emoji o URL |
-| `lanacion_user_ids` | text[] default '{}' | ids de La Nación asociados a este perfil (§9.4) |
 | `created_at` | timestamptz | |
+
+> `lanacion_user_ids` (text[]) existió hasta acá pero se borró en `0011_drop_lanacion_user_ids.sql`: se creó para el binding de identidad de T3.13 (§9.4) y quedó sin uso cuando se descubrió que ese id no es estable por persona (ver la nota en §9.6).
 
 **`games`** — catálogo de juegos (RF-17, D5). Es data, no enum: agregar un juego nuevo no requiere deploy.
 
@@ -476,7 +477,7 @@ Ninguno agrega consultas nuevas: todos se derivan de la grilla que el motor de p
 
 **CI (GitHub Actions, `.github/workflows/ci.yml`)**: en cada PR y push a `main` → typecheck + lint + test (job `check`). Push a `main` además corre el test de contrato con La Nación (§9.6, no bloqueante) y, si `check` pasa, aplica las migraciones pendientes contra Supabase (job `migrate`, necesita el secreto `DATABASE_URL` cargado en GitHub → Settings → Secrets). El deploy en sí lo disparan Vercel y Render por su cuenta al detectar el push, conectando cada uno directamente al repo — no hay un paso de CI que los dispare.
 
-**Seguridad operativa**: CORS restringido a los dominios de Vercel (`ALLOWED_ORIGINS`); `helmet`; rate limit **pendiente** (ver §9.6, no implementado todavía); la service role key jamás sale del backend.
+**Seguridad operativa**: CORS restringido a los dominios de Vercel (`ALLOWED_ORIGINS`); `helmet`; rate limit por usuario (`middleware/rateLimit.ts`, `express-rate-limit` — 120 req/min en toda `/api/v1`, 30 cada 10 min sólo en `/entries/import*` por el costo de golpear a La Nación, ver §9.6); la service role key jamás sale del backend.
 
 ---
 
@@ -585,7 +586,7 @@ Un mismo link se puede importar a **todos los grupos del jugador de una sola vez
 | Cambian la ruta o el formato del JSON | Un solo módulo (`services/lanacion.ts`) con parser Zod; si falla, error claro y fallback a carga manual. Un test de contrato contra un uuid real avisa cuando cambie |
 | Bloquean el acceso por User-Agent u origen | Se llama desde el backend con headers de browser; si bloquean, el front puede llamar directo (el endpoint tiene CORS `*`) |
 | Borran resultados viejos | Se guarda `external_payload` completo al importar: si el link muere, el dato ya es nuestro |
-| Uso abusivo | Una llamada por link importado, cacheada 24 h. Falta el rate limit por usuario (era parte del plan original; no está implementado todavía — lo trae la Fase 5 junto con el resto del rate limiting de la API, ver §7) |
+| Uso abusivo | Una llamada por link importado, cacheada 24 h. Rate limit por usuario: 30 imports cada 10 min (`middleware/rateLimit.ts`, cerrado como deuda técnica el 2026-09-09 — ver §7) |
 | Alguien pega el link de otro | La unicidad global de `imported_results.external_id` impide duplicarlo (409 "ese link ya lo cargó Fulano") — ya no depende de `lanacion_user_id` (ver nota abajo) |
 
 > **Bug real encontrado el 2026-09-09** (reportado por un usuario: "cargué con el link y me sigue apareciendo A mano"): el diseño original de este punto 4 asumía que `ln.user_id` era un identificador **estable** de la cuenta de La Nación de la persona — se guardaba el primero que aparecía en `profiles.lanacion_user_ids` y se marcaba `verified = false` en cuanto un link posterior traía uno distinto. Con datos reales de producción (3 personas, una semana) se confirmó que **no es estable**: La Nación devuelve un `user_id` distinto en cada link compartido, hasta para la misma persona al día siguiente. Con esa lógica, todo resultado importado quedaba `verified = false` después del primero de cada persona, siempre — el chip "Verificado" estuvo roto para todo el equipo desde que se implementó (Fase 3.5, T3.13), en silencio.

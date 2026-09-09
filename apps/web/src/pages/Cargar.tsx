@@ -227,23 +227,29 @@ function ManualEntryForm({ groupId, token }: { groupId: string; token: string | 
   // pide el detalle real del grupo y sólo pinta los juegos con `enabled`.
   const [activeGames, setActiveGames] = useState<ActiveGame[] | null>(null);
   const [values, setValues] = useState<Record<string, GameValue>>({});
+  const [loadError, setLoadError] = useState<string | null>(null);
   useEffect(() => {
     if (!token) return;
     let cancelled = false;
+    setLoadError(null);
     apiFetch<{ games: { slug: string; name: string; penaltySeconds: number; enabled: boolean }[] }>(`/groups/${groupId}`, {
       accessToken: token,
-    }).then((detail) => {
-      if (cancelled) return;
-      const games = detail.games
-        .filter((g) => g.enabled)
-        .map((g) => ({ slug: g.slug, name: g.name, shortName: GAMES.find((x) => x.slug === g.slug)?.shortName ?? g.name, penaltySeconds: g.penaltySeconds }));
-      // Setear los dos juntos, en el mismo tick — con dos efectos separados hay
-      // un frame en el que `activeGames` ya está pero `values` todavía es `{}`,
-      // y `values[g.slug]!.dnf` explota (bug real que rompió esta pantalla en
-      // producción apenas la subí, encontrado al verificarla).
-      setActiveGames(games);
-      setValues(Object.fromEntries(games.map((g) => [g.slug, { dnf: false, time: '', status: 'idle' as SaveStatus }])));
-    });
+    })
+      .then((detail) => {
+        if (cancelled) return;
+        const games = detail.games
+          .filter((g) => g.enabled)
+          .map((g) => ({ slug: g.slug, name: g.name, shortName: GAMES.find((x) => x.slug === g.slug)?.shortName ?? g.name, penaltySeconds: g.penaltySeconds }));
+        // Setear los dos juntos, en el mismo tick — con dos efectos separados hay
+        // un frame en el que `activeGames` ya está pero `values` todavía es `{}`,
+        // y `values[g.slug]!.dnf` explota (bug real que rompió esta pantalla en
+        // producción apenas la subí, encontrado al verificarla).
+        setActiveGames(games);
+        setValues(Object.fromEntries(games.map((g) => [g.slug, { dnf: false, time: '', status: 'idle' as SaveStatus }])));
+      })
+      // Sin este catch, un fetch fallido dejaba "Cargando…" pegado para siempre
+      // en vez de avisar que algo salió mal (misma familia de bug que T9.2).
+      .catch(() => !cancelled && setLoadError('No pudimos cargar los juegos del grupo. Probá de nuevo en un rato.'));
     return () => {
       cancelled = true;
     };
@@ -251,7 +257,8 @@ function ManualEntryForm({ groupId, token }: { groupId: string; token: string | 
 
   const [savingAll, setSavingAll] = useState(false);
 
-  if (!activeGames) return <p style={{ fontSize: 12, color: '#6B6357', marginTop: 12 }}>Cargando…</p>;
+  if (loadError) return <p role="alert" style={{ color: '#A8352A', fontSize: 13, marginTop: 12 }}>{loadError}</p>;
+  if (!activeGames) return <LoadingState compact />;
 
   const totalSeconds = activeGames.reduce((sum, g) => {
     const v = values[g.slug]!;
