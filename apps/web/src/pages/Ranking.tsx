@@ -30,6 +30,8 @@ interface Winner { gameSlug: string; gameName: string; displayName: string; seco
 interface Pending { userId: string; displayName: string }
 interface LeaderboardResponse {
   period: { type: Period; startsOn: string; endsOn: string };
+  /** Períodos habilitados en el grupo (RF-17) — de qué pestañas hay que mostrar. */
+  periodTypes: Period[];
   /** RF-13/RF-17: config del grupo, igual para los N juegos activos. */
   scoringMode: 'total_time' | 'position_points';
   games: { slug: string; name: string }[];
@@ -110,10 +112,18 @@ export default function Ranking() {
             ))}
           </div>
         )}
-        <div style={{ display: 'flex' }}>
-          <TabButton label="Semana" active={period === 'week'} onClick={() => setPeriod('week')} />
-          <TabButton label="Mes" active={period === 'month'} onClick={() => setPeriod('month')} />
-        </div>
+        {/* Sólo las pestañas de los períodos que el grupo tiene habilitados
+            (RF-17). Con uno solo, no hay nada que elegir — no se muestra la barra. */}
+        {data && data.periodTypes.length > 1 && (
+          <div style={{ display: 'flex' }}>
+            {data.periodTypes.includes('week') && (
+              <TabButton label="Semana" active={period === 'week'} onClick={() => setPeriod('week')} />
+            )}
+            {data.periodTypes.includes('month') && (
+              <TabButton label="Mes" active={period === 'month'} onClick={() => setPeriod('month')} />
+            )}
+          </div>
+        )}
       </div>
 
       {error ? (

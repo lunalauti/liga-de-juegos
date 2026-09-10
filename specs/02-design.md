@@ -310,6 +310,7 @@ Códigos: `400` validación, `401` sin token, `403` sin permiso, `404`, `409` co
 ```json
 {
   "period": { "type": "month", "starts_on": "2026-08-01", "ends_on": "2026-08-31", "status": "open" },
+  "period_types": ["month", "week"],
   "scoring_mode": "total_time",
   "games": [{ "slug": "crucigrama", "name": "Crucigrama", "penalty_seconds": 1200 }],
   "rankings": [
@@ -341,7 +342,7 @@ Códigos: `400` validación, `401` sin token, `403` sin permiso, `404`, `409` co
 }
 ```
 
-El front no calcula nada: pinta. `rankings` trae un elemento por cada juego activo del grupo, en el orden del catálogo (`games.sort_order`); cada uno es una tabla completa e independiente, con su propio `rank`, sus propios líderes y su propio podio. Si el modo es `position_points`, cada elemento de `rankings[].rows` trae `points` en vez de (o adjunto a) `total_seconds`, y el orden dentro de ese juego es descendente (RNF-1). `todays_game_winners` no cambia — ya era por juego desde la Fase 4 (T4.10).
+El front no calcula nada: pinta. `period_types` dice qué pestañas de período mostrar en la Tabla — con una sola (grupo semanal o mensual puro, RF-17) no se muestra la barra Semana/Mes, no hay nada que elegir. `rankings` trae un elemento por cada juego activo del grupo, en el orden del catálogo (`games.sort_order`); cada uno es una tabla completa e independiente, con su propio `rank`, sus propios líderes y su propio podio. Si el modo es `position_points`, cada elemento de `rankings[].rows` trae `points` en vez de (o adjunto a) `total_seconds`, y el orden dentro de ese juego es descendente (RNF-1). `todays_game_winners` no cambia — ya era por juego desde la Fase 4 (T4.10).
 
 ---
 

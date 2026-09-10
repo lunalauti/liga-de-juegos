@@ -125,6 +125,9 @@ leaderboardRouter.get('/groups/:id/leaderboard', async (req, res, next) => {
 
     const payload = {
       period: { type: period, startsOn: bounds.start, endsOn: bounds.end, status: bounds.end < today ? 'closed' : 'open' },
+      // Qué períodos tiene habilitados el grupo (RF-17) — el front usa esto para
+      // no mostrar la pestaña "Mes" en un grupo que compite sólo por semana.
+      periodTypes: (settings.period_types ?? ['month', 'week']) as ('week' | 'month')[],
       scoringMode,
       games: roster.games,
       rankings,
