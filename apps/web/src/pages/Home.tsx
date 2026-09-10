@@ -8,6 +8,7 @@ import { Chip, PositionBadge } from '../components/ui';
 import { NoGroupState } from '../components/NoGroupState';
 import { LoadingState } from '../components/LoadingState';
 import { NotifyPrompt } from '../components/NotifyPrompt';
+import { InstallTutorialModal } from '../components/InstallTutorial';
 
 interface LeaderboardRow {
   userId: string;
@@ -113,6 +114,7 @@ export default function Home() {
   return (
     <Screen>
       <Header groupName={activeGroup.name} displayName={me?.displayName} />
+      <InstallTutorialModal />
       <NotifyPrompt token={token} />
 
       {loadedAllThree ? <LoadedCard myDay={myDay!} games={activeGames} /> : <NotLoadedCard othersLoadedToday={othersLoadedToday} onLoad={() => navigate('/cargar')} />}

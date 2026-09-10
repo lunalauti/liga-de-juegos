@@ -1,4 +1,32 @@
-import { isIOS } from '../lib/push';
+import { useEffect, useState } from 'react';
+import { isIOS, isStandalone } from '../lib/push';
+
+const MODAL_SEEN_KEY = 'liga:installTutorialSeen';
+
+/** El contenido en sí — compartido entre la card de Perfil y el modal flotante de Home. */
+function TutorialContent() {
+  const ios = isIOS();
+  return (
+    <>
+      <p style={{ fontSize: 12, color: '#6B6357', margin: '0 0 14px' }}>
+        {ios ? 'En iPhone se instala a mano, en dos pasos:' : 'En Chrome/Android o en la compu, con un botón:'}
+      </p>
+      {ios ? (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <TutorialStep icon={<ShareIcon />} label="Tocá Compartir" />
+          <span aria-hidden="true" style={{ color: '#C9C0AC', fontSize: 18, flex: '0 0 auto' }}>→</span>
+          <TutorialStep icon={<AddToHomeIcon />} label={'Elegí "Agregar a inicio"'} />
+        </div>
+      ) : (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <TutorialStep icon={<ProfileIcon />} label="Andá a tu perfil" />
+          <span aria-hidden="true" style={{ color: '#C9C0AC', fontSize: 18, flex: '0 0 auto' }}>→</span>
+          <TutorialStep icon={<InstallButtonIcon />} label={'Tocá "Instalar app"'} />
+        </div>
+      )}
+    </>
+  );
+}
 
 /**
  * Pedido del usuario, 2026-09-09 — minitutorial ilustrado de cómo instalar la
@@ -6,31 +34,61 @@ import { isIOS } from '../lib/push';
  * de instalar (§10.1), hay que ir por Compartir → Agregar a inicio; en
  * Chrome/Android/desktop sí hay botón propio, servido desde Perfil.
  * El caller decide si tiene sentido mostrarlo (no tiene sentido si ya está instalada).
+ * Versión "card" para Perfil, siempre visible ahí (a diferencia del modal de
+ * Home, esto no se descarta — es material de referencia, no una interrupción).
  */
 export function InstallTutorial() {
-  const ios = isIOS();
   return (
     <section style={{ marginTop: 28 }}>
       <h2 className="lj-card-title" style={{ fontSize: 18, margin: '0 0 10px' }}>Cómo instalar la app</h2>
       <div className="lj-card" style={{ padding: 16 }}>
-        <p style={{ fontSize: 12, color: '#6B6357', margin: '0 0 14px' }}>
-          {ios ? 'En iPhone se instala a mano, en dos pasos:' : 'En Chrome/Android o en la compu, con un botón:'}
-        </p>
-        {ios ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <TutorialStep icon={<ShareIcon />} label="Tocá Compartir" />
-            <span aria-hidden="true" style={{ color: '#C9C0AC', fontSize: 18, flex: '0 0 auto' }}>→</span>
-            <TutorialStep icon={<AddToHomeIcon />} label={'Elegí "Agregar a inicio"'} />
-          </div>
-        ) : (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <TutorialStep icon={<ProfileIcon />} label="Andá a tu perfil" />
-            <span aria-hidden="true" style={{ color: '#C9C0AC', fontSize: 18, flex: '0 0 auto' }}>→</span>
-            <TutorialStep icon={<InstallButtonIcon />} label={'Tocá "Instalar app"'} />
-          </div>
-        )}
+        <TutorialContent />
       </div>
     </section>
+  );
+}
+
+/**
+ * Versión flotante para Home (pedido del usuario, 2026-09-09): tarjeta
+ * centrada sobre un fondo oscurecido, con un botón "Cerrar" explícito. Se
+ * acuerda en localStorage — cerrarla una vez alcanza, no vuelve a insistir
+ * sola (mismo criterio que NotifyPrompt). No aparece si ya está instalada.
+ */
+export function InstallTutorialModal() {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (!localStorage.getItem(MODAL_SEEN_KEY) && !isStandalone()) setVisible(true);
+  }, []);
+
+  if (!visible) return null;
+
+  function close() {
+    localStorage.setItem(MODAL_SEEN_KEY, '1');
+    setVisible(false);
+  }
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Cómo instalar la app"
+      style={{ position: 'fixed', inset: 0, background: 'rgba(20,18,14,.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, zIndex: 50 }}
+      onClick={close}
+    >
+      <div
+        className="lj-card"
+        style={{ background: '#fff', maxWidth: 360, width: '100%', padding: 20, borderColor: '#14120E', borderWidth: 1.5 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="lj-card-title" style={{ fontSize: 20, margin: '0 0 4px' }}>Instalá la app</h2>
+        <p style={{ fontSize: 12, color: '#6B6357', margin: '0 0 14px' }}>Acceso más rápido y avisos cuando te falten tiempos.</p>
+        <TutorialContent />
+        <button type="button" className="btn btn-outline-dark" style={{ width: '100%', marginTop: 18 }} onClick={close}>
+          Cerrar
+        </button>
+      </div>
+    </div>
   );
 }
 
