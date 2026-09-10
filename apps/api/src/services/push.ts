@@ -16,12 +16,23 @@ function ensureConfigured() {
     console.warn('[push] faltan VAPID_PUBLIC_KEY/VAPID_PRIVATE_KEY — no se van a poder mandar avisos');
     return;
   }
-  // El "mailto" es obligatorio en el estándar VAPID (identifica al remitente
-  // ante el push service si algo sale mal). Configurable por env var para no
-  // hardcodear un mail personal en el código — si no se carga, un placeholder
-  // markeado como tal alcanza igual (el estándar no valida que reciba nada).
-  const contact = process.env['VAPID_CONTACT_EMAIL'] ?? 'mailto:no-reply@liga-de-juegos.example';
-  webpush.setVapidDetails(contact.startsWith('mailto:') ? contact : `mailto:${contact}`, publicKey, privateKey);
+  // El "subject" de VAPID identifica al remitente ante el push service. El
+  // estándar acepta un `mailto:` o un `https:`; NO todos los servicios son
+  // igual de tolerantes con el valor:
+  //   - FCM (Chrome/Android) acepta casi cualquier cosa.
+  //   - **Apple (Safari/iOS) rechaza con 403 BadJwtToken** un `mailto:` con
+  //     un dominio reservado tipo `.example` — encontrado en producción
+  //     2026-09-10: los push a iPhone fallaban en silencio mientras los de
+  //     Chrome andaban. Por eso el default ahora es la URL de la app (un
+  //     identificador estable y válido, sin mail personal). `VAPID_CONTACT_EMAIL`
+  //     sigue como override si se quiere un contacto de verdad.
+  const raw = process.env['VAPID_CONTACT_EMAIL'];
+  const subject = !raw
+    ? 'https://liga-de-juegos.vercel.app'
+    : raw.startsWith('mailto:') || raw.startsWith('https://')
+      ? raw
+      : `mailto:${raw}`;
+  webpush.setVapidDetails(subject, publicKey, privateKey);
   configured = true;
 }
 

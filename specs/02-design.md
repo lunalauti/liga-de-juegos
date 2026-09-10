@@ -680,6 +680,8 @@ Apagarlo hace el camino inverso: `subscription.unsubscribe()` en el navegador + 
 
 **VAPID**: par de claves que identifica a esta app ante los push services (FCM, Mozilla, Apple) sin necesitar cuenta en cada uno por separado. Se generan una sola vez (`npx web-push generate-vapid-keys`) y se cargan como secretos — la pública también en el front (§7), la privada sólo en la API, nunca se manda a ningún lado salvo al firmar el envío.
 
+> **Bug real, 2026-09-10 (reportado por el usuario: "mi amiga cargó, tengo la app en el iPhone y me di permiso, pero no me llegó nada").** El JWT de VAPID lleva un `sub` (subject) que identifica al remitente — el estándar acepta `mailto:` o `https:`. **FCM (Chrome/Android) acepta casi cualquier valor; Apple (Safari/iOS) NO**: rechaza con `403 BadJwtToken` un `mailto:` con un dominio reservado (`.example`). El default era `mailto:no-reply@liga-de-juegos.example`, así que todos los push a iPhone fallaban en silencio (`sendToSubscription` no limpia en 403, sólo en 404/410, §10.4 — con razón: un 403 puede ser un problema de config, no de la suscripción). Confirmado contra las suscripciones reales: con `.example` → 403; con la URL de la app o un `mailto:` real → OK. **Fix**: el default de `services/push.ts` pasa a ser `https://liga-de-juegos.vercel.app` (identificador estable y válido, sin mail personal). `VAPID_CONTACT_EMAIL` sigue como override.
+
 ### 10.3 UI de opt-in (Perfil)
 
 Una tarjeta nueva "Avisos" en `/perfil`, con contenido que depende del estado detectado en el momento (no hay flujo lineal — cualquiera de estos es un estado final válido según el navegador/plataforma):
