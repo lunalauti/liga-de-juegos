@@ -195,6 +195,22 @@ Cambiar la configuración deberá recalcular la temporada en curso, nunca las ce
 - Tocar el aviso lleva directo a Cargar.
 - En iPhone, esto **sólo funciona si la app está instalada** (RF-21) — es una limitación de Safari/iOS, no de esta app (ver `02-design.md` §10.6). El sistema deberá explicarlo, no fallar en silencio.
 - El sistema deberá ofrecer activarlo la primera vez que el jugador entra a la app **en cada dispositivo** (no sólo dejarlo escondido en el perfil a que alguien lo encuentre) — sigue siendo opt-in, un "ahora no" no vuelve a preguntar solo.
+- Es uno de tres avisos independientes (RF-22/RF-23/RF-24): activar uno no activa los otros. Ver §5.8.
+
+### 5.8 Avisos en vivo — "se está moviendo el grupo" (pedido del usuario, 2026-09-09)
+
+A diferencia de RF-22 (que corre una vez al día contra un cron), estos dos avisos se disparan **en el momento** en que pasa el evento — mismo mecanismo de push de §5.7, RF-21, pero otro disparador.
+
+**RF-23 — Aviso de actividad de un compañero**: cuando alguien del grupo carga un resultado (a mano o por link) y lo termina (no DNF), el sistema deberá avisarle a los demás miembros de ESE grupo que tengan este aviso activado.
+
+- Si ese resultado es un **récord personal** (T8.4, `isNewPersonalBest`) del que lo cargó, el aviso lo dice explícitamente y con más peso ("🏆 Nuevo récord personal" en vez de un aviso genérico de finalización) — un PB es la métrica que más le importa a la propia persona (RF-14), tiene sentido que también sea lo más festejable para el grupo.
+- Un DNF **no** dispara aviso — nadie necesita que le avisen que un compañero no terminó; es sacar sal a una herida ajena sin que lo haya pedido nadie.
+- Nunca se avisa a la propia persona que cargó su resultado, sólo a los demás.
+- Editar/corregir un resultado ya cargado (RF-9) **no** dispara un aviso nuevo — sólo la primera carga de ese resultado. Si no, arreglar un tiempo mal tipeado generaría un festejo falso.
+
+**RF-24 — Aviso de nuevo miembro**: cuando alguien se une a un grupo (RF-4, por código de invitación), el sistema deberá avisarle a los miembros que ya estaban en ese grupo y tengan este aviso activado, de que esa persona se sumó.
+
+Los tres avisos (RF-22, RF-23, RF-24) se activan por separado, cada uno con su propio toggle en Perfil — activar "faltan tus tiempos" no activa de yapa los avisos de actividad del grupo, y viceversa (D13). Los tres comparten la misma suscripción push del navegador (RF-21/RF-22): no hace falta "instalar de nuevo" ni volver a dar permiso por cada uno, sólo elegir cuáles querés recibir.
 
 ## 6. Requerimientos no funcionales
 
@@ -235,3 +251,4 @@ El MVP está listo cuando, con el sistema desplegado:
 | D11 | Con el ranking por juego (D2), ¿la racha (RF-14) sigue siendo "completé TODOS los juegos activos ese día" o pasa a ser una racha por juego? | **Default asumido: se mantiene holística**, como hoy — es una métrica de compromiso/hábito diario, no de competencia por juego, y partirla en 3 rachas independientes le resta claridad al home sin que lo haya pedido este cambio. Si se prefiere una racha por juego, es un ajuste acotado a `scoring/stats.ts` (Fase 8, sin implementar todavía) | Bajo — sólo la definición de una métrica secundaria, no toca el motor de ranking |
 | D10 | ¿Un resultado importado con un tiempo real peor que la penalización se capea igual que en la carga manual? | **Resuelto: (b).** El tiempo real importado se guarda tal cual llega, sin capear contra la penalización — a diferencia de la carga manual (RF-6b), donde un tiempo peor que la penalización sí se convierte en DNF. Terminar tarde puede costar más que rendirse; es intencional, no un bug. El link es el comprobante real, y capearlo "escondería" un dato verificado. | — |
 | D12 | RF-22, ¿a qué hora se manda el aviso de "faltan tus tiempos"? | **Default asumido: 21:00 ART**, una vez por día. Suficientemente tarde para que ya haya pasado la mañana/tarde típica de resolverlo, con margen antes de que cambie el día del diario a las 00:00. Configurable cambiando la hora del cron externo (`02-design.md` §10.4), sin tocar código. | Bajo — es un parámetro del cron, no del modelo |
+| D13 | RF-23/RF-24, ¿activar los avisos en vivo (compañero cargó/récord, nuevo miembro) es parte del mismo toggle de RF-22 o uno separado? | **Default asumido: tres toggles independientes**, todos apagados por defecto salvo que el jugador los prenda a mano. RF-22 puede llegar a diario (una vez); RF-23 potencialmente muchas veces por día en un grupo activo (hasta un aviso por compañero por juego) — meterlos en el mismo interruptor forzaría a elegir entre "nada" o "todo", cuando son necesidades distintas (uno es un recordatorio personal, el otro es ruido social del grupo). | Medio — define cuántos toggles hay en Perfil y cuántas columnas de preferencia en `profiles.notification_prefs` (`02-design.md` §10.7); si se decide unificarlos más adelante, es un cambio de UI y de la condición del `where` en el envío, no del modelo de datos de push en sí |

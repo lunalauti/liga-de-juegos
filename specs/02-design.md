@@ -97,6 +97,7 @@ Todos los `id` son `uuid` con `default gen_random_uuid()`. Todos los timestamps 
 | `id` | uuid PK | = `auth.users.id` |
 | `display_name` | text NOT NULL | 2–30 chars |
 | `avatar` | text | emoji o URL |
+| `notification_prefs` | jsonb NOT NULL default `{"pendingToday": true, "teammateActivity": false, "newMember": false}` | qué avisos push quiere este usuario (RF-22/RF-23/RF-24, D13, §10.7) — independiente de si tiene o no una fila en `push_subscriptions` |
 | `created_at` | timestamptz | |
 
 > `lanacion_user_ids` (text[]) existió hasta acá pero se borró en `0011_drop_lanacion_user_ids.sql`: se creó para el binding de identidad de T3.13 (§9.4) y quedó sin uso cuando se descubrió que ese id no es estable por persona (ver la nota en §9.6).
@@ -299,6 +300,7 @@ Códigos: `400` validación, `401` sin token, `403` sin permiso, `404`, `409` co
 | `GET` | `/groups/:id/h2h` | Matriz cabeza a cabeza | RF-13 |
 | `POST` | `/push/subscribe` | Registra o actualiza la suscripción push del navegador actual `{ endpoint, keys: { p256dh, auth } }` | RF-22 |
 | `DELETE` | `/push/subscribe` | Da de baja una suscripción `{ endpoint }` | RF-22 |
+| `PATCH` | `/me/notification-prefs` | Prende/apaga uno o más avisos `{ pendingToday?, teammateActivity?, newMember? }` (parcial, no hace falta mandar los tres) | RF-22, RF-23, RF-24 |
 | `POST` | `/internal/cron/notify-pending` | Manda el aviso de "faltan tus tiempos" a quien corresponda hoy (cron externo, header `x-cron-secret`, fuera del stack de JWT) | RF-22 |
 
 ### Ejemplo — `GET /groups/:id/leaderboard`
@@ -738,3 +740,51 @@ Igual que `closeExpiredSeasons`, esto es puro cálculo + IO — no toca el motor
 | El usuario puede negar el permiso y no hay forma de volver a preguntar por código | Estándar de la Push API en todos los navegadores, por spam de sitios que insisten | El mensaje le dice cómo reactivarlo a mano; no se vuelve a pedir solo |
 | Push silenciado por "No molestar" del sistema operativo, o el navegador cerrado del todo en Android con ahorro de batería agresivo | Fuera del control de la app | Aceptado — es la misma limitación de cualquier notificación push, no específica de esta app |
 | El cron corre a una hora fija (21:00 ART); alguien en otro huso horario recibe el aviso "a destiempo" | RNF-3 ya fija todo el sistema a hora argentina — un grupo de amigos que juega el diario de Argentina está, por definición, en esa zona horaria o cerca | No se resuelve; es consistente con el resto del sistema |
+
+### 10.7 Avisos en vivo: actividad de un compañero y nuevos miembros (RF-23, RF-24)
+
+Pedido del usuario (2026-09-09), con ejemplos de copy concretos:
+
+> Récord! 🏆 Luqui completó su crucigrama en xx:xx
+> Sol hizo una nueva marca personal con xx:xx en su crucigrama 🏆
+> Sol completó su crucigrama en xx:xx
+> Aureliano ahora compite en La banda del crucigrama!
+
+A diferencia de RF-22, que un cron dispara una vez al día, estos dos se disparan **en el momento**, desde el mismo código que ya escribe el resultado o procesa el join — nada de cron. Reutilizan toda la infraestructura de §10.2-§10.4 (VAPID, `push_subscriptions`, `sendToSubscription`, el mismo `sw.ts`); lo único nuevo es el disparador, el destinatario y el texto.
+
+**Preferencias por tipo de aviso (D13).** Con tres avisos posibles, "¿tengo una suscripción push?" ya no alcanza para decidir si mandar o no — hace falta saber CUÁLES quiere cada uno. `profiles.notification_prefs` (§3.1) guarda los tres booleanos; todo envío (incluido `notify-pending`, T10.6, que ahora también revisa `pendingToday` además de si hay suscripción) filtra primero por la preferencia correspondiente y recién después busca las suscripciones activas del usuario. Perfil muestra tres toggles independientes en la tarjeta "Avisos" (§10.3), no uno solo — activar RF-22 no prende de yapa RF-23/RF-24.
+
+**RF-23 — actividad de un compañero.** Se engancha en `services/entries.ts#upsertEntry`, el mismo lugar donde ya vive `isNewPersonalBest` (T8.4) — un solo punto de escritura para carga manual, `/entries/bulk` e importación de La Nación (§9.4), así que un solo lugar para disparar el aviso también.
+
+```
+Dentro de upsertEntry, después de escribir la entry:
+1. Si dnf → no hacer nada (RF-23: un DNF no avisa).
+2. Si `before.rows.length > 0` (ya existía, es una EDICIÓN) → no hacer nada
+   (RF-23: sólo la primera carga avisa, corregir un tiempo no).
+3. isPersonalBest = ya se calcula (T8.4) — se reutiliza, no se recalcula.
+4. Traer los demás miembros de ESE group_id (menos quien cargó) cuya
+   notification_prefs.teammateActivity sea true.
+5. Para cada uno, buscar sus push_subscriptions y mandar (fire-and-forget,
+   sin bloquear la respuesta de guardar — un push que tarda o falla no
+   puede demorarle a nadie la confirmación de que su tiempo se guardó):
+     - Si isPersonalBest: título "🏆 Nuevo récord personal",
+       cuerpo "{displayName} hizo {tiempo} en {juego}."
+     - Si no: título "Liga de Juegos",
+       cuerpo "{displayName} completó {juego} en {tiempo}."
+   Al tocarlo, abre /dia/hoy (RF-20) — ahí está el resultado recién cargado
+   en contexto, junto con el resto del grupo ese día.
+```
+
+**RF-24 — nuevo miembro.** Se engancha en `POST /groups/join` (§4), después de insertar la fila en `group_members`.
+
+```
+1. Traer los miembros que YA estaban en el grupo (antes de este join),
+   cuya notification_prefs.newMember sea true.
+2. Para cada uno: título "Liga de Juegos",
+   cuerpo "{displayName} ahora compite en {nombre del grupo}."
+   Al tocarlo, abre /grupo.
+```
+
+**Por qué "fire-and-forget" y no esperar la respuesta.** A diferencia de `/internal/cron/notify-pending` (que ES la tarea entera, tiene sentido que la resolución HTTP espere a que termine), acá el aviso es un efecto secundario de una acción que el jugador está esperando confirmar ya (guardó su tiempo, se unió al grupo). Con hasta ~19 compañeros en un grupo (RNF-5), mandar los push en serie y esperarlos a todos antes de responder podría agregarle varios segundos a un guardado que hoy es instantáneo. Se llama sin `await` (o con un `.catch` que sólo loguea) — si un push tarda o falla, no le pasa nada a la respuesta que ya recibió quien cargó su tiempo.
+
+**Volumen esperado.** RF-23 puede disparar bastante más seguido que RF-22 — hasta un aviso por compañero por juego por día en un grupo activo. Es justo la razón de D13 (toggle separado, apagado por defecto): alguien que sólo quiere el recordatorio personal de RF-22 no debería recibir de yapa una notificación cada vez que cualquiera del grupo termina el Sudoku.
