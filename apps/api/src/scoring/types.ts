@@ -4,6 +4,14 @@ export interface ScoringMember {
   userId: string;
   displayName: string;
   avatar: string | null;
+  /**
+   * Fecha (ART, `YYYY-MM-DD`) en que este miembro entró al grupo. `buildGrid`
+   * no le genera celdas de ausencia por días ANTERIORES a esto — nadie
+   * arranca debiendo penalizaciones por días en los que el grupo (o su
+   * membresía) todavía no existía. Opcional sólo por compatibilidad con
+   * fixtures viejos de tests; en producción `loadRoster` siempre lo llena.
+   */
+  joinedOn?: string;
 }
 
 export interface ScoringGame {

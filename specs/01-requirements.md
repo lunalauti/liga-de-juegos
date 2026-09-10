@@ -115,6 +115,7 @@ Formato: `RF-x` con criterios de aceptación en formato EARS (*Cuando/Si… el s
   - `ignorar`: no suma ni resta, pero el jugador queda marcado como incompleto en ese día.
 - El sistema deberá distinguir visualmente DNF (intentó, no terminó) de ausencia (no jugó).
 - **"Al cerrar el día" es literal, no "en cualquier momento del día":** mientras el día en curso no haya terminado, un juego todavía sin cargar no penaliza — recién se evalúa como ausencia (según la regla de arriba) a partir del día siguiente. El motor original no respetaba esto (penalizaba el día en curso ni bien no había entry, sin esperar a que cerrara); corregido tras un caso real: alguien que cargó un solo juego del día veía su "Total mes" ya inflado con la penalización de los otros dos, todavía no vencidos.
+- **Un jugador no arranca debiendo penalizaciones por días previos a que entrara al grupo.** El ranking de un período (semanal/mensual) sólo penaliza a cada miembro desde su propia fecha de ingreso (`group_members.joined_at`) en adelante. Bug real, 2026-09-10: un grupo recién creado un 10 del mes mostraba a los dos jugadores con ~1 hora ya "cargada" — eran las penalizaciones de los días 1 al 9, cuando el grupo todavía no existía. Corregido en `buildGrid` (§5.1).
 
 **RF-9 — Editar y corregir**
 - Un jugador deberá poder editar o borrar sus propios resultados dentro de las **48 horas** posteriores al día del puzzle.

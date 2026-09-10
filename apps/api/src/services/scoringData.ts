@@ -15,7 +15,8 @@ export interface Roster {
 export async function loadRoster(groupId: string): Promise<Roster> {
   const [membersRes, gamesRes] = await Promise.all([
     db.query(
-      `select p.id, p.display_name, p.avatar
+      `select p.id, p.display_name, p.avatar,
+              (gm.joined_at at time zone 'America/Argentina/Buenos_Aires')::date as joined_on
          from public.group_members gm join public.profiles p on p.id = gm.user_id
         where gm.group_id = $1`,
       [groupId],
@@ -29,7 +30,7 @@ export async function loadRoster(groupId: string): Promise<Roster> {
     ),
   ]);
   return {
-    members: membersRes.rows.map((m) => ({ userId: m.id, displayName: m.display_name, avatar: m.avatar })),
+    members: membersRes.rows.map((m) => ({ userId: m.id, displayName: m.display_name, avatar: m.avatar, joinedOn: m.joined_on })),
     games: gamesRes.rows.map((g) => ({ slug: g.slug, name: g.name, penaltySeconds: g.penalty_seconds })),
   };
 }

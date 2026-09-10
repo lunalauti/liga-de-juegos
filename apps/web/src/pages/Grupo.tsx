@@ -403,6 +403,9 @@ function GroupSettingsForm({
   const [absencePolicy, setAbsencePolicy] = useState<'penalize' | 'ignore'>('penalize');
   const [scoringMode, setScoringMode] = useState<'total_time' | 'position_points'>('total_time');
   const [requireVerified, setRequireVerified] = useState(false);
+  // RF-17 — período de competencia. Se guarda como period_types + primary_period,
+  // pero acá se maneja como una sola opción: semanal / mensual / ambos.
+  const [period, setPeriod] = useState<'week' | 'month' | 'both'>('month');
   // RF-5 — en qué juegos compite el grupo. Arranca con todo el catálogo activo
   // (subset por default: los 3) hasta que llegue la respuesta real del grupo.
   const [enabledGames, setEnabledGames] = useState<Record<string, boolean>>(() =>
@@ -422,6 +425,8 @@ function GroupSettingsForm({
     setAbsencePolicy(settings.absence_policy);
     setScoringMode(settings.scoring_mode);
     setRequireVerified(settings.require_verified);
+    const types = settings.period_types ?? ['month', 'week'];
+    setPeriod(types.length > 1 ? 'both' : types[0] ?? 'month');
   }, [settings]);
 
   useEffect(() => {
@@ -445,6 +450,8 @@ function GroupSettingsForm({
             absence_policy: absencePolicy,
             scoring_mode: scoringMode,
             require_verified: requireVerified,
+            period_types: period === 'both' ? ['month', 'week'] : [period],
+            primary_period: period === 'both' ? 'month' : period,
           },
           games: GAMES.map((g) => ({ slug: g.slug, enabled: enabledGames[g.slug] ?? true })),
         },
@@ -483,6 +490,15 @@ function GroupSettingsForm({
           </p>
         )}
       </div>
+
+      <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <span style={{ fontSize: 13, fontWeight: 600 }}>Período de competencia</span>
+        <select className="form-select" value={period} onChange={(e) => setPeriod(e.target.value as typeof period)}>
+          <option value="week">Semanal</option>
+          <option value="month">Mensual</option>
+          <option value="both">Semanal y mensual</option>
+        </select>
+      </label>
 
       <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <span style={{ fontSize: 13, fontWeight: 600 }}>Trato de ausencias</span>

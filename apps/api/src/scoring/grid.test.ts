@@ -80,6 +80,28 @@ describe('buildGrid', () => {
     expect(grid).toHaveLength(GAMES.length); // sólo el 09-01 queda
   });
 
+  it('no penaliza días anteriores a que el miembro entrara al grupo (joinedOn)', () => {
+    // Bug real 2026-09-10: grupo recién creado mostraba horas de penalización
+    // acumuladas por días del mes previos a que el grupo existiera.
+    const grid = buildGrid({
+      members: [{ userId: 'u1', displayName: 'Uno', avatar: null, joinedOn: '2026-09-01' }],
+      games: GAMES,
+      days: ['2026-08-31', '2026-09-01'],
+      entries: [],
+      blackouts: [],
+      absencePolicy: 'penalize',
+      today: TODAY,
+    });
+    // El 08-31 es anterior al joinedOn → sin celdas. Sólo el 09-01 penaliza.
+    expect(grid.every((c) => c.puzzleDate === '2026-09-01')).toBe(true);
+    expect(grid).toHaveLength(GAMES.length);
+  });
+
+  it('sin joinedOn (fixture viejo) se comporta como antes: penaliza todos los días cerrados', () => {
+    const grid = buildGrid({ members: MEMBERS, games: GAMES, days: DAYS, entries: [], blackouts: [], absencePolicy: 'penalize', today: TODAY });
+    expect(grid).toHaveLength(MEMBERS.length * GAMES.length * DAYS.length);
+  });
+
   it('un blackout de un solo juego no anula el resto del día', () => {
     const grid = buildGrid({
       members: MEMBERS,

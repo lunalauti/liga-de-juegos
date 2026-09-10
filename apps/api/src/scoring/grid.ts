@@ -29,6 +29,12 @@ function isBlackout(blackouts: Blackout[], puzzleDate: string, gameSlug: string)
  * ausencia, sin importar `absencePolicy` — no perdiste nada todavía si el día
  * no cerró. Pedido explícito del usuario: "sólo sumá las penalizaciones si
  * terminó el día y no lo hice".
+ *
+ * `member.joinedOn` pone un piso por miembro: tampoco se penaliza un día
+ * ANTERIOR a que esa persona entrara al grupo (bug real encontrado el
+ * 2026-09-10 — un grupo recién creado mostraba a los dos jugadores con horas
+ * acumuladas de penalización por los días del mes previos a que el grupo
+ * existiera).
  */
 export function buildGrid(params: {
   members: ScoringMember[];
@@ -62,7 +68,7 @@ export function buildGrid(params: {
             verified: entry.verified,
             source: 'entry',
           });
-        } else if (absencePolicy === 'penalize' && day < today) {
+        } else if (absencePolicy === 'penalize' && day < today && (member.joinedOn === undefined || day >= member.joinedOn)) {
           cells.push({
             userId: member.userId,
             gameSlug: game.slug,

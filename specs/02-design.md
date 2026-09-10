@@ -387,6 +387,8 @@ entrada: entries del grupo en [desde, hasta], settings, miembros, juegos activos
 
 **Nota sobre "hoy" (RF-8):** el día en curso nunca genera una celda de ausencia, sea cual sea `absence_policy`. `buildGrid` recibe `today` explícito y compara `day < today`. Esto tampoco cambia con D2 — sigue viviendo en `buildGrid`, que es compartido por todos los juegos.
 
+**Nota sobre el ingreso al grupo (RF-8, bug real 2026-09-10):** además de `today`, `buildGrid` recibe un `joinedOn` por miembro (`ScoringMember.joinedOn`, sale de `group_members.joined_at` convertido a fecha ART en `loadRoster`). Un día anterior a `joinedOn` **no** genera celda de ausencia para ese miembro — nadie arranca debiendo penalizaciones por días en los que el grupo, o su membresía, todavía no existía. Sin esto, un grupo creado un 10 del mes mostraba a sus miembros con la penalización de los días 1–9 ya acumulada (≈1 h en Crucigrama). El creador tiene `joined_at` ≈ `created_at`, así que el mismo mecanismo cubre "grupo nuevo" y "alguien se sumó a mitad de período".
+
 **Simplificación real que trae este cambio:** `computeDailyWinners` (T4.2) tenía que chequear `cells.length < activeGameCount` para descartar a quien no tuviera el día completo en los 3 juegos, porque comparaba sumas del día entero. Al rankear por juego, esa comparación desaparece: ganar el día en Crucigrama sólo depende de haber jugado Crucigrama ese día, no de haber jugado también Sudoku. Menos código, no más.
 
 ### 5.2 Modo `position_points`
