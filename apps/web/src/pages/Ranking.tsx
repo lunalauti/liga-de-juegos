@@ -55,7 +55,9 @@ export default function Ranking() {
   const me = session?.user;
   const { activeGroup, loading: loadingMe } = useActiveGroupContext();
 
-  const [period, setPeriod] = useState<Period>('month');
+  // `null` = todavía no se eligió una pestaña a mano → el backend usa el
+  // período principal del grupo, y la respuesta nos dice cuál fue.
+  const [period, setPeriod] = useState<Period | null>(null);
   const [gameSlug, setGameSlug] = useState<string | null>(null);
   const [data, setData] = useState<LeaderboardResponse | null>(null);
   const [h2h, setH2h] = useState<H2HResponse | null>(null);
@@ -69,13 +71,15 @@ export default function Ranking() {
     }
     setLoading(true);
     setError(null);
+    const qs = period ? `?period=${period}` : '';
     Promise.all([
-      apiFetch<LeaderboardResponse>(`/groups/${activeGroup.id}/leaderboard?period=${period}`, { accessToken: token }),
-      apiFetch<H2HResponse>(`/groups/${activeGroup.id}/h2h?period=${period}`, { accessToken: token }),
+      apiFetch<LeaderboardResponse>(`/groups/${activeGroup.id}/leaderboard${qs}`, { accessToken: token }),
+      apiFetch<H2HResponse>(`/groups/${activeGroup.id}/h2h${qs}`, { accessToken: token }),
     ])
       .then(([res, h2hRes]) => {
         setData(res);
         setH2h(h2hRes);
+        setPeriod((prev) => prev ?? res.period.type); // en el primer load, adopta el período principal del grupo
         // El juego seleccionado sigue vivo mientras exista en la respuesta nueva;
         // si no (cambió de grupo, o el admin desactivó ese juego), cae al primero.
         setGameSlug((prev) => (prev && res.rankings.some((r) => r.gameSlug === prev) ? prev : (res.rankings[0]?.gameSlug ?? null)));

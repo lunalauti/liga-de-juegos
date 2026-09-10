@@ -80,11 +80,12 @@ describe('buildGrid', () => {
     expect(grid).toHaveLength(GAMES.length); // sólo el 09-01 queda
   });
 
-  it('no penaliza días anteriores a que el miembro entrara al grupo (joinedOn)', () => {
+  it('no penaliza días <= a que el miembro entrara al grupo (joinedOn, piso estricto)', () => {
     // Bug real 2026-09-10: grupo recién creado mostraba horas de penalización
-    // acumuladas por días del mes previos a que el grupo existiera.
+    // acumuladas por días previos a que el grupo existiera. El día de ingreso
+    // tampoco cuenta (funciona igual que "hoy" para esa persona).
     const grid = buildGrid({
-      members: [{ userId: 'u1', displayName: 'Uno', avatar: null, joinedOn: '2026-09-01' }],
+      members: [{ userId: 'u1', displayName: 'Uno', avatar: null, joinedOn: '2026-08-31' }],
       games: GAMES,
       days: ['2026-08-31', '2026-09-01'],
       entries: [],
@@ -92,7 +93,7 @@ describe('buildGrid', () => {
       absencePolicy: 'penalize',
       today: TODAY,
     });
-    // El 08-31 es anterior al joinedOn → sin celdas. Sólo el 09-01 penaliza.
+    // El 08-31 (día de ingreso) no penaliza. Sólo el 09-01.
     expect(grid.every((c) => c.puzzleDate === '2026-09-01')).toBe(true);
     expect(grid).toHaveLength(GAMES.length);
   });

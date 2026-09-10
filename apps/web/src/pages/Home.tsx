@@ -53,7 +53,10 @@ export default function Home() {
     }
     setLoading(true);
     Promise.all([
-      apiFetch<LeaderboardResponse>(`/groups/${activeGroup.id}/leaderboard?period=month`, { accessToken: token }),
+      // Sin `?period=`: el backend usa el período principal del grupo
+      // (`settings.primary_period`) — Home no debe forzar el mensual sobre un
+      // grupo que compite por semana.
+      apiFetch<LeaderboardResponse>(`/groups/${activeGroup.id}/leaderboard`, { accessToken: token }),
       apiFetch<DayResponse>(`/groups/${activeGroup.id}/day`, { accessToken: token }),
     ])
       .then(([lbRes, dayRes]) => {
@@ -133,7 +136,7 @@ export default function Home() {
       {myPositions.length > 0 && (
         <div style={{ background: '#fff', border: '1px solid #DDD6C8' }}>
           <div style={{ padding: '10px 16px', borderBottom: '1px solid #DDD6C8', background: '#F1EBDD' }}>
-            <span className="lj-label" style={{ color: '#4A4438' }}>Tu posición · este mes</span>
+            <span className="lj-label" style={{ color: '#4A4438' }}>Tu posición · {lb.period.type === 'week' ? 'esta semana' : 'este mes'}</span>
           </div>
           {myPositions.map(({ ranking, row }, i) => (
             <div
