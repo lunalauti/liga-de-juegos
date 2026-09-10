@@ -57,15 +57,20 @@ export async function upsertEntry(client: Pool | PoolClient, write: EntryWrite, 
   );
 
   const entry = after.rows[0];
+  const wasCreated = before.rows.length === 0;
   await client.query(
     `insert into public.entry_audit (entry_id, actor_id, action, before, after) values ($1, $2, $3, $4, $5)`,
-    [entry.id, actorId, before.rows.length ? 'update' : 'create', before.rows[0] ?? null, entry],
+    [entry.id, actorId, wasCreated ? 'create' : 'update', before.rows[0] ?? null, entry],
   );
 
   // T7.1/RF-16: garantiza que exista una `season` abierta para el período de este
   // resultado — sin esto, T7.2 no tendría nada que cerrar cuando el período termine.
   await ensureOpenSeasons(client, write.groupId, write.puzzleDate);
 
+  // No es una columna de la tabla — es información que ya tenemos acá (antes
+  // vs. después del upsert) y que el caller necesita para decidir si dispara
+  // el aviso de RF-23 (T11.3): sólo la primera carga avisa, nunca una edición.
+  entry.was_created = wasCreated;
   return entry;
 }
 

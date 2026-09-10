@@ -47,7 +47,22 @@ cronRouter.post('/internal/cron/notify-pending', async (req, res, next) => {
     }
 
     const puzzleDate = todayInArgentina();
-    const pending = await findPendingUsers(puzzleDate);
+    const allPending = await findPendingUsers(puzzleDate);
+
+    // T11.1/D13 — "tener una suscripción push" ya no implica "querer este
+    // aviso puntual": con tres avisos independientes hace falta filtrar
+    // también por notification_prefs.pendingToday, no sólo por pending.length.
+    let pending = allPending;
+    let skippedPrefOff = 0;
+    if (allPending.length > 0) {
+      const prefsRes = await db.query(
+        `select id from public.profiles where id = any($1) and (notification_prefs->>'pendingToday')::boolean is true`,
+        [allPending.map((u) => u.userId)],
+      );
+      const wantsIt = new Set(prefsRes.rows.map((r) => r.id as string));
+      pending = allPending.filter((u) => wantsIt.has(u.userId));
+      skippedPrefOff = allPending.length - pending.length;
+    }
 
     let notified = 0;
     let skippedAlreadySent = 0;
@@ -78,7 +93,7 @@ cronRouter.post('/internal/cron/notify-pending', async (req, res, next) => {
       notified++;
     }
 
-    res.json({ ok: true, puzzleDate, pendingUsers: pending.length, notified, skippedAlreadySent, skippedNoSubscription });
+    res.json({ ok: true, puzzleDate, pendingUsers: pending.length, notified, skippedAlreadySent, skippedNoSubscription, skippedPrefOff });
   } catch (err) {
     next(err);
   }

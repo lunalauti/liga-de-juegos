@@ -7,6 +7,7 @@ import { getMembership } from '../services/authz.js';
 import { fetchLnResult, LnFetchError, type LnResult } from '../services/lanacion.js';
 import { upsertEntry, serializeEntry, resolveLnVerification, isNewPersonalBest } from '../services/entries.js';
 import { invalidateGroupCache } from '../services/leaderboardCache.js';
+import { notifyTeammateActivity } from '../services/notifications.js';
 
 export const entriesImportRouter = Router();
 
@@ -223,6 +224,18 @@ entriesImportRouter.post('/entries/import', async (req, res, next) => {
 
     await client.query('commit');
     for (const g of groupResults) if (g.status === 'created' || g.status === 'updated') invalidateGroupCache(g.groupId);
+
+    // RF-23/T11.3 — fire-and-forget, después del commit (nunca dentro de la
+    // transacción de guardado). Un link puede importarse a varios grupos a la
+    // vez (§9.4): sólo avisa en los grupos donde de verdad se CREÓ el
+    // resultado, no en los que ya lo tenían y se actualizó.
+    if (!r.dnf) {
+      for (const g of groupResults) {
+        if (g.status === 'created') {
+          void notifyTeammateActivity({ groupId: g.groupId, actorId, gameName: r.gameName, durationSeconds: r.ln.seconds, isPersonalBest });
+        }
+      }
+    }
 
     // El tiempo real (ln.seconds) es el mismo para todos los grupos, pero si dnf=true
     // el segundo que cuenta es la penalización de CADA grupo — puede diferir entre

@@ -7,6 +7,7 @@ import { badRequest, conflict, forbidden, notFound } from '../errors.js';
 import { requireMember } from '../services/authz.js';
 import { upsertEntry, serializeEntry, isNewPersonalBest } from '../services/entries.js';
 import { invalidateGroupCache } from '../services/leaderboardCache.js';
+import { notifyTeammateActivity } from '../services/notifications.js';
 
 export const entriesRouter = Router();
 
@@ -106,6 +107,14 @@ async function writeManualEntry(
   // T8.4/RF-14: se calcula DESPUÉS del upsert, así el propio resultado ya cuenta
   // en el mínimo — PB es global por jugador y juego, no por grupo.
   const isPersonalBest = await isNewPersonalBest(db, actorId, groupGame.game_id, durationSeconds, dnf);
+
+  // RF-23/T11.3 — fire-and-forget: sin await, no puede demorar la respuesta
+  // de "tu tiempo se guardó". Sólo la primera carga avisa (no una edición), y
+  // nunca un DNF (ver notifyTeammateActivity, que igual no filtraría porque
+  // esto ni siquiera se llama en ese caso).
+  if (!dnf && entry.was_created) {
+    void notifyTeammateActivity({ groupId, actorId, gameName: groupGame.name, durationSeconds, isPersonalBest });
+  }
 
   return { entry: serializeEntry(entry), gameSlug: groupGame.slug, autoConvertedToDnf, isPersonalBest };
 }

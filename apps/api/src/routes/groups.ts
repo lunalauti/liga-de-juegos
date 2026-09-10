@@ -6,6 +6,7 @@ import { badRequest, conflict, notFound } from '../errors.js';
 import { generateInviteCode } from '../services/inviteCode.js';
 import { getMembership, requireMember, requireAdmin } from '../services/authz.js';
 import { invalidateGroupCache } from '../services/leaderboardCache.js';
+import { notifyNewMember } from '../services/notifications.js';
 
 export const groupsRouter = Router();
 
@@ -125,6 +126,11 @@ groupsRouter.post('/groups/join', async (req, res, next) => {
         `insert into public.group_members (group_id, user_id, role) values ($1, $2, 'member')`,
         [group.id, req.user!.id],
       );
+      // RF-24/T11.4 — fire-and-forget, y sólo en un join DE VERDAD (join es
+      // idempotente: si ya era miembro, no hay nada nuevo que festejar).
+      const profileRes = await db.query(`select display_name from public.profiles where id = $1`, [req.user!.id]);
+      const newMemberName = profileRes.rows[0]?.display_name ?? 'Alguien';
+      void notifyNewMember({ groupId: group.id, groupName: group.name, newMemberId: req.user!.id, newMemberName });
     }
 
     const detail = await loadGroupDetail(group.id);

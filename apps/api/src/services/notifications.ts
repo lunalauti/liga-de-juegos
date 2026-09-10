@@ -1,4 +1,6 @@
+import { formatTime } from '@liga/shared';
 import { db } from '../db.js';
+import { subscriptionsForUser, sendToSubscription } from './push.js';
 
 /**
  * T10.5, specs/02-design.md §10.4 — RF-22 "faltan tus tiempos de hoy". Quiénes
@@ -74,4 +76,90 @@ export function pendingBodyText(gameNames: string[]): string {
   if (gameNames.length === 1) return `${gameNames[0]} sigue sin cargar.`;
   const allButLast = gameNames.slice(0, -1).join(', ');
   return `${allButLast} y ${gameNames[gameNames.length - 1]} siguen sin cargar.`;
+}
+
+// ---------------------------------------------------------------------------
+// RF-23/RF-24, T11.3/T11.4, specs/02-design.md §10.7 — avisos EN VIVO, no por
+// cron: se llaman fire-and-forget (sin await desde el caller) justo después
+// de escribir el resultado o de procesar el join, usando el pool top-level
+// en vez de la conexión transaccional del caller — este efecto secundario no
+// puede formar parte de esa transacción ni demorar su respuesta.
+// ---------------------------------------------------------------------------
+
+/** "🏆 Nuevo récord personal" con más peso que una finalización genérica (RF-14 ya lo destaca en el resto de la app). Pura. */
+export function teammateActivityPayload(
+  actorName: string,
+  p: { gameName: string; durationSeconds: number; isPersonalBest: boolean },
+): { title: string; body: string; url: string } {
+  const time = formatTime(p.durationSeconds);
+  return p.isPersonalBest
+    ? { title: '🏆 Nuevo récord personal', body: `${actorName} hizo ${time} en ${p.gameName}.`, url: '/dia/hoy' }
+    : { title: 'Liga de Juegos', body: `${actorName} completó ${p.gameName} en ${time}.`, url: '/dia/hoy' };
+}
+
+/**
+ * RF-23 — se llama desde `services/entries.ts#upsertEntry` cuando la carga
+ * es nueva (no una edición) y no es DNF. Filtra por `notification_prefs.
+ * teammateActivity` antes de buscar suscripciones — "tener push" ya no
+ * alcanza para decidir a quién mandarle esto (D13).
+ */
+export async function notifyTeammateActivity(params: {
+  groupId: string;
+  actorId: string;
+  gameName: string;
+  durationSeconds: number;
+  isPersonalBest: boolean;
+}): Promise<void> {
+  try {
+    const actorRes = await db.query(`select display_name from public.profiles where id = $1`, [params.actorId]);
+    const actorName = actorRes.rows[0]?.display_name ?? 'Alguien';
+
+    const teammates = await db.query(
+      `select gm.user_id from public.group_members gm
+         join public.profiles p on p.id = gm.user_id
+        where gm.group_id = $1 and gm.user_id != $2
+          and coalesce((p.notification_prefs->>'teammateActivity')::boolean, false)`,
+      [params.groupId, params.actorId],
+    );
+    if (teammates.rows.length === 0) return;
+
+    const payload = teammateActivityPayload(actorName, params);
+    for (const row of teammates.rows) {
+      for (const sub of await subscriptionsForUser(db, row.user_id)) await sendToSubscription(db, sub, payload);
+    }
+  } catch (err) {
+    // Nunca debe tumbar la carga del resultado que lo disparó — sólo loguear.
+    console.error('[notifications] error en aviso de actividad de compañero', err);
+  }
+}
+
+/** "{Nombre} ahora compite en {grupo}." (§10.5, RF-24). Pura. */
+export function newMemberPayload(newMemberName: string, groupName: string): { title: string; body: string; url: string } {
+  return { title: 'Liga de Juegos', body: `${newMemberName} ahora compite en ${groupName}.`, url: '/grupo' };
+}
+
+/** RF-24 — se llama desde `POST /groups/join` después de insertar la membresía. */
+export async function notifyNewMember(params: {
+  groupId: string;
+  groupName: string;
+  newMemberId: string;
+  newMemberName: string;
+}): Promise<void> {
+  try {
+    const existingMembers = await db.query(
+      `select gm.user_id from public.group_members gm
+         join public.profiles p on p.id = gm.user_id
+        where gm.group_id = $1 and gm.user_id != $2
+          and coalesce((p.notification_prefs->>'newMember')::boolean, false)`,
+      [params.groupId, params.newMemberId],
+    );
+    if (existingMembers.rows.length === 0) return;
+
+    const payload = newMemberPayload(params.newMemberName, params.groupName);
+    for (const row of existingMembers.rows) {
+      for (const sub of await subscriptionsForUser(db, row.user_id)) await sendToSubscription(db, sub, payload);
+    }
+  } catch (err) {
+    console.error('[notifications] error en aviso de nuevo miembro', err);
+  }
 }

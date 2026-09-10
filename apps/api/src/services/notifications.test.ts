@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { consolidatePending, pendingBodyText, type PendingRow } from './notifications.js';
+import { consolidatePending, pendingBodyText, teammateActivityPayload, newMemberPayload, type PendingRow } from './notifications.js';
 
 function row(over: Partial<PendingRow>): PendingRow {
   return { userId: 'u1', displayName: 'Lauti', gameSlug: 'crucigrama', gameName: 'Crucigrama', groupId: 'g1', ...over };
@@ -48,5 +48,29 @@ describe('pendingBodyText', () => {
     expect(pendingBodyText(['Crucigrama', 'Cruci Experto', 'Sudoku Avanzado'])).toBe(
       'Crucigrama, Cruci Experto y Sudoku Avanzado siguen sin cargar.',
     );
+  });
+});
+
+describe('teammateActivityPayload (T11.3, RF-23)', () => {
+  it('finalización normal: texto genérico', () => {
+    const p = teammateActivityPayload('Sol', { gameName: 'Crucigrama', durationSeconds: 425, isPersonalBest: false });
+    expect(p.title).toBe('Liga de Juegos');
+    expect(p.body).toBe('Sol completó Crucigrama en 07:05.');
+    expect(p.url).toBe('/dia/hoy');
+  });
+
+  it('récord personal: título y texto con más peso, con el trofeo', () => {
+    const p = teammateActivityPayload('Luqui', { gameName: 'Sudoku Avanzado', durationSeconds: 300, isPersonalBest: true });
+    expect(p.title).toBe('🏆 Nuevo récord personal');
+    expect(p.body).toBe('Luqui hizo 05:00 en Sudoku Avanzado.');
+  });
+});
+
+describe('newMemberPayload (T11.4, RF-24)', () => {
+  it('arma el texto de bienvenida', () => {
+    const p = newMemberPayload('Aureliano', 'La banda del crucigrama');
+    expect(p.title).toBe('Liga de Juegos');
+    expect(p.body).toBe('Aureliano ahora compite en La banda del crucigrama.');
+    expect(p.url).toBe('/grupo');
   });
 });

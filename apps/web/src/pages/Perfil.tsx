@@ -7,10 +7,17 @@ import { getPushUiState, subscribeToPush, unsubscribeFromPush, isStandalone, can
 import { promptInstall } from '../lib/installPrompt';
 import { InstallTutorial } from '../components/InstallTutorial';
 
+interface NotificationPrefs {
+  pendingToday: boolean;
+  teammateActivity: boolean;
+  newMember: boolean;
+}
+
 interface Me {
   id: string;
   displayName: string;
   avatar: string | null;
+  notificationPrefs: NotificationPrefs;
   groups: { id: string; name: string; inviteCode: string; role: string }[];
 }
 
@@ -109,7 +116,7 @@ export default function Perfil() {
         </button>
       </form>
 
-      <NotificationsCard token={token} />
+      <NotificationsCard token={token} prefs={me?.notificationPrefs} onPrefsChange={(p) => setMe((prev) => (prev ? { ...prev, notificationPrefs: p } : prev))} />
       {!isStandalone() && <InstallTutorial />}
 
       {me && me.groups.length > 0 && (
@@ -145,22 +152,39 @@ function Shell({ children }: { children: React.ReactNode }) {
   return <div style={{ maxWidth: 420, margin: '0 auto', padding: '40px 20px' }}>{children}</div>;
 }
 
+const PREF_LABELS: { key: keyof NotificationPrefs; title: string; caption: string }[] = [
+  { key: 'pendingToday', title: 'Avisarme si me faltan tiempos', caption: 'Un aviso por día, a la noche, si te queda algo pendiente.' },
+  { key: 'teammateActivity', title: 'Avisos de mis compañeros', caption: 'Cuando alguien del grupo completa un juego (o hace un récord).' },
+  { key: 'newMember', title: 'Nuevos miembros', caption: 'Cuando alguien se suma a uno de tus grupos.' },
+];
+
 /**
- * T10.4, specs/02-design.md §10.3 — RF-21/RF-22. El estado se recalcula,
- * nunca se guarda en un flag propio: la fuente de verdad de "¿estoy
- * suscripto en ESTE navegador?" es el navegador mismo
- * (`pushManager.getSubscription()`).
+ * T10.4/T11.2, specs/02-design.md §10.3/§10.7 — RF-21/RF-22/RF-23/RF-24, D13.
+ * El estado de SUSCRIPCIÓN se recalcula, nunca se guarda en un flag propio:
+ * la fuente de verdad de "¿estoy suscripto en ESTE navegador?" es el
+ * navegador mismo (`pushManager.getSubscription()`). Las PREFERENCIAS (qué
+ * tipo de aviso querés) sí viven en el backend (`profiles.notification_prefs`)
+ * — son tres toggles independientes (D13), no uno solo: activar uno no
+ * activa los otros.
  *
  * Corregido 2026-09-10 (pregunta del usuario: "¿se pueden mandar
  * notificaciones sin instalar en desktop?"): instalar sólo es un requisito
  * TÉCNICO en iOS — en Chrome/Android/desktop las notificaciones andan igual
- * sin instalar nada. El toggle ya no queda escondido detrás de un paso de
+ * sin instalar nada. Los toggles no quedan escondidos detrás de un paso de
  * instalación obligatorio salvo en iOS; `canInstall()` es sólo informativo,
  * ofrece instalar como comodidad aparte, nunca como condición.
  */
-function NotificationsCard({ token }: { token: string | undefined }) {
+function NotificationsCard({
+  token,
+  prefs,
+  onPrefsChange,
+}: {
+  token: string | undefined;
+  prefs: NotificationPrefs | undefined;
+  onPrefsChange: (p: NotificationPrefs) => void;
+}) {
   const [state, setState] = useState<PushUiState | 'loading'>('loading');
-  const [busy, setBusy] = useState(false);
+  const [busyKey, setBusyKey] = useState<keyof NotificationPrefs | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = () => {
@@ -171,7 +195,7 @@ function NotificationsCard({ token }: { token: string | undefined }) {
 
   useEffect(refresh, []);
 
-  if (state === 'loading') return null;
+  if (state === 'loading' || !prefs) return null;
   if (state === 'unsupported') return null; // RNF-9: no aparece nada, no un error
 
   async function handleInstall() {
@@ -180,26 +204,36 @@ function NotificationsCard({ token }: { token: string | undefined }) {
     if (outcome === 'accepted') refresh();
   }
 
-  async function handleToggle(next: boolean) {
-    if (!token) return;
-    setBusy(true);
+  async function handleToggle(key: keyof NotificationPrefs, next: boolean) {
+    if (!token || !prefs) return;
+    setBusyKey(key);
     setError(null);
     try {
-      if (next) {
-        await subscribeToPush(token);
-      } else {
-        await unsubscribeFromPush(token);
-      }
+      // Sin suscripción todavía en este navegador, no hay a quién mandarle
+      // ningún aviso — se crea acá, con el mismo click (es el gesto real que
+      // el navegador necesita para mostrar el permiso).
+      if (state === 'not-subscribed') await subscribeToPush(token);
+      const res = await apiFetch<{ notificationPrefs: NotificationPrefs }>('/me/notification-prefs', {
+        method: 'PATCH',
+        accessToken: token,
+        body: { [key]: next },
+      });
+      onPrefsChange(res.notificationPrefs);
+      // Si ya no quiere ninguno de los tres, la suscripción de este navegador
+      // no le sirve a nadie más — se da de baja sola, en vez de dejarla
+      // colgada sin ningún aviso que la use.
+      const stillWantsSomething = Object.values(res.notificationPrefs).some(Boolean);
+      if (!stillWantsSomething) await unsubscribeFromPush(token);
       refresh();
     } catch (e) {
       if (e instanceof Error && e.message === 'PERMISSION_DENIED') {
         setError('No diste el permiso — no se puede activar sin eso.');
       } else {
-        setError('No pudimos activar los avisos. Probá de nuevo en un rato.');
+        setError('No pudimos guardar el cambio. Probá de nuevo en un rato.');
       }
       refresh();
     } finally {
-      setBusy(false);
+      setBusyKey(null);
     }
   }
 
@@ -223,23 +257,30 @@ function NotificationsCard({ token }: { token: string | undefined }) {
 
         {(state === 'not-subscribed' || state === 'subscribed') && (
           <>
-            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, cursor: busy ? 'default' : 'pointer' }}>
-              <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <span style={{ fontSize: 14, fontWeight: 600 }}>Avisarme si me faltan tiempos</span>
-                <span style={{ fontSize: 12, color: '#6B6357' }}>Un aviso por día, a la noche, si te queda algo pendiente.</span>
-              </span>
-              <input
-                type="checkbox"
-                role="switch"
-                className="form-check-input"
-                checked={state === 'subscribed'}
-                disabled={busy}
-                onChange={(e) => void handleToggle(e.target.checked)}
-                style={{ flex: '0 0 auto' }}
-              />
-            </label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {PREF_LABELS.map(({ key, title, caption }, i) => (
+                <label
+                  key={key}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, cursor: busyKey ? 'default' : 'pointer', paddingTop: i > 0 ? 12 : 0, borderTop: i > 0 ? '1px solid #EDE7DA' : undefined }}
+                >
+                  <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <span style={{ fontSize: 14, fontWeight: 600 }}>{title}</span>
+                    <span style={{ fontSize: 12, color: '#6B6357' }}>{caption}</span>
+                  </span>
+                  <input
+                    type="checkbox"
+                    role="switch"
+                    className="form-check-input"
+                    checked={state === 'subscribed' && prefs[key]}
+                    disabled={busyKey !== null}
+                    onChange={(e) => void handleToggle(key, e.target.checked)}
+                    style={{ flex: '0 0 auto' }}
+                  />
+                </label>
+              ))}
+            </div>
             {canInstall() && (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 12, paddingTop: 12, borderTop: '1px solid #EDE7DA' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 14, paddingTop: 14, borderTop: '1px solid #EDE7DA' }}>
                 <span style={{ fontSize: 12, color: '#6B6357' }}>¿Querés acceso más rápido? No hace falta para los avisos.</span>
                 <button type="button" className="btn btn-outline-dark btn-sm" style={{ flex: '0 0 auto' }} onClick={() => void handleInstall()}>
                   Instalar app
@@ -252,7 +293,7 @@ function NotificationsCard({ token }: { token: string | undefined }) {
         {state === 'denied' && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <span style={{ fontSize: 14, fontWeight: 600, color: '#8C8271' }}>Avisarme si me faltan tiempos</span>
+              <span style={{ fontSize: 14, fontWeight: 600, color: '#8C8271' }}>Avisos</span>
               <span style={{ fontSize: 12, color: '#6B6357' }}>Lo bloqueaste desde el navegador — hay que habilitarlo ahí para poder activarlo acá.</span>
             </span>
             <input type="checkbox" role="switch" className="form-check-input" checked={false} disabled style={{ flex: '0 0 auto' }} />

@@ -10,7 +10,7 @@ meRouter.get('/me', async (req, res, next) => {
   try {
     const userId = req.user!.id;
     const profileQ = db.query(
-      `select id, display_name, avatar, created_at from public.profiles where id = $1`,
+      `select id, display_name, avatar, notification_prefs, created_at from public.profiles where id = $1`,
       [userId],
     );
     const groupsQ = db.query(
@@ -29,6 +29,7 @@ meRouter.get('/me', async (req, res, next) => {
       id: p.id,
       displayName: p.display_name,
       avatar: p.avatar,
+      notificationPrefs: p.notification_prefs,
       createdAt: p.created_at,
       groups: groups.rows.map((g) => ({
         id: g.id,
@@ -77,6 +78,38 @@ meRouter.patch('/me', async (req, res, next) => {
 
     const p = result.rows[0];
     res.json({ id: p.id, displayName: p.display_name, avatar: p.avatar, createdAt: p.created_at });
+  } catch (err) {
+    next(err);
+  }
+});
+
+const notificationPrefsSchema = z
+  .object({
+    pendingToday: z.boolean().optional(),
+    teammateActivity: z.boolean().optional(),
+    newMember: z.boolean().optional(),
+  })
+  .refine((v) => Object.keys(v).length > 0, { message: 'No mandaste ningún aviso para cambiar' });
+
+/**
+ * T11.1, RF-22/RF-23/RF-24, D13 — tres avisos independientes, se prenden y
+ * apagan por separado. Parcial a propósito (como el PATCH de arriba): mandar
+ * sólo `{ teammateActivity: true }` no toca los otros dos.
+ * `jsonb_set` en vez de reemplazar la columna entera evita pisar una
+ * preferencia que no vino en este PATCH con lo que sea que trajera el default.
+ */
+meRouter.patch('/me/notification-prefs', async (req, res, next) => {
+  try {
+    const body = notificationPrefsSchema.parse(req.body);
+    const current = await db.query(`select notification_prefs from public.profiles where id = $1`, [req.user!.id]);
+    if (current.rows.length === 0) throw notFound();
+
+    const merged = { ...current.rows[0].notification_prefs, ...body };
+    const result = await db.query(
+      `update public.profiles set notification_prefs = $1 where id = $2 returning notification_prefs`,
+      [JSON.stringify(merged), req.user!.id],
+    );
+    res.json({ notificationPrefs: result.rows[0].notification_prefs });
   } catch (err) {
     next(err);
   }
