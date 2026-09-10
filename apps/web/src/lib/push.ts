@@ -8,13 +8,7 @@ import { getInstallPrompt } from './installPrompt';
  * `scoring/*.ts` en la API: la parte que hay que razonar con cuidado vive
  * aparte de lo que sólo pinta.
  */
-export type PushUiState =
-  | 'unsupported'
-  | 'ios-not-installed'
-  | 'installable'
-  | 'not-subscribed'
-  | 'subscribed'
-  | 'denied';
+export type PushUiState = 'unsupported' | 'ios-not-installed' | 'not-subscribed' | 'subscribed' | 'denied';
 
 export function isIOS(): boolean {
   // iPadOS 13+ se identifica como Mac con soporte táctil — sin el chequeo de
@@ -42,13 +36,22 @@ function urlBase64ToUint8Array(base64: string): Uint8Array<ArrayBuffer> {
 
 export async function getPushUiState(): Promise<PushUiState> {
   if (!isPushSupported()) return 'unsupported';
+  // Instalar sólo es un requisito TÉCNICO en iOS (Apple no deja usar Web Push
+  // desde Safari si no está agregada a la pantalla de inicio). En
+  // Chrome/Android/desktop las notificaciones andan igual sin instalar nada
+  // — instalar ahí es sólo una comodidad aparte (ver `canInstall`), nunca un
+  // paso obligatorio antes de poder activar los avisos.
   if (isIOS() && !isStandalone()) return 'ios-not-installed';
   if (Notification.permission === 'denied') return 'denied';
-  if (!isStandalone() && getInstallPrompt()) return 'installable';
 
   const registration = await navigator.serviceWorker.ready;
   const subscription = await registration.pushManager.getSubscription();
   return subscription ? 'subscribed' : 'not-subscribed';
+}
+
+/** Sólo informativo: hay un prompt de instalación nativo disponible (Chrome/Android/desktop) y todavía no está instalada. No condiciona si se puede activar el toggle de avisos. */
+export function canInstall(): boolean {
+  return !isStandalone() && !!getInstallPrompt();
 }
 
 export async function subscribeToPush(accessToken: string): Promise<void> {

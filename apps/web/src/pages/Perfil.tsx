@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { apiFetch, ApiClientError } from '../api/client';
 import { useSession } from '../hooks/useSession';
 import { LoadingState } from '../components/LoadingState';
-import { getPushUiState, subscribeToPush, unsubscribeFromPush, isStandalone, type PushUiState } from '../lib/push';
+import { getPushUiState, subscribeToPush, unsubscribeFromPush, isStandalone, canInstall, type PushUiState } from '../lib/push';
 import { promptInstall } from '../lib/installPrompt';
 import { InstallTutorial } from '../components/InstallTutorial';
 
@@ -146,11 +146,17 @@ function Shell({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * T10.4, specs/02-design.md §10.3 — RF-21/RF-22. Seis estados posibles según
- * plataforma y permiso; ninguno es "el flujo", cada uno es un estado final
- * válido por sí mismo (§10.3 lo deja explícito). El estado se recalcula, nunca
- * se guarda en un flag propio: la fuente de verdad de "¿estoy suscripto en
- * ESTE navegador?" es el navegador mismo (`pushManager.getSubscription()`).
+ * T10.4, specs/02-design.md §10.3 — RF-21/RF-22. El estado se recalcula,
+ * nunca se guarda en un flag propio: la fuente de verdad de "¿estoy
+ * suscripto en ESTE navegador?" es el navegador mismo
+ * (`pushManager.getSubscription()`).
+ *
+ * Corregido 2026-09-10 (pregunta del usuario: "¿se pueden mandar
+ * notificaciones sin instalar en desktop?"): instalar sólo es un requisito
+ * TÉCNICO en iOS — en Chrome/Android/desktop las notificaciones andan igual
+ * sin instalar nada. El toggle ya no queda escondido detrás de un paso de
+ * instalación obligatorio salvo en iOS; `canInstall()` es sólo informativo,
+ * ofrece instalar como comodidad aparte, nunca como condición.
  */
 function NotificationsCard({ token }: { token: string | undefined }) {
   const [state, setState] = useState<PushUiState | 'loading'>('loading');
@@ -215,29 +221,32 @@ function NotificationsCard({ token }: { token: string | undefined }) {
           </div>
         )}
 
-        {state === 'installable' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <p style={{ fontSize: 13, color: '#4A4438', margin: 0 }}>Instalá la app para recibir avisos y acceso más rápido.</p>
-            <button type="button" className="btn btn-primary" onClick={() => void handleInstall()}>Instalar app</button>
-          </div>
-        )}
-
         {(state === 'not-subscribed' || state === 'subscribed') && (
-          <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, cursor: busy ? 'default' : 'pointer' }}>
-            <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <span style={{ fontSize: 14, fontWeight: 600 }}>Avisarme si me faltan tiempos</span>
-              <span style={{ fontSize: 12, color: '#6B6357' }}>Un aviso por día, a la noche, si te queda algo pendiente.</span>
-            </span>
-            <input
-              type="checkbox"
-              role="switch"
-              className="form-check-input"
-              checked={state === 'subscribed'}
-              disabled={busy}
-              onChange={(e) => void handleToggle(e.target.checked)}
-              style={{ flex: '0 0 auto' }}
-            />
-          </label>
+          <>
+            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, cursor: busy ? 'default' : 'pointer' }}>
+              <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <span style={{ fontSize: 14, fontWeight: 600 }}>Avisarme si me faltan tiempos</span>
+                <span style={{ fontSize: 12, color: '#6B6357' }}>Un aviso por día, a la noche, si te queda algo pendiente.</span>
+              </span>
+              <input
+                type="checkbox"
+                role="switch"
+                className="form-check-input"
+                checked={state === 'subscribed'}
+                disabled={busy}
+                onChange={(e) => void handleToggle(e.target.checked)}
+                style={{ flex: '0 0 auto' }}
+              />
+            </label>
+            {canInstall() && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 12, paddingTop: 12, borderTop: '1px solid #EDE7DA' }}>
+                <span style={{ fontSize: 12, color: '#6B6357' }}>¿Querés acceso más rápido? No hace falta para los avisos.</span>
+                <button type="button" className="btn btn-outline-dark btn-sm" style={{ flex: '0 0 auto' }} onClick={() => void handleInstall()}>
+                  Instalar app
+                </button>
+              </div>
+            )}
+          </>
         )}
 
         {state === 'denied' && (

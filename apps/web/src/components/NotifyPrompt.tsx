@@ -21,7 +21,7 @@ export function NotifyPrompt({ token }: { token: string | undefined }) {
     if (localStorage.getItem(STORAGE_KEY)) return;
     getPushUiState()
       .then((s) => {
-        if (s === 'not-subscribed' || s === 'installable' || s === 'ios-not-installed') setState(s);
+        if (s === 'not-subscribed' || s === 'ios-not-installed') setState(s);
       })
       .catch(() => {});
   }, []);
@@ -45,8 +45,8 @@ export function NotifyPrompt({ token }: { token: string | undefined }) {
       dismiss();
       return;
     }
-    // Instalable o iOS sin instalar: el flujo completo (con instrucciones)
-    // vive en Perfil, no tiene sentido duplicarlo acá.
+    // iOS sin instalar: el flujo completo (con instrucciones) vive en
+    // Perfil, no tiene sentido duplicarlo acá.
     dismiss();
     navigate('/perfil');
   }
