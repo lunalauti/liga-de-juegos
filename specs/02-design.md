@@ -700,6 +700,14 @@ El toggle se resuelve consultando `registration.pushManager.getSubscription()` a
 
 **Segundo pedido (mismo día):** el minitutorial ilustrado (pasos animados en SVG, distintos según iOS o no) pasa de vivir sólo en Perfil a aparecer también como modal flotante en Home — fondo oscurecido, tarjeta centrada, botón "Cerrar" explícito — apenas se entra, si la app todavía no está instalada. Se acuerda en `localStorage` (clave propia, independiente de la de `NotifyPrompt`): cerrarlo una vez alcanza, no vuelve a aparecer solo. Al ser un overlay que tapa toda la pantalla, no compite visualmente con `NotifyPrompt` — mientras el modal está abierto, el banner de abajo queda tapado; se ve recién cuando se cierra el modal (o si éste ya no aplica). El mismo contenido queda además en Perfil como card de referencia, sin la lógica de "una sola vez" — ahí es material de consulta, no una interrupción.
 
+**Tercer pedido (2026-09-10): tres CTA en vez de un solo "Cerrar".** De más a menos comprometida — la acción completa es la principal, "Cerrar" queda como salida discreta (texto, no botón lleno) para no competir visualmente con las dos de verdad:
+
+1. **"Activar avisos e instalar la app"** (primario) — `subscribeToPush()` + `PATCH /me/notification-prefs { pendingToday: true }` + `promptInstall()` (el `beforeinstallprompt` capturado), en ese orden: la suscripción primero, porque instalar puede relanzar la página en modo standalone y no vale la pena arriesgar perder el permiso de push a mitad de camino.
+2. **"Sólo activar avisos"** (secundario) — lo mismo, sin el último paso. Válido fuera de iOS porque instalar nunca fue un requisito técnico ahí (§10.3, corrección del mismo día).
+3. **"Cerrar"** — no hace nada, se acuerda igual que antes.
+
+**En iOS sólo queda "Cerrar".** Ninguna de las otras dos tiene un equivalente de un click ahí: no existe `beforeinstallprompt` (instalar es Compartir → Agregar a inicio, a mano) y Safari bloquea `pushManager.subscribe()` fuera de modo standalone — el tutorial ilustrado de arriba YA es la acción a tomar, ofrecer un botón que fallaría sería peor que no ofrecer nada.
+
 ### 10.4 El cron diario (servidor)
 
 Mismo patrón que el cierre de temporadas (§5.4): no hay Cron Jobs nativos en el plan free de Render (RNF-6), así que `POST /internal/cron/notify-pending` es un endpoint fuera del stack de JWT, protegido por `x-cron-secret`, golpeado una vez al día por cron-job.org — a las **21:00 ART = 00:00 UTC** (D12).

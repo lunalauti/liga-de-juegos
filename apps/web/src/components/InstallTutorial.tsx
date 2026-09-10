@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { isIOS, isStandalone } from '../lib/push';
+import { apiFetch } from '../api/client';
+import { isIOS, isStandalone, subscribeToPush } from '../lib/push';
+import { promptInstall } from '../lib/installPrompt';
 
 const MODAL_SEEN_KEY = 'liga:installTutorialSeen';
 
@@ -50,12 +52,27 @@ export function InstallTutorial() {
 
 /**
  * Versión flotante para Home (pedido del usuario, 2026-09-09): tarjeta
- * centrada sobre un fondo oscurecido, con un botón "Cerrar" explícito. Se
- * acuerda en localStorage — cerrarla una vez alcanza, no vuelve a insistir
- * sola (mismo criterio que NotifyPrompt). No aparece si ya está instalada.
+ * centrada sobre un fondo oscurecido. Se acuerda en localStorage — cerrarla
+ * una vez alcanza, no vuelve a insistir sola (mismo criterio que
+ * NotifyPrompt). No aparece si ya está instalada.
+ *
+ * Tres CTA (pedido del usuario, 2026-09-10), de más a menos comprometida —
+ * la más completa es la principal, "Cerrar" queda como salida discreta, no
+ * compite visualmente con las acciones de verdad:
+ *   1. "Activar avisos e instalar la app" — las dos cosas de una.
+ *   2. "Sólo activar avisos" — sin instalar (RF-22 anda igual sin eso fuera de iOS).
+ *   3. "Cerrar" — no hacer nada, no vuelve a preguntar.
+ *
+ * En iOS no hay ninguna de las dos acciones para ofrecer con un click: ni
+ * instalar (no existe `beforeinstallprompt`, es Compartir → Agregar a inicio
+ * a mano) ni suscribirse a push (Safari lo bloquea fuera de standalone) — ahí
+ * el tutorial de arriba YA es la acción, sólo queda "Cerrar".
  */
-export function InstallTutorialModal() {
+export function InstallTutorialModal({ token }: { token: string | undefined }) {
   const [visible, setVisible] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const ios = isIOS();
 
   useEffect(() => {
     if (!localStorage.getItem(MODAL_SEEN_KEY) && !isStandalone()) setVisible(true);
@@ -66,6 +83,21 @@ export function InstallTutorialModal() {
   function close() {
     localStorage.setItem(MODAL_SEEN_KEY, '1');
     setVisible(false);
+  }
+
+  async function activate(alsoInstall: boolean) {
+    if (!token) return close();
+    setBusy(true);
+    setError(null);
+    try {
+      await subscribeToPush(token);
+      await apiFetch('/me/notification-prefs', { method: 'PATCH', accessToken: token, body: { pendingToday: true } });
+      if (alsoInstall) await promptInstall();
+      close();
+    } catch (e) {
+      setError(e instanceof Error && e.message === 'PERMISSION_DENIED' ? 'No diste el permiso — no se puede activar sin eso.' : 'No pudimos activar los avisos. Probá de nuevo en un rato.');
+      setBusy(false);
+    }
   }
 
   return (
@@ -84,9 +116,28 @@ export function InstallTutorialModal() {
         <h2 className="lj-card-title" style={{ fontSize: 20, margin: '0 0 4px' }}>Instalá la app</h2>
         <p style={{ fontSize: 12, color: '#6B6357', margin: '0 0 14px' }}>Acceso más rápido y avisos cuando te falten tiempos.</p>
         <TutorialContent />
-        <button type="button" className="btn btn-outline-dark" style={{ width: '100%', marginTop: 18 }} onClick={close}>
-          Cerrar
-        </button>
+
+        {error && <p role="alert" style={{ color: '#A8352A', fontSize: 12, margin: '14px 0 0' }}>{error}</p>}
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 18 }}>
+          {ios ? (
+            <button type="button" className="btn btn-outline-dark" style={{ width: '100%' }} onClick={close}>
+              Cerrar
+            </button>
+          ) : (
+            <>
+              <button type="button" className="btn btn-primary" style={{ width: '100%' }} disabled={busy} onClick={() => void activate(true)}>
+                Activar avisos e instalar la app
+              </button>
+              <button type="button" className="btn btn-outline-dark" style={{ width: '100%' }} disabled={busy} onClick={() => void activate(false)}>
+                Sólo activar avisos
+              </button>
+              <button type="button" className="btn btn-link" style={{ width: '100%', color: '#6B6357' }} disabled={busy} onClick={close}>
+                Cerrar
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

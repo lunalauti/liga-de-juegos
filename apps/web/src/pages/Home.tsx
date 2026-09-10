@@ -114,7 +114,7 @@ export default function Home() {
   return (
     <Screen>
       <Header groupName={activeGroup.name} displayName={me?.displayName} />
-      <InstallTutorialModal />
+      <InstallTutorialModal token={token} />
       <NotifyPrompt token={token} />
 
       {loadedAllThree ? <LoadedCard myDay={myDay!} games={activeGames} /> : <NotLoadedCard othersLoadedToday={othersLoadedToday} onLoad={() => navigate('/cargar')} />}
