@@ -6,8 +6,8 @@ import { useSession } from '../hooks/useSession';
 type Mode = 'signin' | 'signup';
 
 /**
- * RF-1: registro e inicio de sesión, con Google y con email+contraseña, sesión
- * persistente. No hay artboard para esta pantalla (no está en los 7 del canvas);
+ * RF-1: registro e inicio de sesión con email+contraseña, sesión persistente
+ * (el login con Google se sacó a pedido del usuario, 2026-10-05). No hay artboard para esta pantalla (no está en los 7 del canvas);
  * se construyó con los mismos tokens del sistema (design/tokens.md).
  */
 export default function Login() {
@@ -71,14 +71,6 @@ export default function Login() {
     }
   }
 
-  async function handleGoogle() {
-    setError(null);
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.origin },
-    });
-  }
-
   return (
     <div style={{ maxWidth: 380, margin: '0 auto', padding: '56px 20px' }}>
       <p className="lj-label" style={{ marginBottom: 8 }}>Liga de Juegos</p>
@@ -136,16 +128,6 @@ export default function Login() {
             {busy ? 'Un segundo…' : mode === 'signin' ? 'Iniciar sesión' : 'Crear cuenta'}
           </button>
         </form>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '16px 0' }}>
-          <span style={{ flex: 1, height: 1, background: '#DDD6C8' }} />
-          <span className="lj-label" style={{ fontSize: 9 }}>o</span>
-          <span style={{ flex: 1, height: 1, background: '#DDD6C8' }} />
-        </div>
-
-        <button type="button" className="btn btn-outline-dark" onClick={handleGoogle} style={{ width: '100%' }}>
-          Continuar con Google
-        </button>
       </div>
 
       <p style={{ fontSize: 13, color: '#6B6357', marginTop: 16, textAlign: 'center' }}>

@@ -23,7 +23,7 @@
 | Capa | Responsable de |
 |---|---|
 | React (Vercel) | UI, estado de formularios, sesión, cache de respuestas |
-| Supabase Auth | registro, login, Google OAuth, emisión y refresh de JWT |
+| Supabase Auth | registro, login (email + contraseña; el Google OAuth se sacó el 2026-10-05), emisión y refresh de JWT |
 | API Node (Render) | validación, reglas de negocio, cálculo de rankings, autorización |
 | Postgres (Supabase) | persistencia, constraints de integridad, RLS como segunda barrera |
 

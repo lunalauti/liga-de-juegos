@@ -61,7 +61,7 @@ Formato: `RF-x` con criterios de aceptación en formato EARS (*Cuando/Si… el s
 
 **RF-1 — Registro e inicio de sesión**
 - Cuando un visitante se registra con email y contraseña, el sistema deberá crear su cuenta y pedirle un nombre visible (*display name*).
-- Cuando un visitante elige "Continuar con Google", el sistema deberá autenticarlo por OAuth sin pedir contraseña.
+- ~~Cuando un visitante elige "Continuar con Google", el sistema deberá autenticarlo por OAuth sin pedir contraseña.~~ **Quitado a pedido del usuario (2026-10-05):** el acceso es sólo por email + contraseña. El botón y su handler se sacaron de `/login`; el proveedor de Google en Supabase Auth queda sin uso (se puede deshabilitar desde el dashboard).
 - Si el email ya existe, el sistema deberá informarlo sin revelar si la contraseña es correcta.
 - El sistema deberá mantener la sesión iniciada entre visitas (token persistente) — nadie quiere loguearse todas las mañanas.
 
